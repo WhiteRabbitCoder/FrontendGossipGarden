@@ -2,20 +2,17 @@ class Range {
   final double min;
   final double max;
 
-  Range({required this.min, required this.max});
+  const Range(this.min, this.max);
 
   factory Range.fromList(List? list) {
     if (list == null || list.length < 2) {
-      return Range(min: 0, max: 0);
+      return const Range(0, 0);
     }
-
     return Range(
-      min: (list[0] as num?)?.toDouble() ?? 0,
-      max: (list[1] as num?)?.toDouble() ?? 0,
+      (list[0] as num).toDouble(),
+      (list[1] as num).toDouble(),
     );
   }
-
-  List<double> toList() => [min, max];
 }
 
 class ComfortZones {
@@ -24,7 +21,7 @@ class ComfortZones {
   final Range light;
   final Range soilMoisture;
 
-  ComfortZones({
+  const ComfortZones({
     required this.humidity,
     required this.temperature,
     required this.light,

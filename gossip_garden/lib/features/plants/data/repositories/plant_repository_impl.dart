@@ -1,6 +1,6 @@
 import '../../domain/repositories/plant_repository.dart';
 import '../datasources/plant_mock_datasource.dart';
-import '../models/plant_model.dart';
+import '../models/plant.dart';
 
 class PlantRepositoryImpl implements PlantRepository {
   final PlantMockDatasource datasource;

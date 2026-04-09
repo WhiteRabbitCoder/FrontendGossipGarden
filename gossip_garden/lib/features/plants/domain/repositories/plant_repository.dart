@@ -1,4 +1,4 @@
-import '../../data/models/plant_model.dart';
+import '../../data/models/plant.dart';
 
 abstract class PlantRepository {
   Future<List<Plant>> getAllPlants();

@@ -4,7 +4,7 @@ class Sensors {
   final double light;
   final double soilMoisture;
 
-  Sensors({
+  const Sensors({
     required this.humidity,
     required this.temperature,
     required this.light,
