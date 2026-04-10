@@ -1,0 +1,9 @@
+fastapi[standard]
+pydantic
+pydantic-settings
+sqlalchemy
+uvicorn
+sqlmodel
+psycopg2-binary
+fastapi-mqtt
+gmqtt
