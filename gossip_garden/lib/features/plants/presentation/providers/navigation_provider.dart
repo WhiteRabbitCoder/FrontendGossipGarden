@@ -1,6 +1,12 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-enum TabId { dashboard, chat, profile, settings }
+/// ✅ DEFINIMOS TabId SOLO AQUÍ (fuente única)
+enum TabId {
+  dashboard,
+  chat,
+  garden,
+  profile
+}
 
 class NavigationState {
   final TabId activeTab;
@@ -38,11 +44,6 @@ class NavigationState {
   }
 }
 
-final navigationProvider =
-    StateNotifierProvider<NavigationNotifier, NavigationState>((ref) {
-  return NavigationNotifier();
-});
-
 class NavigationNotifier extends StateNotifier<NavigationState> {
   NavigationNotifier() : super(const NavigationState());
 
@@ -55,7 +56,6 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
       selectedPlantId: id,
       showPlantProfile: true,
       showChat: false,
-      selectedFriendId: null,
     );
   }
 
@@ -64,16 +64,11 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
       selectedPlantId: id,
       showChat: true,
       showPlantProfile: false,
-      selectedFriendId: null,
     );
   }
 
-  void openFriendGarden(String friendId) {
-    state = state.copyWith(
-      selectedFriendId: friendId,
-      showChat: false,
-      showPlantProfile: false,
-    );
+  void openFriendGarden(String id) {
+    state = state.copyWith(selectedFriendId: id);
   }
 
   void changeTab(TabId tab) {
@@ -85,23 +80,24 @@ class NavigationNotifier extends StateNotifier<NavigationState> {
     );
   }
 
-  /// 🔥 MANEJO CENTRALIZADO DEL BACK (CLAVE)
   bool handleBack() {
     if (state.showChat) {
       state = state.copyWith(showChat: false);
       return false;
     }
-
     if (state.showPlantProfile) {
       state = state.copyWith(showPlantProfile: false);
       return false;
     }
-
     if (state.selectedFriendId != null) {
       state = state.copyWith(selectedFriendId: null);
       return false;
     }
-
-    return true; // salir app
+    return true;
   }
 }
+
+final navigationProvider =
+    StateNotifierProvider<NavigationNotifier, NavigationState>((ref) {
+  return NavigationNotifier();
+});

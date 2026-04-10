@@ -1,15 +1,14 @@
 import '../../domain/repositories/plant_repository.dart';
-import '../datasources/plant_mock_datasource.dart';
+import '../datasources/plant_datasource.dart';
 import '../models/plant.dart';
 
 class PlantRepositoryImpl implements PlantRepository {
-  final PlantMockDatasource datasource;
+  final PlantDatasource datasource;
 
   PlantRepositoryImpl(this.datasource);
 
   @override
-  Future<List<Plant>> getAllPlants() async {
-    final raw = await datasource.getRawPlants();
-    return raw.map((e) => Plant.fromJson(e)).toList();
+  Future<List<Plant>> getAllPlants() {
+    return datasource.getPlants();
   }
 }

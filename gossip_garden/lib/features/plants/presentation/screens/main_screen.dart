@@ -1,7 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../providers/navigation_provider.dart';
-import '../../../../core/widgets/keep_alive_wrapper.dart';
+
+import 'dashboard_screen.dart';
+import 'chat_list_screen.dart';
+import 'garden_view_screen.dart';
+import 'plant_profile_screen.dart';
+
+import '../../navigation/presentation/widgets/animated_bottom_nav.dart';
 
 class MainScreen extends ConsumerWidget {
   const MainScreen({super.key});
@@ -11,29 +18,26 @@ class MainScreen extends ConsumerWidget {
     final nav = ref.watch(navigationProvider);
     final notifier = ref.read(navigationProvider.notifier);
 
-    /// ONBOARDING
+    /// ONBOARDING SIMPLE
     if (nav.showOnboarding) {
-      return OnboardingScreen(
-        onComplete: notifier.completeOnboarding,
+      return Scaffold(
+        body: Center(
+          child: ElevatedButton(
+            onPressed: notifier.completeOnboarding,
+            child: const Text('Entrar'),
+          ),
+        ),
       );
     }
 
-    final showOverlay =
+    final hasOverlay =
         nav.showChat || nav.showPlantProfile || nav.selectedFriendId != null;
 
-    return PopScope(
-      canPop: false,
-      onPopInvoked: (didPop) {
-        final shouldExit = notifier.handleBack();
-        if (shouldExit) {
-          Navigator.of(context).maybePop();
-        }
-      },
-      child: Scaffold(
-        body: Stack(
-          children: [
-            /// 🔥 BASE CON ESTADO PERSISTENTE
-            IndexedStack(
+    return Scaffold(
+      body: Stack(
+        children: [
+          SafeArea(
+            child: IndexedStack(
               index: nav.activeTab.index,
               children: [
                 DashboardScreen(
@@ -41,48 +45,37 @@ class MainScreen extends ConsumerWidget {
                   onOpenChat: notifier.openChat,
                   onOpenFriendGarden: notifier.openFriendGarden,
                 ),
-                ChatListScreen(
-                  onOpenChat: notifier.openChat,
-                ),
-                GardenViewScreen(
-                  onSelectPlant: notifier.selectPlant,
-                ),
-                const ProfileSettingsScreen(),
+                const ChatListScreen(),
+                GardenViewScreen(),
+                const Center(child: Text('Profile')),
               ],
             ),
+          ),
 
-            /// 🔥 OVERLAYS (encima del stack)
-            if (nav.showChat)
-              PlantChatScreen(
-                plantId: nav.selectedPlantId,
-                onBack: notifier.handleBack,
-              ),
-
-            if (!nav.showChat && nav.showPlantProfile)
-              PlantProfileScreen(
-                plantId: nav.selectedPlantId,
-                onBack: notifier.handleBack,
-                onOpenChat: notifier.openChat,
-              ),
-
-            if (!nav.showChat &&
-                !nav.showPlantProfile &&
-                nav.selectedFriendId != null)
-              FriendGardenScreen(
-                friendId: nav.selectedFriendId!,
-                onBack: notifier.handleBack,
-              ),
-          ],
-        ),
-
-        /// 🔥 Bottom Nav solo si no hay overlays
-        bottomNavigationBar: showOverlay
-            ? null
-            : BottomNav(
-                activeTab: nav.activeTab,
-                onTabChange: notifier.changeTab,
-              ),
+          /// OVERLAY
+          if (hasOverlay) _buildOverlay(nav, notifier),
+        ],
       ),
+
+      bottomNavigationBar: hasOverlay
+          ? null
+          : AnimatedBottomNav(
+              activeTab: nav.activeTab,
+              onTabChange: notifier.changeTab,
+            ),
     );
+  }
+
+  Widget _buildOverlay(
+      NavigationState nav, NavigationNotifier notifier) {
+    if (nav.showPlantProfile) {
+      return PlantProfileScreen(
+        plantId: nav.selectedPlantId,
+        onBack: notifier.handleBack,
+        onOpenChat: notifier.openChat,
+      );
+    }
+
+    return const SizedBox.shrink();
   }
 }

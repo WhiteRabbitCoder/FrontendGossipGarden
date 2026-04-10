@@ -42,44 +42,56 @@ class Plant {
 
   factory Plant.fromJson(Map<String, dynamic> json) {
     return Plant(
-      id: json['id'] ?? '',
-      name: json['name'] ?? 'Sin nombre',
-      species: json['species'] ?? '',
-      image: json['image'] ?? '',
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? 'Sin nombre',
+      species: json['species']?.toString() ?? '',
+      image: json['image']?.toString() ?? '',
 
-      health: (json['health'] as num?)?.toDouble() ?? 0,
-      lastWatered: json['lastWatered'] ?? '',
+      health: (json['health'] as num?)?.toDouble() ?? 0.0,
+      lastWatered: json['lastWatered']?.toString() ?? '',
 
-      personality: enumFromString(
+      // Mapeo de Enums usando la utilidad inferior
+      personality: _enumFromString(
         PlantPersonality.values,
         json['personality'],
         PlantPersonality.playful,
       ),
-      mood: enumFromString(
+      mood: _enumFromString(
         PlantMood.values,
         json['mood'],
         PlantMood.happy,
       ),
-      sensorStatus: enumFromString(
+      sensorStatus: _enumFromString(
         SensorStatus.values,
         json['sensorStatus'],
         SensorStatus.offline,
       ),
-      confidence: enumFromString(
+      confidence: _enumFromString(
         ConfidenceLevel.values,
         json['confidence'],
         ConfidenceLevel.low,
       ),
 
+      // Inicialización de sub-objetos con validación de nulos
       sensors: Sensors.fromJson(json['sensors'] ?? {}),
       comfortZones: ComfortZones.fromJson(json['comfortZones'] ?? {}),
 
+      // Listas
       insights: List<String>.from(json['insights'] ?? []),
-
       actions: (json['actions'] as List?)
               ?.map((e) => PlantAction.fromJson(e))
               .toList() ??
           [],
     );
   }
+}
+
+/// Utilidad para convertir String de JSON a Enum de Dart de forma segura.
+/// Se marca con '_' para que sea privada a este archivo.
+T _enumFromString<T>(List<T> values, dynamic key, T defaultValue) {
+  if (key == null || key is! String) return defaultValue;
+  return values.firstWhere(
+    (v) => v.toString().split('.').last.toLowerCase() == key.toLowerCase(),
+    orElse: () => defaultValue,
+  );
 }
