@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:gossip_garden/features/plants/presentation/providers/navigation_provider.dart';
+import '../providers/navigation_provider.dart';
 
 class AnimatedBottomNav extends StatelessWidget {
   final TabId activeTab;

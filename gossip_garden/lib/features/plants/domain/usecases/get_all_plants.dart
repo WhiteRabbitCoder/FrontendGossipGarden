@@ -1,5 +1,5 @@
 import '../repositories/plant_repository.dart';
-import '../../data/models/plant_model.dart';
+import '../../data/models/plant.dart';
 
 class GetAllPlants {
   final PlantRepository repository;

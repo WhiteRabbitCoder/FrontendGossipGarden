@@ -7,8 +7,9 @@ import 'dashboard_screen.dart';
 import 'chat_list_screen.dart';
 import 'garden_view_screen.dart';
 import 'plant_profile_screen.dart';
+import 'plant_chat_screen.dart';
 
-import '../../navigation/presentation/widgets/animated_bottom_nav.dart';
+import '../widgets/animated_bottom_nav.dart';
 
 class MainScreen extends ConsumerWidget {
   const MainScreen({super.key});
@@ -56,7 +57,6 @@ class MainScreen extends ConsumerWidget {
           if (hasOverlay) _buildOverlay(nav, notifier),
         ],
       ),
-
       bottomNavigationBar: hasOverlay
           ? null
           : AnimatedBottomNav(
@@ -66,13 +66,18 @@ class MainScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildOverlay(
-      NavigationState nav, NavigationNotifier notifier) {
+  Widget _buildOverlay(NavigationState nav, NavigationNotifier notifier) {
     if (nav.showPlantProfile) {
       return PlantProfileScreen(
         plantId: nav.selectedPlantId,
         onBack: notifier.handleBack,
         onOpenChat: notifier.openChat,
+      );
+    }
+    if (nav.showChat) {
+      return PlantChatScreen(
+        plantId: nav.selectedPlantId,
+        onBack: notifier.handleBack,
       );
     }
 

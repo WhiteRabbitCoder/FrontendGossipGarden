@@ -8,7 +8,7 @@ class AppDesignSystem {
   static const Color destructive = Color(0xFFEF4444);
   static const Color background = Colors.white;
   static const Color card = Color(0xFFFFFFFF);
-  
+
   // 2. Las Sombras (Shadows) de tus archivos .tsx
   static List<BoxShadow> shadowSm = [
     BoxShadow(
@@ -35,7 +35,7 @@ class AppDesignSystem {
     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
     textStyle: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
   );
-  
+
   static ButtonStyle ctaButton = ElevatedButton.styleFrom(
     backgroundColor: accent,
     foregroundColor: Colors.black,
@@ -72,4 +72,5 @@ class AppDesignSystem {
         ),
       ),
     );
+  }
 }
