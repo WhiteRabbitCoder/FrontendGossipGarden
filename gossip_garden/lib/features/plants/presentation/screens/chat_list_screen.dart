@@ -31,7 +31,7 @@ class ChatListScreen extends ConsumerWidget {
           padding: const EdgeInsets.all(16),
           itemCount: plants.length,
           itemBuilder: (context, index) =>
-              _buildChatItem(context, plants[index], navNotifier),
+              _buildChatItem(context, ref, plants[index], navNotifier),
         ),
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
@@ -39,11 +39,13 @@ class ChatListScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildChatItem(
-      BuildContext context, Plant plant, NavigationNotifier nav) {
-    final lastMessage = _getLastMessagePreview(plant.id);
+  Widget _buildChatItem(BuildContext context, WidgetRef ref, Plant plant,
+      NavigationNotifier nav) {
+    final messages = ref.read(chatMessagesProvider(plant.id));
+    final lastMessage =
+        messages.isNotEmpty ? messages.last.content : 'Sin mensajes recientes';
     final isOnline = plant.sensorStatus == SensorStatus.online;
-    final unread = _hasUnread(plant.id);
+    final unread = messages.isNotEmpty && messages.last.sender == 'plant';
 
     return GestureDetector(
       onTap: () => nav.openChat(plant.id),
@@ -107,8 +109,9 @@ class ChatListScreen extends ConsumerWidget {
                             fontSize: 16, fontWeight: FontWeight.w600),
                       ),
                       Text(
-                        _formatTime(DateTime.now().subtract(
-                            Duration(minutes: plant.id.hashCode % 60))),
+                        _formatTime(messages.isNotEmpty
+                            ? messages.last.timestamp
+                            : DateTime.now()),
                         style: const TextStyle(
                             fontSize: 12, color: Colors.black54),
                       ),
@@ -180,22 +183,6 @@ class ChatListScreen extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  String _getLastMessagePreview(String plantId) {
-    final messages = [
-      '¡Hola! Mi humedad del suelo está al 28%, tengo sed.',
-      '¡Gracias por regarme! Ahora estoy al 45%.',
-      '¿Podrías moverme a un lugar con más luz?',
-      'La temperatura está perfecta hoy 😊',
-      'Mi sensor de luz detecta poca luminosidad.',
-    ];
-    final index = plantId.hashCode % messages.length;
-    return messages[index];
-  }
-
-  bool _hasUnread(String plantId) {
-    return plantId.hashCode % 3 == 0; // Simular algunos no leídos
   }
 
   String _formatTime(DateTime time) {

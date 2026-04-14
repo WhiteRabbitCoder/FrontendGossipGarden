@@ -18,6 +18,42 @@ class ChatMessage {
     required this.timestamp,
     this.actions,
   });
+
+  factory ChatMessage.fromMap(Map<String, dynamic> json) {
+    final timestampRaw = json['timestampMs'] ?? json['timestamp'];
+
+    return ChatMessage(
+      id: json['id']?.toString() ?? '',
+      content: json['content']?.toString() ?? '',
+      sender: json['sender']?.toString() ?? 'system',
+      source: json['source']?.toString() ?? 'no-data',
+      confidence: json['confidence']?.toString() ?? 'low',
+      timestamp: _parseTimestamp(timestampRaw),
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'content': content,
+      'sender': sender,
+      'source': source,
+      'confidence': confidence,
+      'timestampMs': timestamp.millisecondsSinceEpoch,
+    };
+  }
+
+  static DateTime _parseTimestamp(dynamic raw) {
+    if (raw is DateTime) return raw;
+    if (raw is int) {
+      return DateTime.fromMillisecondsSinceEpoch(raw);
+    }
+    if (raw is String) {
+      return DateTime.tryParse(raw) ?? DateTime.now();
+    }
+
+    return DateTime.now();
+  }
 }
 
 class MessageAction {
@@ -54,15 +90,13 @@ class MessageBubble extends StatelessWidget {
           if (isPlant) const SizedBox(width: 8),
           Flexible(
             child: Column(
-              crossAxisAlignment: isUser
-                  ? CrossAxisAlignment.end
-                  : CrossAxisAlignment.start,
+              crossAxisAlignment:
+                  isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: [
                 _buildBubble(context),
                 const SizedBox(height: 6),
                 if (!isUser) _buildMeta(),
-                if (message.actions != null &&
-                    message.actions!.isNotEmpty)
+                if (message.actions != null && message.actions!.isNotEmpty)
                   _buildActions(),
               ],
             ),
@@ -95,10 +129,8 @@ class MessageBubble extends StatelessWidget {
         borderRadius: BorderRadius.only(
           topLeft: const Radius.circular(20),
           topRight: const Radius.circular(20),
-          bottomLeft:
-              Radius.circular(isUser ? 20 : 4),
-          bottomRight:
-              Radius.circular(isUser ? 4 : 20),
+          bottomLeft: Radius.circular(isUser ? 20 : 4),
+          bottomRight: Radius.circular(isUser ? 4 : 20),
         ),
         boxShadow: [
           if (!isUser)
@@ -148,8 +180,7 @@ class MessageBubble extends StatelessWidget {
     }
 
     return Container(
-      padding:
-          const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
@@ -210,11 +241,10 @@ class MessageBubble extends StatelessWidget {
               (action) => GestureDetector(
                 onTap: action.onTap,
                 child: Container(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 12, vertical: 8),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF4A6741)
-                        .withOpacity(0.1),
+                    color: const Color(0xFF4A6741).withOpacity(0.1),
                     borderRadius: BorderRadius.circular(20),
                   ),
                   child: Text(

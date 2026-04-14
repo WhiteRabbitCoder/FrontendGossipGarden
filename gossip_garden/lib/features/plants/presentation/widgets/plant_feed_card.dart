@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 // Cámbialo por la ruta donde está tu clase Plant que definimos antes
-import '../../data/models/plant.dart'; 
+import '../../data/models/plant.dart';
 
 class PlantFeedCard extends StatelessWidget {
   final Plant plant;
@@ -42,12 +42,13 @@ class PlantFeedCard extends StatelessWidget {
                       color: colorScheme.primary.withOpacity(0.08),
                     ),
                     padding: const EdgeInsets.all(10),
-                    // Usamos un placeholder por si la URL falla
-                    child: Image.network(
-                      plant.image,
-                      errorBuilder: (context, error, stackTrace) => 
-                        const Icon(Icons.eco, color: Colors.green),
-                    ),
+                    child: plant.image.isNotEmpty
+                        ? Image.network(
+                            plant.image,
+                            errorBuilder: (context, error, stackTrace) =>
+                                const Icon(Icons.eco, color: Colors.green),
+                          )
+                        : const Icon(Icons.eco, color: Colors.green),
                   ),
                 ),
                 const SizedBox(width: 14),

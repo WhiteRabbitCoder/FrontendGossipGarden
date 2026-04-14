@@ -58,18 +58,35 @@ The application is containerized using Docker for easy setup and deployment.
     ```
 
 2.  **Create the environment file:**
-    Create a file named `.env` in the project root and add the following environment variables. This file is used by Docker Compose to configure the services.
+    Create a file named `.env` in the project root and add the following environment variables. You can also copy from `.env.example`.
 
     ```ini
-    # PostgreSQL Settings
+    # Preferred: full URL (Railway/Postgres managed)
+    DATABASE_URL=postgresql://admin:yoursecretpassword@db:5432/plants_db
+
+    # Optional fallback (if DATABASE_URL is not present)
     POSTGRES_USER=admin
     POSTGRES_PASSWORD=yoursecretpassword
     POSTGRES_DB=plants_db
+    POSTGRES_HOST=db
+    POSTGRES_PORT=5432
 
-    # Application Database URL
-    # This must match the PostgreSQL settings above.
-    # The hostname 'db' refers to the database service in docker-compose.yml.
-    DATABASE_URL=postgresql://admin:yoursecretpassword@db:5432/plants_db
+    # MQTT (optional; defaults to built-in fallback values)
+    MQTT_ENABLED=true
+    MQTT_HOST=0712cb0c18314a609092dfd3544c234c.s1.eu.hivemq.cloud
+    MQTT_PORT=8883
+    MQTT_KEEPALIVE=60
+    MQTT_USERNAME=Danieloide
+    MQTT_PASSWORD=Danii123
+    MQTT_SSL=true
+    MQTT_TOPIC=plantas/esp32_01/sensores
+
+    # Firebase (optional for Accounts/Chats/Logs)
+    FIREBASE_ENABLED=false
+    FIREBASE_CREDENTIALS_JSON=
+    FIREBASE_PROJECT_ID=
+    FIREBASE_DATABASE_URL=
+    FIREBASE_STORAGE_BUCKET=
     ```
 
 3.  **Run the application:**
@@ -84,14 +101,35 @@ The application is containerized using Docker for easy setup and deployment.
 
 The application is configured using environment variables.
 
-| Variable          | Description                                                                                             |
-| ----------------- | ------------------------------------------------------------------------------------------------------- |
-| `DATABASE_URL`    | The connection string for the PostgreSQL database. Example: `postgresql://USER:PASSWORD@HOST:PORT/DBNAME` |
-| `POSTGRES_USER`   | The username for the PostgreSQL database.                                                               |
-| `POSTGRES_PASSWORD`| The password for the PostgreSQL database.                                                               |
-| `POSTGRES_DB`     | The name of the database to create.                                                                     |
+| Variable                   | Description                                                                                             |
+| -------------------------- | ------------------------------------------------------------------------------------------------------- |
+| `DATABASE_URL`             | Primary PostgreSQL connection string. Example: `postgresql://USER:PASSWORD@HOST:PORT/DBNAME`         |
+| `POSTGRES_USER`            | Optional fallback user if `DATABASE_URL` is not set.                                                   |
+| `POSTGRES_PASSWORD`        | Optional fallback password if `DATABASE_URL` is not set.                                               |
+| `POSTGRES_DB`              | Optional fallback DB name if `DATABASE_URL` is not set.                                                |
+| `POSTGRES_HOST`            | Optional fallback host if `DATABASE_URL` is not set.                                                   |
+| `POSTGRES_PORT`            | Optional fallback port if `DATABASE_URL` is not set (`5432` default).                                 |
+| `MQTT_ENABLED`             | Enables MQTT startup (`true/false`).                                                                   |
+| `MQTT_FAIL_FAST`           | If `true`, startup fails when MQTT cannot connect.                                                     |
+| `MQTT_HOST`                | MQTT broker host.                                                                                       |
+| `MQTT_PORT`                | MQTT broker port (`8883` default).                                                                     |
+| `MQTT_KEEPALIVE`           | MQTT keepalive seconds (`60` default).                                                                 |
+| `MQTT_USERNAME`            | MQTT username.                                                                                          |
+| `MQTT_PASSWORD`            | MQTT password.                                                                                          |
+| `MQTT_SSL`                 | MQTT TLS on/off (`true` default).                                                                      |
+| `MQTT_TOPIC`               | MQTT topic subscription for sensor data.                                                               |
+| `FIREBASE_ENABLED`         | Enables Firebase Admin initialization.                                                                  |
+| `FIREBASE_FAIL_FAST`       | If `true`, startup fails when Firebase config is invalid.                                              |
+| `FIREBASE_CREDENTIALS_JSON`| Service-account JSON content in a single line.                                                         |
+| `FIREBASE_CREDENTIALS_FILE`| Service-account JSON path inside container/host.                                                       |
+| `FIREBASE_PROJECT_ID`      | Firebase project id used by Admin SDK options.                                                         |
+| `FIREBASE_DATABASE_URL`    | Firebase Realtime Database URL (optional).                                                             |
+| `FIREBASE_STORAGE_BUCKET`  | Firebase Storage bucket (optional).                                                                    |
 
-**Note:** The MQTT client credentials are currently hardcoded in `app/core/mqtt_config.py`. For a production environment, it is highly recommended to move these into environment variables as well.
+## Data Ownership
+
+-   **PostgreSQL**: plants, species profiles, sensor/device telemetry and relational entities.
+-   **Firebase**: accounts/auth, chats, logs/event streams.
 
 ## API Endpoints
 

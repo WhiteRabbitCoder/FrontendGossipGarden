@@ -1,17 +1,52 @@
-# gossip_garden
+# Gossip Garden (Flutter)
 
-A new Flutter project.
+App cliente para Gossip Garden.
 
-## Getting Started
+## Conexion con Backend
 
-This project is a starting point for a Flutter application.
+La app usa variables de compilacion (`--dart-define`) para elegir a que backend conectarse.
 
-A few resources to get you started if this is your first Flutter project:
+Variables soportadas:
 
-- [Learn Flutter](https://docs.flutter.dev/get-started/learn-flutter)
-- [Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Flutter learning resources](https://docs.flutter.dev/reference/learning-resources)
+- `BACKEND_TARGET`: `local` (default) o `prod`
+- `BACKEND_LOCAL_URL`: URL del backend local
+- `BACKEND_DEPLOY_URL`: URL del backend desplegado
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+### Ejemplos
+
+Local (Android emulador):
+
+```bash
+flutter run \
+  --dart-define=BACKEND_TARGET=local \
+  --dart-define=BACKEND_LOCAL_URL=http://10.0.2.2:8000
+```
+
+Local (iOS simulador):
+
+```bash
+flutter run \
+  --dart-define=BACKEND_TARGET=local \
+  --dart-define=BACKEND_LOCAL_URL=http://localhost:8000
+```
+
+Produccion:
+
+```bash
+flutter run \
+  --dart-define=BACKEND_TARGET=prod \
+  --dart-define=BACKEND_DEPLOY_URL=https://tu-api.com
+```
+
+## Endpoints consumidos
+
+- `GET /plants`
+- `GET /plant_species`
+- `GET /sensor_data/{plant_id}`
+
+La UI muestra datos procesados usando promedio historico cuando el backend lo provee.
+
+## Nota sobre chat y auth
+
+Chats y autenticacion Google/Firebase aun no estan implementados en esta app.
+Actualmente solo se integra la capa de plantas/telemetria contra el backend PostgreSQL.

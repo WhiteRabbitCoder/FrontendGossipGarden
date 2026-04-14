@@ -1,15 +1,42 @@
+import 'dart:async';
+
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:gossip_garden/core/config/firebase_environment.dart';
+
+import '../../data/repositories/chat_repository.dart';
+import '../../data/repositories/chat_repository_firestore.dart';
+import '../../data/repositories/chat_repository_memory.dart';
 import '../widgets/message_bubble.dart';
+
+final chatRepositoryProvider = Provider<ChatRepository>((ref) {
+  if (FirebaseEnvironment.isConfigured) {
+    return FirestoreChatRepository(FirebaseFirestore.instance);
+  }
+
+  return MemoryChatRepository();
+});
 
 final chatMessagesProvider = StateNotifierProvider.family<ChatMessagesNotifier,
     List<ChatMessage>, String>(
-  (ref, plantId) => ChatMessagesNotifier(plantId),
+  (ref, plantId) => ChatMessagesNotifier(
+    plantId,
+    ref.read(chatRepositoryProvider),
+  ),
 );
 
 class ChatMessagesNotifier extends StateNotifier<List<ChatMessage>> {
   final String plantId;
+  final ChatRepository _repository;
+  StreamSubscription<List<ChatMessage>>? _subscription;
 
-  ChatMessagesNotifier(this.plantId) : super(_generateMockMessages(plantId));
+  ChatMessagesNotifier(this.plantId, this._repository)
+      : super(_generateMockMessages(plantId)) {
+    _subscription = _repository.watchMessages(plantId).listen((messages) {
+      syncMessages(messages);
+    });
+  }
 
   static List<ChatMessage> _generateMockMessages(String plantId) {
     final now = DateTime.now();
@@ -17,34 +44,11 @@ class ChatMessagesNotifier extends StateNotifier<List<ChatMessage>> {
       ChatMessage(
         id: '1',
         content:
-            '¡Hola! Soy tu planta. Mi humedad del suelo está al 28%, tengo sed.',
+            'Tengo telemetria activa para la planta $plantId. La humedad va bajando.',
         sender: 'plant',
         source: 'sensor',
         confidence: 'high',
         timestamp: now.subtract(const Duration(minutes: 5)),
-        actions: [
-          MessageAction(label: 'Regar ahora', onTap: () {}),
-          MessageAction(label: 'Más detalles', onTap: () {}),
-        ],
-      ),
-      ChatMessage(
-        id: '2',
-        content: 'Vale, voy a regarte ahora mismo.',
-        sender: 'user',
-        source: 'no-data',
-        confidence: 'high',
-        timestamp: now.subtract(const Duration(minutes: 3)),
-      ),
-      ChatMessage(
-        id: '3',
-        content: '¡Gracias! La humedad ya subió al 45%. Me siento mejor.',
-        sender: 'plant',
-        source: 'ai',
-        confidence: 'medium',
-        timestamp: now.subtract(const Duration(minutes: 1)),
-        actions: [
-          MessageAction(label: 'Ver telemetría', onTap: () {}),
-        ],
       ),
     ];
   }
@@ -62,9 +66,16 @@ class ChatMessagesNotifier extends StateNotifier<List<ChatMessage>> {
       timestamp: DateTime.now(),
     );
     state = [...state, newMessage];
+    _repository.sendMessage(plantId, newMessage);
   }
 
-  void clearMessages() {
-    state = [];
+  void syncMessages(List<ChatMessage> messages) {
+    state = messages;
+  }
+
+  @override
+  void dispose() {
+    _subscription?.cancel();
+    super.dispose();
   }
 }

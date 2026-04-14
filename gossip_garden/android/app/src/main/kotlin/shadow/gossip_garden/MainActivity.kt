@@ -1,4 +1,4 @@
-package com.example.gossip_garden
+package shadow.gossip_garden
 
 import io.flutter.embedding.android.FlutterActivity
 

@@ -1,11 +1,11 @@
-from sqlmodel import create_engine, Session
+from sqlmodel import Session, create_engine
 from core.config import settings
 
 # El motor de la base de datos.
 # La URL de conexión la toma de la configuración central.
 # echo=True hace que SQLAlchemy imprima todas las sentencias SQL que ejecuta.
 # Es muy útil para depurar.
-engine = create_engine(settings.DATABASE_URL, echo=True)
+engine = create_engine(settings.database_url, echo=True)
 
 def get_session():
     """

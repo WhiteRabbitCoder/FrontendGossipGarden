@@ -1,0 +1,45 @@
+import 'package:firebase_core/firebase_core.dart';
+
+class FirebaseEnvironment {
+  const FirebaseEnvironment._();
+
+  static const bool enableFirebase = bool.fromEnvironment(
+    'ENABLE_FIREBASE',
+    defaultValue: false,
+  );
+
+  static const String apiKey = String.fromEnvironment('FIREBASE_API_KEY');
+  static const String appId = String.fromEnvironment('FIREBASE_APP_ID');
+  static const String messagingSenderId =
+      String.fromEnvironment('FIREBASE_MESSAGING_SENDER_ID');
+  static const String projectId = String.fromEnvironment('FIREBASE_PROJECT_ID');
+  static const String storageBucket =
+      String.fromEnvironment('FIREBASE_STORAGE_BUCKET');
+  static const String authDomain =
+      String.fromEnvironment('FIREBASE_AUTH_DOMAIN');
+  static const String measurementId =
+      String.fromEnvironment('FIREBASE_MEASUREMENT_ID');
+
+  static bool get isConfigured =>
+      enableFirebase &&
+      apiKey.isNotEmpty &&
+      appId.isNotEmpty &&
+      messagingSenderId.isNotEmpty &&
+      projectId.isNotEmpty;
+
+  static FirebaseOptions get options {
+    if (!isConfigured) {
+      throw StateError('Firebase no esta configurado.');
+    }
+
+    return FirebaseOptions(
+      apiKey: apiKey,
+      appId: appId,
+      messagingSenderId: messagingSenderId,
+      projectId: projectId,
+      storageBucket: storageBucket.isEmpty ? null : storageBucket,
+      authDomain: authDomain.isEmpty ? null : authDomain,
+      measurementId: measurementId.isEmpty ? null : measurementId,
+    );
+  }
+}

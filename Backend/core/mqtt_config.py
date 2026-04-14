@@ -1,12 +1,13 @@
 from fastapi_mqtt import FastMQTT, MQTTConfig
+from core.config import settings
 
 mqtt_config = MQTTConfig(
-    host="0712cb0c18314a609092dfd3544c234c.s1.eu.hivemq.cloud",
-    port=8883,
-    keepalive=60,
-    username="Danieloide",
-    password="Danii123",
-    ssl=True
+    host=settings.MQTT_HOST,
+    port=settings.MQTT_PORT,
+    keepalive=settings.MQTT_KEEPALIVE,
+    username=settings.MQTT_USERNAME,
+    password=settings.MQTT_PASSWORD,
+    ssl=settings.MQTT_SSL
 )
 
 fast_mqtt = FastMQTT(config=mqtt_config)

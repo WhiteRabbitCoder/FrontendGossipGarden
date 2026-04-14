@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gossip_garden/features/plants/presentation/providers/navigation_provider.dart';
+import 'package:gossip_garden/features/auth/presentation/providers/auth_provider.dart';
 
 enum OnboardingStep { wow, welcome, connect, identify, firstInsight, config }
 
@@ -318,7 +319,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
         _radioOption('all', 'Todas', selected),
         const SizedBox(height: 48),
         _primaryButton('🌱 ¡A escucharlas!', () {
-          nav.completeOnboarding();
+          ref.read(authStateProvider.notifier).completeOnboarding();
           nav.changeTab(TabId.dashboard);
         }),
       ],

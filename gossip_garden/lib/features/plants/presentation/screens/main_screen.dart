@@ -8,6 +8,7 @@ import 'chat_list_screen.dart';
 import 'garden_view_screen.dart';
 import 'plant_profile_screen.dart';
 import 'plant_chat_screen.dart';
+import 'profile_settings_screen.dart';
 
 import '../widgets/animated_bottom_nav.dart';
 
@@ -18,18 +19,6 @@ class MainScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final nav = ref.watch(navigationProvider);
     final notifier = ref.read(navigationProvider.notifier);
-
-    /// ONBOARDING SIMPLE
-    if (nav.showOnboarding) {
-      return Scaffold(
-        body: Center(
-          child: ElevatedButton(
-            onPressed: notifier.completeOnboarding,
-            child: const Text('Entrar'),
-          ),
-        ),
-      );
-    }
 
     final hasOverlay =
         nav.showChat || nav.showPlantProfile || nav.selectedFriendId != null;
@@ -48,7 +37,7 @@ class MainScreen extends ConsumerWidget {
                 ),
                 const ChatListScreen(),
                 GardenViewScreen(),
-                const Center(child: Text('Profile')),
+                const ProfileSettingsScreen(),
               ],
             ),
           ),

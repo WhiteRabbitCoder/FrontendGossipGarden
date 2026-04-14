@@ -7,3 +7,4 @@ sqlmodel
 psycopg2-binary
 fastapi-mqtt
 gmqtt
+firebase-admin

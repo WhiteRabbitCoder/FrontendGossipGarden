@@ -1,12 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 /// ✅ DEFINIMOS TabId SOLO AQUÍ (fuente única)
-enum TabId {
-  dashboard,
-  chat,
-  garden,
-  profile
-}
+enum TabId { dashboard, chat, garden, profile }
 
 class NavigationState {
   final TabId activeTab;
@@ -14,7 +9,6 @@ class NavigationState {
   final String? selectedFriendId;
   final bool showChat;
   final bool showPlantProfile;
-  final bool showOnboarding;
 
   const NavigationState({
     this.activeTab = TabId.dashboard,
@@ -22,7 +16,6 @@ class NavigationState {
     this.selectedFriendId,
     this.showChat = false,
     this.showPlantProfile = false,
-    this.showOnboarding = true,
   });
 
   NavigationState copyWith({
@@ -31,7 +24,6 @@ class NavigationState {
     String? selectedFriendId,
     bool? showChat,
     bool? showPlantProfile,
-    bool? showOnboarding,
   }) {
     return NavigationState(
       activeTab: activeTab ?? this.activeTab,
@@ -39,17 +31,12 @@ class NavigationState {
       selectedFriendId: selectedFriendId,
       showChat: showChat ?? this.showChat,
       showPlantProfile: showPlantProfile ?? this.showPlantProfile,
-      showOnboarding: showOnboarding ?? this.showOnboarding,
     );
   }
 }
 
 class NavigationNotifier extends StateNotifier<NavigationState> {
   NavigationNotifier() : super(const NavigationState());
-
-  void completeOnboarding() {
-    state = state.copyWith(showOnboarding: false);
-  }
 
   void selectPlant(String id) {
     state = state.copyWith(

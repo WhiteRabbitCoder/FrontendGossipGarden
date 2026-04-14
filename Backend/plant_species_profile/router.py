@@ -3,7 +3,7 @@ from sqlmodel import Session, select
 
 from db.session import get_session
 from .models import PlantSpeciesProfileModel
-from .schema import PlantSpeciesProfileSchema
+from .schema import PlantSpeciesProfileSchema, PlantSpeciesProfileUpdateSchema
 
 plant_species_router = APIRouter()
 
@@ -59,3 +59,51 @@ async def create_plant_species_profile(plant_species_profile: PlantSpeciesProfil
             "message": plant_profile
         }
 
+
+@plant_species_router.patch("/{specie_id}")
+async def update_plant_species_profile(
+    specie_id: int,
+    plant_species_profile: PlantSpeciesProfileUpdateSchema,
+    db: Session = Depends(get_session),
+):
+    try:
+        plant_profile = db.exec(
+            select(PlantSpeciesProfileModel).where(PlantSpeciesProfileModel.plant_species_id == specie_id)
+        ).first()
+
+        if not plant_profile:
+            return {"message": "Plant species profile not found"}
+
+        update_data = plant_species_profile.model_dump(exclude_unset=True)
+        for field, value in update_data.items():
+            setattr(plant_profile, field, value)
+
+        db.add(plant_profile)
+        db.commit()
+        db.refresh(plant_profile)
+
+    except Exception as e:
+        return {"message": str(e)}
+
+    else:
+        return {"plant_species_profile": plant_profile}
+
+
+@plant_species_router.delete("/{specie_id}")
+async def delete_plant_species_profile(specie_id: int, db: Session = Depends(get_session)):
+    try:
+        plant_profile = db.exec(
+            select(PlantSpeciesProfileModel).where(PlantSpeciesProfileModel.plant_species_id == specie_id)
+        ).first()
+
+        if not plant_profile:
+            return {"message": "Plant species profile not found"}
+
+        db.delete(plant_profile)
+        db.commit()
+
+    except Exception as e:
+        return {"message": str(e)}
+
+    else:
+        return {"message": "Plant species profile deleted successfully"}

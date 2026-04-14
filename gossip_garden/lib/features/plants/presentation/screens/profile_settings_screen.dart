@@ -4,6 +4,7 @@ import '../providers/plant_providers.dart';
 import '../../data/models/plant.dart';
 import '../../data/models/plant_enums.dart';
 import 'package:gossip_garden/core/theme/app_design_system.dart';
+import 'package:gossip_garden/features/auth/presentation/providers/auth_provider.dart';
 
 final favoritePlantsProvider = StateProvider<List<String>>((ref) => ['1', '2']);
 final viewModeProvider =
@@ -17,6 +18,7 @@ class ProfileSettingsScreen extends ConsumerWidget {
     final plantsAsync = ref.watch(plantsProvider);
     final favorites = ref.watch(favoritePlantsProvider);
     final viewMode = ref.watch(viewModeProvider);
+    final authSession = ref.watch(authStateProvider).value;
 
     return Scaffold(
       backgroundColor: const Color(0xFFFDFCF8),
@@ -43,6 +45,8 @@ class ProfileSettingsScreen extends ConsumerWidget {
               _buildFavoritePlants(context, plants, favorites, ref),
               const SizedBox(height: 24),
               _buildSensorStatusCards(plants),
+              const SizedBox(height: 24),
+              _buildSessionCard(context, ref, authSession),
               const SizedBox(height: 40),
             ],
           ),
@@ -89,6 +93,48 @@ class ProfileSettingsScreen extends ConsumerWidget {
                 ),
               ],
             ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSessionCard(
+      BuildContext context, WidgetRef ref, AuthSession? authSession) {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        boxShadow: AppDesignSystem.shadowSoft,
+      ),
+      child: Row(
+        children: [
+          CircleAvatar(
+            radius: 24,
+            backgroundColor: const Color(0xFF4A6741).withOpacity(0.1),
+            child: const Icon(Icons.person, color: Color(0xFF4A6741)),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  authSession?.profile?.displayName ?? 'Sesion activa',
+                  style: const TextStyle(
+                      fontSize: 16, fontWeight: FontWeight.w700),
+                ),
+                Text(
+                  authSession?.profile?.email ?? 'Sesion local',
+                  style: TextStyle(color: Colors.grey.shade600),
+                ),
+              ],
+            ),
+          ),
+          TextButton(
+            onPressed: () => ref.read(authStateProvider.notifier).signOut(),
+            child: const Text('Cerrar sesion'),
           ),
         ],
       ),
