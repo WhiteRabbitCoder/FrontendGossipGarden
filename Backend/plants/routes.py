@@ -36,7 +36,8 @@ async def create_plant(plant: PlantSchema, db: Session = Depends(get_session)):
         plant_db = PlantsModel(
             name=plant.name,
             location=plant.location,
-            plant_species_id=plant.plant_species_id,
+            plant_specie_id=plant.plant_specie_id,
+            user_id=plant.user_id,
             visibility=plant.visibility
         )
         db.add(plant_db)
