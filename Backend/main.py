@@ -2,6 +2,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 from sqlmodel import SQLModel
+from sqlalchemy import inspect, text
 
 from plants.routes import router_plants
 from plant_species_profile.router import plant_species_router
@@ -14,9 +15,24 @@ from db.session import engine
 import db.base  # noqa: F401
 import sensor_data.mqtt_handlers
 
+def ensure_schema_compatibility():
+    """
+    Ajustes idempotentes para entornos con tablas antiguas creadas antes
+    de agregar nuevas columnas en los modelos.
+    """
+    inspector = inspect(engine)
+    plant_columns = {column["name"] for column in inspector.get_columns("plant")}
+
+    if "user_id" not in plant_columns:
+        print("⚠️ Columna faltante detectada: plant.user_id. Aplicando ALTER TABLE...")
+        with engine.begin() as connection:
+            connection.execute(text("ALTER TABLE plant ADD COLUMN user_id BIGINT NULL"))
+        print("✅ Columna plant.user_id creada.")
+
 def create_db_and_tables():
 
     SQLModel.metadata.create_all(engine)
+    ensure_schema_compatibility()
     seed_data()
 
 @asynccontextmanager

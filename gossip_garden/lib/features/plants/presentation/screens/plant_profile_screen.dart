@@ -25,6 +25,25 @@ class PlantProfileScreen extends ConsumerWidget {
 
     return plantsAsync.when(
       data: (plants) {
+        if (plants.isEmpty) {
+          return Scaffold(
+            backgroundColor: const Color(0xFFFDFCF8),
+            appBar: AppBar(
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: onBack,
+              ),
+              title: const Text('Perfil de planta'),
+            ),
+            body: const Center(
+              child: Text(
+                'Aun no hay plantas disponibles.',
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+          );
+        }
+
         final plant = plants.firstWhere((p) => p.id == plantId,
             orElse: () => plants.first);
         return Scaffold(

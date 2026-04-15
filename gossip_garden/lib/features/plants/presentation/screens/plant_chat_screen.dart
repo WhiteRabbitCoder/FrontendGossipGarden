@@ -47,7 +47,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
 
   void _sendMessage() {
     final text = _textController.text.trim();
-    if (text.isEmpty) return;
+    if (text.isEmpty || _plant == null) return;
 
     ref.read(chatMessagesProvider(widget.plantId).notifier).addMessage(text);
     _textController.clear();
@@ -72,6 +72,26 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
 
     return plantsAsync.when(
       data: (plants) {
+        if (plants.isEmpty) {
+          _plant = null;
+          return Scaffold(
+            backgroundColor: const Color(0xFFFDFCF8),
+            appBar: AppBar(
+              leading: IconButton(
+                icon: const Icon(Icons.arrow_back),
+                onPressed: widget.onBack,
+              ),
+              title: const Text('Chat de planta'),
+            ),
+            body: const Center(
+              child: Text(
+                'Aun no hay plantas disponibles.',
+                style: TextStyle(fontSize: 16),
+              ),
+            ),
+          );
+        }
+
         _plant = plants.firstWhere((p) => p.id == widget.plantId,
             orElse: () => plants.first);
         return Scaffold(

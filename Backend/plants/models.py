@@ -1,5 +1,5 @@
 from sqlmodel import Field, SQLModel, Relationship
-from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, BigInteger, String, Text, DateTime, ForeignKey
 from typing import Optional, TYPE_CHECKING
 from datetime import datetime
 
@@ -19,7 +19,7 @@ class PlantsModel(SQLModel, table=True):
         sa_column=Column(Integer, primary_key=True, autoincrement=True)
     )
     user_id: Optional[int] = Field(
-        sa_column=Column(Integer, ForeignKey("user.user_id"), nullable=True)
+        sa_column=Column(BigInteger, ForeignKey("user.user_id"), nullable=True)
     )
     plant_species_id: Optional[int] = Field(
         sa_column=Column(Integer, ForeignKey("plant_species_profile.plant_species_id"), nullable=True)
