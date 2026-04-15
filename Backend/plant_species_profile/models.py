@@ -1,20 +1,26 @@
 from sqlmodel import SQLModel, Field, Relationship
-from typing import Optional
+from sqlalchemy import Column, BigInteger, String, Float, Text
+from typing import Optional, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from plants.models import PlantsModel
+
 
 class PlantSpeciesProfileModel(SQLModel, table=True):
     __tablename__ = "plant_species_profile"
 
-    plant_species_id: Optional[int] = Field(default=None, primary_key=True)
-    specie_name: str
-    personality: Optional[str] = None
-    min_temperature: float
-    max_temperature: float
-    min_humidity: float
-    max_humidity: float
-    min_soil_moisture: float
-    max_soil_moisture: float
-    min_light: float
-    max_light: float
-    care_instructions: str
+    plant_specie_id: Optional[int] = Field(
+        sa_column=Column(BigInteger, primary_key=True, autoincrement=True)
+    )
+    species_name: str = Field(sa_column=Column(String(100), nullable=False))
+    min_temperature: float = Field(sa_column=Column(Float, nullable=False))
+    max_temperature: float = Field(sa_column=Column(Float, nullable=False))
+    min_humidity: float = Field(sa_column=Column(Float, nullable=False))
+    max_humidity: float = Field(sa_column=Column(Float, nullable=False))
+    min_soil_moisture: float = Field(sa_column=Column(Float, nullable=False))
+    max_soil_moisture: float = Field(sa_column=Column(Float, nullable=False))
+    min_light: float = Field(sa_column=Column(Float, nullable=False))
+    max_light: float = Field(sa_column=Column(Float, nullable=False))
+    care_instructions: Optional[str] = Field(sa_column=Column(Text, nullable=True))
 
     plant: list["PlantsModel"] = Relationship(back_populates="plant_species")
