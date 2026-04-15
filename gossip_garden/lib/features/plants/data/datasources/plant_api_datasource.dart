@@ -24,14 +24,17 @@ class PlantApiDatasource implements PlantDatasource {
     final speciesResponse = await _getJson('/plant_species');
 
     final plantsRaw = (plantsResponse['plants'] as List?) ?? const [];
-    final speciesRaw =
-        (speciesResponse['plant_species_profiles'] as List?) ?? const [];
+    final speciesRaw = (speciesResponse['plant_species_profiles'] as List?) ??
+        (speciesResponse['plant_species_profile'] as List?) ??
+        const [];
 
     final speciesById = <int, Map<String, dynamic>>{};
     for (final raw in speciesRaw) {
       if (raw is! Map) continue;
       final map = Map<String, dynamic>.from(raw);
-      final specieId = _toInt(map['plant_species_id']) ?? -1;
+      final specieId = _toInt(map['plant_species_id']) ??
+          _toInt(map['plant_specie_id']) ??
+          -1;
       if (specieId > 0) {
         speciesById[specieId] = map;
       }
@@ -49,7 +52,9 @@ class PlantApiDatasource implements PlantDatasource {
     Map<int, Map<String, dynamic>> speciesById,
   ) async {
     final plantId = _toInt(plantRaw['plant_id']) ?? 0;
-    final speciesId = _toInt(plantRaw['plant_species_id']) ?? -1;
+    final speciesId = _toInt(plantRaw['plant_species_id']) ??
+        _toInt(plantRaw['plant_specie_id']) ??
+        -1;
     final speciesRaw = speciesById[speciesId] ?? const {};
 
     final sensorSnapshot = await _getSensorSnapshot(plantId);
@@ -60,8 +65,10 @@ class PlantApiDatasource implements PlantDatasource {
     return Plant(
       id: plantId.toString(),
       name: _toString(plantRaw['name'], fallback: 'Planta #$plantId'),
-      species:
-          _toString(speciesRaw['specie_name'], fallback: 'Especie desconocida'),
+      species: _toString(
+        speciesRaw['specie_name'] ?? speciesRaw['species_name'],
+        fallback: 'Especie desconocida',
+      ),
       image: '',
       personality: _derivePersonality(speciesRaw['personality']),
       health: _calculateHealth(sensors, comfortZones, status),

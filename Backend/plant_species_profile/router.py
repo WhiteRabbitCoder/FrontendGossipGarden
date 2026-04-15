@@ -22,7 +22,7 @@ async def root(db: Session = Depends(get_session)):
 @plant_species_router.get("/{specie_id}")
 async def get_plant_species_profile(specie_id: int, db: Session = Depends(get_session)):
     try:
-        plant_species_profile = db.exec(select(PlantSpeciesProfileModel).where(PlantSpeciesProfileModel.plant_specie_id == specie_id)).first()
+        plant_species_profile = db.exec(select(PlantSpeciesProfileModel).where(PlantSpeciesProfileModel.plant_species_id == specie_id)).first()
 
     except Exception as e:
         return {"message": str(e)}
@@ -35,7 +35,8 @@ async def create_plant_species_profile(plant_species_profile: PlantSpeciesProfil
     try:
 
         plant_profile = PlantSpeciesProfileModel(
-            species_name=plant_species_profile.species_name,
+            specie_name=plant_species_profile.specie_name,
+            personality=plant_species_profile.personality,
             min_temperature=plant_species_profile.min_temperature,
             max_temperature=plant_species_profile.max_temperature,
             min_humidity=plant_species_profile.min_humidity,
@@ -68,7 +69,7 @@ async def update_plant_species_profile(
 ):
     try:
         plant_profile = db.exec(
-            select(PlantSpeciesProfileModel).where(PlantSpeciesProfileModel.plant_specie_id == specie_id)
+            select(PlantSpeciesProfileModel).where(PlantSpeciesProfileModel.plant_species_id == specie_id)
         ).first()
 
         if not plant_profile:
@@ -93,7 +94,7 @@ async def update_plant_species_profile(
 async def delete_plant_species_profile(specie_id: int, db: Session = Depends(get_session)):
     try:
         plant_profile = db.exec(
-            select(PlantSpeciesProfileModel).where(PlantSpeciesProfileModel.plant_specie_id == specie_id)
+            select(PlantSpeciesProfileModel).where(PlantSpeciesProfileModel.plant_species_id == specie_id)
         ).first()
 
         if not plant_profile:

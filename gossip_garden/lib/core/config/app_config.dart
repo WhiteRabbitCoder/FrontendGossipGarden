@@ -3,7 +3,7 @@ class AppConfig {
 
   static const String backendTarget = String.fromEnvironment(
     'BACKEND_TARGET',
-    defaultValue: 'local',
+    defaultValue: 'remote',
   );
 
   static const String localBackendUrl = String.fromEnvironment(
@@ -13,7 +13,7 @@ class AppConfig {
 
   static const String deployedBackendUrl = String.fromEnvironment(
     'BACKEND_DEPLOY_URL',
-    defaultValue: 'https://api.example.com',
+    defaultValue: 'https://gossip-garden-backend.up.railway.app',
   );
 
   static const bool enableFirebase = bool.fromEnvironment(

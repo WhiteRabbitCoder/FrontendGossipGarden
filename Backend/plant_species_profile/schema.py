@@ -2,7 +2,8 @@ from pydantic import BaseModel
 from typing import Optional
 
 class PlantSpeciesProfileSchema(BaseModel):
-    species_name: str
+    specie_name: str
+    personality: Optional[str] = None
     min_temperature: float
     max_temperature: float
     min_humidity: float
@@ -11,11 +12,12 @@ class PlantSpeciesProfileSchema(BaseModel):
     max_soil_moisture: float
     min_light: float
     max_light: float
-    care_instructions: Optional[str] = None
+    care_instructions: str
 
 
 class PlantSpeciesProfileUpdateSchema(BaseModel):
-    species_name: Optional[str] = None
+    specie_name: Optional[str] = None
+    personality: Optional[str] = None
     min_temperature: Optional[float] = None
     max_temperature: Optional[float] = None
     min_humidity: Optional[float] = None

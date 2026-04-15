@@ -11,6 +11,7 @@ from core.mqtt_config import fast_mqtt
 from core.config import settings
 from core.firebase_config import initialize_firebase
 from db.session import engine
+import db.base  # noqa: F401
 import sensor_data.mqtt_handlers
 
 def create_db_and_tables():

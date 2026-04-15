@@ -3,15 +3,15 @@ from typing import Optional
 
 class PlantSchema(BaseModel):
     name: str
-    location: Optional[str] = None
-    plant_specie_id: Optional[int] = None
+    location: str
+    plant_species_id: Optional[int] = None
     user_id: Optional[int] = None
-    visibility: Optional[str] = None
+    visibility: Optional[int] = 1
 
 
 class PlantUpdateSchema(BaseModel):
     name: Optional[str] = None
     location: Optional[str] = None
-    plant_specie_id: Optional[int] = None
+    plant_species_id: Optional[int] = None
     user_id: Optional[int] = None
-    visibility: Optional[str] = None
+    visibility: Optional[int] = None

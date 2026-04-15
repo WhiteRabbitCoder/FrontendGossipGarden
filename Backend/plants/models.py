@@ -1,5 +1,5 @@
 from sqlmodel import Field, SQLModel, Relationship
-from sqlalchemy import Column, BigInteger, String, Text, DateTime, ForeignKey
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
 from typing import Optional, TYPE_CHECKING
 from datetime import datetime
 
@@ -16,21 +16,21 @@ class PlantsModel(SQLModel, table=True):
     __tablename__ = "plant"
 
     plant_id: Optional[int] = Field(
-        sa_column=Column(BigInteger, primary_key=True, autoincrement=True)
+        sa_column=Column(Integer, primary_key=True, autoincrement=True)
     )
     user_id: Optional[int] = Field(
-        sa_column=Column(BigInteger, ForeignKey("user.user_id"), nullable=True)
+        sa_column=Column(Integer, ForeignKey("user.user_id"), nullable=True)
     )
-    plant_specie_id: Optional[int] = Field(
-        sa_column=Column(BigInteger, ForeignKey("plant_species_profile.plant_specie_id"), nullable=True)
+    plant_species_id: Optional[int] = Field(
+        sa_column=Column(Integer, ForeignKey("plant_species_profile.plant_species_id"), nullable=True)
     )
     name: str = Field(sa_column=Column(String(60), nullable=False))
-    location: Optional[str] = Field(sa_column=Column(Text, nullable=True))
+    location: str = Field(sa_column=Column(Text, nullable=False))
     registered_at: Optional[datetime] = Field(
-        sa_column=Column(DateTime, nullable=True, default=datetime.now)
+        sa_column=Column(DateTime, nullable=False, default=datetime.now)
     )
-    visibility: Optional[str] = Field(
-        sa_column=Column(String(45), nullable=True)
+    visibility: int = Field(
+        sa_column=Column(Integer, nullable=False, default=1)
     )
 
     plant_species: Optional["PlantSpeciesProfileModel"] = Relationship(back_populates="plant")
@@ -39,4 +39,3 @@ class PlantsModel(SQLModel, table=True):
     tasks: list["TaskModel"] = Relationship(back_populates="plant")
     chat_messages: list["ChatMessageModel"] = Relationship(back_populates="plant")
     health_statuses: list["PlantHealthStatusModel"] = Relationship(back_populates="plant")
-
