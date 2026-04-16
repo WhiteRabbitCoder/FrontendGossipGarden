@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../providers/plant_providers.dart';
 import '../widgets/telemetry_panel.dart';
 import '../../data/models/plant.dart';
@@ -22,6 +23,8 @@ class PlantProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final plantsAsync = ref.watch(plantsProvider);
+    final realtimeAsync =
+        ref.watch(plantRealtimeSensorProvider(int.tryParse(plantId) ?? 0));
 
     return plantsAsync.when(
       data: (plants) {
@@ -46,6 +49,14 @@ class PlantProfileScreen extends ConsumerWidget {
 
         final plant = plants.firstWhere((p) => p.id == plantId,
             orElse: () => plants.first);
+        final realtime = realtimeAsync.value;
+
+        final soilMoisture =
+            realtime?.soilMoisture ?? plant.sensors.soilMoisture;
+        final temperature = realtime?.temperature ?? plant.sensors.temperature;
+        final light = realtime?.light ?? plant.sensors.light;
+        final humidity = realtime?.humidity ?? plant.sensors.humidity;
+
         return Scaffold(
           backgroundColor: const Color(0xFFFDFCF8),
           appBar: AppBar(
@@ -76,28 +87,23 @@ class PlantProfileScreen extends ConsumerWidget {
                   telemetryData: [
                     _telemetryData(
                         'Humedad suelo',
-                        plant.sensors.soilMoisture,
+                        soilMoisture,
                         plant.comfortZones.soilMoisture,
                         '%',
                         Icons.water_drop,
                         const Color(0xFF4A6741)),
                     _telemetryData(
                         'Temperatura',
-                        plant.sensors.temperature,
+                        temperature,
                         plant.comfortZones.temperature,
                         '°C',
                         Icons.thermostat,
                         Colors.orange),
-                    _telemetryData(
-                        'Luz',
-                        plant.sensors.light,
-                        plant.comfortZones.light,
-                        'lux',
-                        Icons.light_mode,
-                        Colors.amber),
+                    _telemetryData('Luz', light, plant.comfortZones.light,
+                        'lux', Icons.light_mode, Colors.amber),
                     _telemetryData(
                         'Humedad aire',
-                        plant.sensors.humidity,
+                        humidity,
                         plant.comfortZones.humidity,
                         '%',
                         Icons.cloud,
@@ -287,7 +293,7 @@ class PlantProfileScreen extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text('📈 Insights recientes',
+          const Text('Insights recientes',
               style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
           const SizedBox(height: 12),
           ...plant.insights
@@ -322,17 +328,18 @@ class PlantProfileScreen extends ConsumerWidget {
           spacing: 12,
           runSpacing: 12,
           children: [
-            _actionButton('💬 Hablar con planta', () => onOpenChat(plantId)),
-            _actionButton('💧 Regar', () {}),
-            _actionButton('📊 Ver historial', () {}),
-            _actionButton('⚙️ Ajustar sensores', () {}),
+            _actionButton(FontAwesomeIcons.commentDots, 'Hablar con planta',
+                () => onOpenChat(plantId)),
+            _actionButton(FontAwesomeIcons.droplet, 'Regar', () {}),
+            _actionButton(FontAwesomeIcons.chartLine, 'Ver historial', () {}),
+            _actionButton(FontAwesomeIcons.sliders, 'Ajustar sensores', () {}),
           ],
         ),
       ],
     );
   }
 
-  Widget _actionButton(String label, VoidCallback onTap) {
+  Widget _actionButton(IconData icon, String label, VoidCallback onTap) {
     return GestureDetector(
       onTap: onTap,
       child: Container(
@@ -342,7 +349,14 @@ class PlantProfileScreen extends ConsumerWidget {
           borderRadius: BorderRadius.circular(20),
           boxShadow: AppDesignSystem.shadowSoft,
         ),
-        child: Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+        child: Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            FaIcon(icon, size: 14, color: const Color(0xFF4A6741)),
+            const SizedBox(width: 8),
+            Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+          ],
+        ),
       ),
     );
   }

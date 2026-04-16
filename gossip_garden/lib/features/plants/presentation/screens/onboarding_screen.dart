@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gossip_garden/features/plants/presentation/providers/navigation_provider.dart';
 import 'package:gossip_garden/features/auth/presentation/providers/auth_provider.dart';
 
@@ -171,14 +172,18 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
         const SizedBox(height: 40),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: ['💧', '☀️', '🌡️'].map((e) {
+          children: const [
+            Icons.water_drop,
+            Icons.wb_sunny,
+            Icons.thermostat,
+          ].map((e) {
             return AnimatedBuilder(
               animation: _iconAnimation,
               builder: (_, __) => Transform.scale(
                 scale: _iconAnimation.value,
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Text(e, style: const TextStyle(fontSize: 32)),
+                  padding: EdgeInsets.symmetric(horizontal: 12),
+                  child: Icon(e, size: 32, color: Color(0xFF4A6741)),
                 ),
               ),
             );
@@ -194,7 +199,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               color: Color(0xFF4A6741)),
         ),
         const SizedBox(height: 48),
-        _primaryButton('🌱 Quiero escucharlas', () {
+        _primaryButton('Quiero escucharlas', () {
           ref.read(onboardingStepProvider.notifier).state =
               OnboardingStep.welcome;
         }),
@@ -209,12 +214,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
         _card(
           child: Column(
             children: [
+              _buildBenefitRow(FontAwesomeIcons.commentDots, 'Plantas hablan',
+                  'Escucha lo que necesitan'),
+              const SizedBox(height: 16),
+              _buildBenefitRow(FontAwesomeIcons.towerBroadcast, 'Sensores',
+                  'Monitoreo en tiempo real'),
+              const SizedBox(height: 16),
               _buildBenefitRow(
-                  '💬', 'Plantas hablan', 'Escucha lo que necesitan'),
-              const SizedBox(height: 16),
-              _buildBenefitRow('📡', 'Sensores', 'Monitoreo en tiempo real'),
-              const SizedBox(height: 16),
-              _buildBenefitRow('🧠', 'IA', 'Predicciones inteligentes'),
+                  FontAwesomeIcons.brain, 'IA', 'Predicciones inteligentes'),
             ],
           ),
         ),
@@ -273,9 +280,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
         const Text('Identifica tu planta',
             style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600)),
         const SizedBox(height: 40),
-        _option('📸', 'Tomar foto'),
+        _option(Icons.camera_alt_outlined, 'Tomar foto'),
         const SizedBox(height: 16),
-        _option('🔍', 'Buscar'),
+        _option(Icons.search, 'Buscar'),
         const SizedBox(height: 24),
         TextButton(
           onPressed: () {
@@ -294,7 +301,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       children: [
         _card(
           child: const Text(
-              '¡Hola! Soy tu Monstera 🌿\nMi tierra está al 28% y tengo sed'),
+              'Hola, soy tu Monstera. Mi tierra está al 28% y tengo sed.'),
         ),
         const SizedBox(height: 48),
         _primaryButton('Continuar', () {
@@ -318,7 +325,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
         const SizedBox(height: 16),
         _radioOption('all', 'Todas', selected),
         const SizedBox(height: 48),
-        _primaryButton('🌱 ¡A escucharlas!', () {
+        _primaryButton('A escucharlas', () {
           ref.read(authStateProvider.notifier).completeOnboarding();
           nav.changeTab(TabId.dashboard);
         }),
@@ -348,10 +355,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     );
   }
 
-  Widget _buildBenefitRow(String emoji, String title, String subtitle) {
+  Widget _buildBenefitRow(IconData icon, String title, String subtitle) {
     return Row(
       children: [
-        Text(emoji, style: const TextStyle(fontSize: 24)),
+        Icon(icon, size: 24, color: const Color(0xFF4A6741)),
         const SizedBox(width: 12),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -364,11 +371,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     );
   }
 
-  Widget _option(String icon, String text) {
+  Widget _option(IconData icon, String text) {
     return _card(
       child: Row(
         children: [
-          Text(icon, style: const TextStyle(fontSize: 28)),
+          Icon(icon, size: 28, color: const Color(0xFF4A6741)),
           const SizedBox(width: 16),
           Text(text),
           const Spacer(),

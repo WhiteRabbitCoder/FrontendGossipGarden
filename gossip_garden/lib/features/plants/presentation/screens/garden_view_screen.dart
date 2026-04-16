@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../providers/plant_providers.dart';
 import '../providers/navigation_provider.dart';
 import '../../data/models/plant.dart';
@@ -82,18 +83,20 @@ class GardenViewScreen extends ConsumerWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          _buildStatItem('🌿', '$totalPlants', 'Plantas'),
-          _buildStatItem('💚', '$healthyCount', 'Saludables'),
-          _buildStatItem('📡', '$onlineCount', 'En línea'),
+          _buildStatItem(FontAwesomeIcons.seedling, '$totalPlants', 'Plantas'),
+          _buildStatItem(
+              FontAwesomeIcons.heartPulse, '$healthyCount', 'Saludables'),
+          _buildStatItem(
+              FontAwesomeIcons.towerBroadcast, '$onlineCount', 'En linea'),
         ],
       ),
     );
   }
 
-  Widget _buildStatItem(String emoji, String value, String label) {
+  Widget _buildStatItem(IconData icon, String value, String label) {
     return Column(
       children: [
-        Text(emoji, style: const TextStyle(fontSize: 32)),
+        FaIcon(icon, size: 24, color: const Color(0xFF4A6741)),
         const SizedBox(height: 8),
         Text(value,
             style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
@@ -114,10 +117,10 @@ class GardenViewScreen extends ConsumerWidget {
           spacing: 12,
           runSpacing: 12,
           children: [
-            _actionButton('💧 Regar todas', Icons.water_drop, Colors.blue),
-            _actionButton('📊 Reporte', Icons.assessment, Colors.green),
-            _actionButton('🌤️ Luz', Icons.light_mode, Colors.amber),
-            _actionButton('🔔 Alertas', Icons.notifications, Colors.orange),
+            _actionButton('Regar todas', Icons.water_drop, Colors.blue),
+            _actionButton('Reporte', Icons.assessment, Colors.green),
+            _actionButton('Luz', Icons.light_mode, Colors.amber),
+            _actionButton('Alertas', Icons.notifications, Colors.orange),
           ],
         ),
       ],

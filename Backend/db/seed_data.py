@@ -1,8 +1,12 @@
+from datetime import datetime
+
+from sqlalchemy import text
 from sqlmodel import Session, select
 from db.session import engine
 from plant_species_profile.models import PlantSpeciesProfileModel
 from plants.models import PlantsModel
 from roles.models import RoleModel
+from users.models import UserModel
 
 def seed_data():
 
@@ -101,59 +105,59 @@ def seed_data():
 
             session.commit()
             session.refresh(specie_1)
-            session.refresh(specie_2)
-            session.refresh(specie_3)
-            session.refresh(specie_5)
-            session.refresh(specie_6)
-            session.refresh(specie_7)
 
-            print("\nInsertando Plantas... \n")
-            plant_1 = PlantsModel(
+        # Mantener solo datos mínimos para demo: 1 usuario + 1 planta
+        # Conserva todas las especies y sus personalidades.
+        role_user = session.exec(
+            select(RoleModel).where(RoleModel.role_name == "user")
+        ).first()
+        if role_user is None:
+            role_user = RoleModel(role_name="user")
+            session.add(role_user)
+            session.commit()
+            session.refresh(role_user)
+
+        demo_user = session.exec(
+            select(UserModel).where(UserModel.email == "demo@gossipgarden.app")
+        ).first()
+
+        if demo_user is None:
+            demo_user = UserModel(
+                role_id=role_user.role_id,
+                name="Demo User",
+                email="demo@gossipgarden.app",
+                password_hash="firebase_google_auth",
+                is_active=True,
+                created_at=datetime.utcnow(),
+                updated_at=datetime.utcnow(),
+            )
+            session.add(demo_user)
+            session.commit()
+            session.refresh(demo_user)
+
+        # Eliminar datos dependientes de plantas antiguas
+        session.execute(text("DELETE FROM sensor_data"))
+        session.execute(text("DELETE FROM chat_message"))
+        session.execute(text("DELETE FROM task"))
+        session.execute(text("DELETE FROM plant_health_status"))
+        session.execute(text("DELETE FROM plant"))
+
+        base_species = session.exec(
+            select(PlantSpeciesProfileModel)
+            .where(PlantSpeciesProfileModel.specie_name == "Lavanda Serenissima")
+        ).first()
+        if base_species is None:
+            base_species = session.exec(select(PlantSpeciesProfileModel)).first()
+
+        if base_species is not None:
+            demo_plant = PlantsModel(
+                user_id=demo_user.user_id,
                 name="Luna",
                 location="Sala de estar",
-                plant_species_id=specie_1.plant_species_id,
-                visibility=1
+                plant_species_id=base_species.plant_species_id,
+                visibility=1,
             )
-            plant_2 = PlantsModel(
-                name="Groot",
-                location="Balcón",
-                plant_species_id=specie_2.plant_species_id,
-                visibility=1
-            )
+            session.add(demo_plant)
+            session.flush()
 
-            plant_3 = PlantsModel(
-                name="Platón",
-                location="Escritorio",
-                plant_species_id=specie_3.plant_species_id,
-                visibility=1
-            )
-
-            plant_4 = PlantsModel(
-                name="Shakespeare",
-                location="Rincón de lectura",
-                plant_species_id=specie_4.plant_species_id,
-                visibility=1
-            )
-
-            plant_5 = PlantsModel(
-                name="Fénix",
-                location="Cocina",
-                plant_species_id=specie_7.plant_species_id,
-                visibility=1
-            )
-
-            plant_6 = PlantsModel(
-                name="Venus",
-                location="Dormitorio",
-                plant_species_id=specie_6.plant_species_id,
-                visibility=1
-            )
-
-            session.add(plant_1)
-            session.add(plant_2)
-            session.add(plant_3)
-            session.add(plant_4)
-            session.add(plant_5)
-            session.add(plant_6)
-
-            session.commit()
+        session.commit()

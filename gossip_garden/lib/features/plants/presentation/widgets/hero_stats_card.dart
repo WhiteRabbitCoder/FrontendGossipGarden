@@ -29,7 +29,7 @@ class HeroStatsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            "Tus plantas te necesitan 🌿",
+            "Tus plantas te necesitan",
             style: TextStyle(
               color: Colors.white,
               fontSize: 18,
@@ -42,7 +42,6 @@ class HeroStatsCard extends StatelessWidget {
             style: TextStyle(color: Colors.white70, fontSize: 13),
           ),
           const SizedBox(height: 16),
-
           ElevatedButton(
             onPressed: onAction,
             style: ElevatedButton.styleFrom(

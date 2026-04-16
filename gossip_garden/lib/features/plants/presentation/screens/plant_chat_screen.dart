@@ -69,6 +69,9 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
   Widget build(BuildContext context) {
     final plantsAsync = ref.watch(plantsProvider);
     final messages = ref.watch(chatMessagesProvider(widget.plantId));
+    final realtimeAsync = ref.watch(
+      plantRealtimeSensorProvider(int.tryParse(widget.plantId) ?? 0),
+    );
 
     return plantsAsync.when(
       data: (plants) {
@@ -94,6 +97,14 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
 
         _plant = plants.firstWhere((p) => p.id == widget.plantId,
             orElse: () => plants.first);
+        final realtime = realtimeAsync.value;
+        final soilMoisture =
+            realtime?.soilMoisture ?? _plant!.sensors.soilMoisture;
+        final temperature =
+            realtime?.temperature ?? _plant!.sensors.temperature;
+        final light = realtime?.light ?? _plant!.sensors.light;
+        final humidity = realtime?.humidity ?? _plant!.sensors.humidity;
+
         return Scaffold(
           backgroundColor: const Color(0xFFFDFCF8),
           appBar: AppBar(
@@ -105,7 +116,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
               children: [
                 CircleAvatar(
                   backgroundColor: const Color(0xFF4A6741).withOpacity(0.1),
-                  child: Text(_plant?.name.substring(0, 1) ?? '🌿'),
+                  child: Text(_plant?.name.substring(0, 1) ?? 'P'),
                 ),
                 const SizedBox(width: 12),
                 Column(
@@ -156,7 +167,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                   telemetryData: [
                     TelemetryData(
                       label: 'Humedad suelo',
-                      value: _plant!.sensors.soilMoisture,
+                      value: soilMoisture,
                       min: _plant!.comfortZones.soilMoisture.min,
                       max: _plant!.comfortZones.soilMoisture.max,
                       unit: '%',
@@ -165,7 +176,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                     ),
                     TelemetryData(
                       label: 'Temperatura',
-                      value: _plant!.sensors.temperature,
+                      value: temperature,
                       min: _plant!.comfortZones.temperature.min,
                       max: _plant!.comfortZones.temperature.max,
                       unit: '°C',
@@ -174,7 +185,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                     ),
                     TelemetryData(
                       label: 'Luz',
-                      value: _plant!.sensors.light,
+                      value: light,
                       min: _plant!.comfortZones.light.min,
                       max: _plant!.comfortZones.light.max,
                       unit: 'lux',
@@ -183,7 +194,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                     ),
                     TelemetryData(
                       label: 'Humedad aire',
-                      value: _plant!.sensors.humidity,
+                      value: humidity,
                       min: _plant!.comfortZones.humidity.min,
                       max: _plant!.comfortZones.humidity.max,
                       unit: '%',

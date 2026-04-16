@@ -1,4 +1,5 @@
 from sqlmodel import Session
+from sqlalchemy import select
 from .models import SensorDataModel
 from .schemas import SensorDataSchema
 from core.logger import get_logger
@@ -8,15 +9,34 @@ from .firestore_service import SensorReading, persist_sensor_reading_to_firestor
 logger = get_logger(__name__)
 
 def save_sensor_data(db: Session, sensor_data: SensorDataSchema, *, source: str = "api"):
-    sensor_data_db = SensorDataModel(
-        plant_id=sensor_data.plant_id,
-        timestamp=sensor_data.timestamp,
-        temperature=sensor_data.sensors.temperature,
-        humidity=sensor_data.sensors.humidity,
-        soil_moisture=sensor_data.sensors.soil_moisture,
-        light=sensor_data.sensors.light,
-    )
-    db.add(sensor_data_db)
+    existing_rows = db.execute(
+        select(SensorDataModel)
+        .where(SensorDataModel.plant_id == sensor_data.plant_id)
+        .order_by(SensorDataModel.timestamp.desc(), SensorDataModel.sensor_data_id.desc())
+    ).scalars().all()
+
+    sensor_data_db = existing_rows[0] if existing_rows else None
+
+    if sensor_data_db is None:
+        sensor_data_db = SensorDataModel(
+            plant_id=sensor_data.plant_id,
+            timestamp=sensor_data.timestamp,
+            temperature=sensor_data.sensors.temperature,
+            humidity=sensor_data.sensors.humidity,
+            soil_moisture=sensor_data.sensors.soil_moisture,
+            light=sensor_data.sensors.light,
+        )
+        db.add(sensor_data_db)
+    else:
+        sensor_data_db.timestamp = sensor_data.timestamp
+        sensor_data_db.temperature = sensor_data.sensors.temperature
+        sensor_data_db.humidity = sensor_data.sensors.humidity
+        sensor_data_db.soil_moisture = sensor_data.sensors.soil_moisture
+        sensor_data_db.light = sensor_data.sensors.light
+
+        for stale_row in existing_rows[1:]:
+            db.delete(stale_row)
+
     db.commit()
     db.refresh(sensor_data_db)
 

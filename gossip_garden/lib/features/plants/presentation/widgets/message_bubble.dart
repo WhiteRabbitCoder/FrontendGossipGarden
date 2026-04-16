@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 class ChatMessage {
   final String id;
@@ -114,9 +115,7 @@ class MessageBubble extends StatelessWidget {
         color: const Color(0xFFF0F4EF),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: const Center(
-        child: Text('🌿', style: TextStyle(fontSize: 16)),
-      ),
+      child: const Center(child: FaIcon(FontAwesomeIcons.seedling, size: 14)),
     );
   }
 
@@ -167,15 +166,15 @@ class MessageBubble extends StatelessWidget {
 
     switch (message.source) {
       case 'sensor':
-        label = '📡 Sensor';
+        label = 'Sensor';
         color = Colors.green;
         break;
       case 'ai':
-        label = '🧠 IA';
+        label = 'IA';
         color = Colors.blue;
         break;
       default:
-        label = '⚠️ Sin datos';
+        label = 'Sin datos';
         color = Colors.orange;
     }
 

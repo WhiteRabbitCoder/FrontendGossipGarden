@@ -11,10 +11,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gossip_garden/main.dart';
 
 void main() {
-  testWidgets('App renders onboarding entry point',
-      (WidgetTester tester) async {
+  testWidgets('App renders login entry point', (WidgetTester tester) async {
     await tester.pumpWidget(const ProviderScope(child: MyApp()));
 
-    expect(find.text('Entrar'), findsOneWidget);
+    expect(find.text('Continuar con Google'), findsOneWidget);
   });
 }

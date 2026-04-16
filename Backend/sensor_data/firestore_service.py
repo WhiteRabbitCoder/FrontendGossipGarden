@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Any
+from uuid import uuid4
 
 from core.firebase_config import get_firestore_client, is_firebase_ready
 from core.logger import get_logger
@@ -180,6 +181,78 @@ def get_firestore_daily_aggregates(
         return []
 
     return [doc.to_dict() or {} for doc in docs]
+
+
+def get_firestore_window_averages(plant_id: int, *, days: int = 30) -> dict[str, float | None]:
+    daily = get_firestore_daily_aggregates(plant_id, days=days)
+    if not daily:
+        return {
+            "temperature": None,
+            "humidity": None,
+            "soil_moisture": None,
+            "light": None,
+        }
+
+    totals = {
+        "temperature": {"sum": 0.0, "count": 0},
+        "humidity": {"sum": 0.0, "count": 0},
+        "soil_moisture": {"sum": 0.0, "count": 0},
+        "light": {"sum": 0.0, "count": 0},
+    }
+
+    for day in daily:
+        for key in totals.keys():
+            metric = day.get(key)
+            if not isinstance(metric, dict):
+                continue
+            metric_sum = metric.get("sum")
+            metric_count = metric.get("count")
+            if metric_sum is None or metric_count is None:
+                continue
+            try:
+                sum_value = float(metric_sum)
+                count_value = int(metric_count)
+            except (TypeError, ValueError):
+                continue
+
+            totals[key]["sum"] += sum_value
+            totals[key]["count"] += count_value
+
+    return {
+        key: (values["sum"] / values["count"] if values["count"] > 0 else None)
+        for key, values in totals.items()
+    }
+
+
+def test_firestore_connection() -> dict[str, Any]:
+    if not is_firebase_ready():
+        return {"ok": False, "reason": "Firebase no inicializado"}
+
+    firestore_client = get_firestore_client()
+    if firestore_client is None:
+        return {"ok": False, "reason": "No se pudo crear cliente Firestore"}
+
+    doc_id = uuid4().hex
+    doc_ref = firestore_client.collection("healthchecks").document(doc_id)
+    payload = {
+        "type": "firestore-connection-test",
+        "created_at": datetime.utcnow(),
+        "ok": True,
+    }
+
+    try:
+        doc_ref.set(payload)
+        snapshot = doc_ref.get()
+        exists = snapshot.exists
+        doc_ref.delete()
+    except Exception as exc:
+        logger.exception("Firestore connection test failed: %s", exc)
+        return {"ok": False, "reason": str(exc)}
+
+    return {
+        "ok": bool(exists),
+        "reason": None if exists else "No se pudo leer documento de prueba",
+    }
 
 
 def _upsert_daily_aggregate(firestore_client: Any, reading: SensorReading) -> None:

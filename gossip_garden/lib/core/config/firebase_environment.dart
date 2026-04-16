@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:firebase_core/firebase_core.dart';
 
 class FirebaseEnvironment {
@@ -5,7 +6,7 @@ class FirebaseEnvironment {
 
   static const bool enableFirebase = bool.fromEnvironment(
     'ENABLE_FIREBASE',
-    defaultValue: false,
+    defaultValue: true,
   );
 
   static const String apiKey = String.fromEnvironment('FIREBASE_API_KEY');
@@ -22,6 +23,13 @@ class FirebaseEnvironment {
 
   static bool get isConfigured =>
       enableFirebase &&
+      (!kIsWeb ||
+          (apiKey.isNotEmpty &&
+              appId.isNotEmpty &&
+              messagingSenderId.isNotEmpty &&
+              projectId.isNotEmpty));
+
+  static bool get hasWebOptions =>
       apiKey.isNotEmpty &&
       appId.isNotEmpty &&
       messagingSenderId.isNotEmpty &&

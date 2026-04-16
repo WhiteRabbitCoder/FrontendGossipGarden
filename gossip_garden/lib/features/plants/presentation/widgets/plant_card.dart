@@ -72,7 +72,7 @@ class PlantCard extends StatelessWidget {
         ),
         const SizedBox(height: 8),
         Text(
-          plant.insights.isNotEmpty ? plant.insights.first : 'Todo bien 🌿',
+          plant.insights.isNotEmpty ? plant.insights.first : 'Todo bien',
           style: const TextStyle(fontSize: 13, color: Colors.black87),
           maxLines: 1,
           overflow: TextOverflow.ellipsis,

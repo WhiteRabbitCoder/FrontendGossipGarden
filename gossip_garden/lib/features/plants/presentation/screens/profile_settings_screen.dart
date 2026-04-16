@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import '../providers/plant_providers.dart';
 import '../../data/models/plant.dart';
 import '../../data/models/plant_enums.dart';
@@ -87,8 +88,16 @@ class ProfileSettingsScreen extends ConsumerWidget {
                 Wrap(
                   spacing: 8,
                   children: [
-                    _buildTag('🌱 Novato', const Color(0xFF4A6741)),
-                    _buildTag('📡 3 sensores', Colors.blue),
+                    _buildTag(
+                        FaIcon(FontAwesomeIcons.seedling,
+                            size: 12, color: const Color(0xFF4A6741)),
+                        'Novato',
+                        const Color(0xFF4A6741)),
+                    _buildTag(
+                        FaIcon(FontAwesomeIcons.towerBroadcast,
+                            size: 12, color: Colors.blue),
+                        '3 sensores',
+                        Colors.blue),
                   ],
                 ),
               ],
@@ -143,10 +152,18 @@ class ProfileSettingsScreen extends ConsumerWidget {
 
   Widget _buildBadgesSection() {
     final badges = [
-      ('🌿', 'Primera planta', 'Agregaste tu primera planta'),
-      ('💬', 'Conversador', 'Enviaste 10 mensajes'),
-      ('📈', 'Científico', 'Monitoreo continuo por 7 días'),
-      ('🤖', 'IA Amiga', 'Usaste insights de IA'),
+      (
+        FontAwesomeIcons.seedling,
+        'Primera planta',
+        'Agregaste tu primera planta'
+      ),
+      (FontAwesomeIcons.commentDots, 'Conversador', 'Enviaste 10 mensajes'),
+      (
+        FontAwesomeIcons.chartLine,
+        'Científico',
+        'Monitoreo continuo por 7 días'
+      ),
+      (FontAwesomeIcons.robot, 'IA Amiga', 'Usaste insights de IA'),
     ];
 
     return Column(
@@ -178,7 +195,8 @@ class ProfileSettingsScreen extends ConsumerWidget {
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(badge.$1, style: const TextStyle(fontSize: 32)),
+                      FaIcon(badge.$1,
+                          size: 28, color: const Color(0xFF4A6741)),
                       const SizedBox(height: 8),
                       Text(badge.$2,
                           style: const TextStyle(
@@ -404,21 +422,28 @@ class ProfileSettingsScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildTag(String text, Color color) {
+  Widget _buildTag(Widget icon, String text, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Text(text,
-          style: TextStyle(
-              color: color, fontSize: 12, fontWeight: FontWeight.w600)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          icon,
+          const SizedBox(width: 6),
+          Text(text,
+              style: TextStyle(
+                  color: color, fontSize: 12, fontWeight: FontWeight.w600)),
+        ],
+      ),
     );
   }
 
   void _showBadgeInfo(
-      BuildContext context, String emoji, String title, String description) {
+      BuildContext context, IconData icon, String title, String description) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
@@ -427,7 +452,7 @@ class ProfileSettingsScreen extends ConsumerWidget {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(emoji, style: const TextStyle(fontSize: 48)),
+            FaIcon(icon, size: 42, color: const Color(0xFF4A6741)),
             const SizedBox(height: 16),
             Text(title,
                 style:

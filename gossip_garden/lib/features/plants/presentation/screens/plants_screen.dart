@@ -31,13 +31,16 @@ class DashboardScreen extends ConsumerWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text("Buenos días, Gabriela ✨", 
-                    style: TextStyle(color: Colors.black45, fontSize: 14)),
+                  const Text("Buenos dias, Gabriela",
+                      style: TextStyle(color: Colors.black45, fontSize: 14)),
                   const SizedBox(height: 4),
-                  const Text("Gossip Garden", 
-                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800, letterSpacing: -1)),
-                  const Text("Tus plantas tienen algo que contarte...", 
-                    style: TextStyle(color: Colors.black38, fontSize: 15)),
+                  const Text("Gossip Garden",
+                      style: TextStyle(
+                          fontSize: 32,
+                          fontWeight: FontWeight.w800,
+                          letterSpacing: -1)),
+                  const Text("Tus plantas tienen algo que contarte...",
+                      style: TextStyle(color: Colors.black38, fontSize: 15)),
                 ],
               ),
             ),
@@ -51,8 +54,12 @@ class DashboardScreen extends ConsumerWidget {
           const SliverToBoxAdapter(
             child: Padding(
               padding: EdgeInsets.fromLTRB(24, 40, 24, 16),
-              child: Text('HOY TE DICEN...', 
-                style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.black26, letterSpacing: 1.2)),
+              child: Text('HOY TE DICEN...',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.black26,
+                      letterSpacing: 1.2)),
             ),
           ),
           plantsAsync.when(
@@ -60,13 +67,17 @@ class DashboardScreen extends ConsumerWidget {
               delegate: SliverChildBuilderDelegate(
                 (context, index) => Padding(
                   padding: const EdgeInsets.fromLTRB(24, 0, 24, 12),
-                  child: PlantFeedCard(plant: plants[index], onTap: () => onSelectPlant(plants[index].id)),
+                  child: PlantFeedCard(
+                      plant: plants[index],
+                      onTap: () => onSelectPlant(plants[index].id)),
                 ),
                 childCount: plants.length,
               ),
             ),
-            loading: () => const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator())),
-            error: (e, _) => SliverToBoxAdapter(child: Center(child: Text('Error: $e'))),
+            loading: () => const SliverToBoxAdapter(
+                child: Center(child: CircularProgressIndicator())),
+            error: (e, _) =>
+                SliverToBoxAdapter(child: Center(child: Text('Error: $e'))),
           ),
           const SliverToBoxAdapter(child: SizedBox(height: 120)),
         ],

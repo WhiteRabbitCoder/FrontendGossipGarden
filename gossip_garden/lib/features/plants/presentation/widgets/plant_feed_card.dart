@@ -68,7 +68,7 @@ class PlantFeedCard extends StatelessWidget {
                       Text(
                         plant.insights.isNotEmpty
                             ? plant.insights.first
-                            : 'Todo está bien 🌿',
+                            : 'Todo esta bien',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: TextStyle(
