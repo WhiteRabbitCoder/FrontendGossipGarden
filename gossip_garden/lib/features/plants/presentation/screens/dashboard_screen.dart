@@ -28,18 +28,51 @@ class DashboardScreen extends ConsumerWidget {
             floating: true,
             backgroundColor: const Color(0xFFFDFCF8),
             elevation: 0,
-            title: const Text('Gossip Garden', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            toolbarHeight: 70,
+            title: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: Colors.green.shade100,
+                    image: const DecorationImage(
+                      image: NetworkImage(''),
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text('¡Hola, Juliana!', 
+                      style: TextStyle(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.w800)),
+                    Text('Tu jardín está vivo', 
+                      style: TextStyle(color: Colors.grey.shade500, fontSize: 13, fontWeight: FontWeight.w500)),
+                  ],
+                ),
+              ],
+            ),
           ),
           SliverToBoxAdapter(
             child: Padding(
-              padding: const EdgeInsets.all(16.0),
+              padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
               child: SummaryBanner(onAction: () => onOpenChat('1')),
             ),
           ),
-          const SliverToBoxAdapter(
+          SliverToBoxAdapter(
             child: Padding(
-              padding: EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-              child: Text('HOY TE DICEN...', style: TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.black45)),
+              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+              child: Row(
+                children: [
+                  const Text('HOY TE DICEN...', 
+                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.black45, letterSpacing: 1.2)),
+                  const SizedBox(width: 12),
+                  Expanded(child: Divider(color: Colors.grey.shade200)),
+                ],
+              ),
             ),
           ),
           plantsAsync.when(

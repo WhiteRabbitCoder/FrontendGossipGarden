@@ -5,6 +5,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/datasources/plant_datasource.dart';
 import '../../data/datasources/plant_api_datasource.dart';
 import '../../data/datasources/sensor_stream_datasource.dart';
+import '../../data/datasources/wifi_setup_datasource.dart';
 import '../../data/repositories/plant_repository_impl.dart';
 import '../../domain/repositories/plant_repository.dart';
 import '../../data/models/plant.dart';
@@ -20,6 +21,10 @@ final repositoryProvider = Provider<PlantRepository>(
 
 final sensorStreamDatasourceProvider = Provider<SensorStreamDatasource>(
   (ref) => SensorStreamDatasource(),
+);
+
+final wifiSetupDatasourceProvider = Provider<WifiSetupDatasource>(
+  (ref) => const WifiSetupDatasource(),
 );
 
 final plantsProvider = FutureProvider<List<Plant>>((ref) async {

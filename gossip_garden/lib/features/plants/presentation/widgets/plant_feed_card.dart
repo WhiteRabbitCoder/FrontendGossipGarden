@@ -18,72 +18,111 @@ class PlantFeedCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final colorScheme = Theme.of(context).colorScheme;
 
+    final bool hasAlert = plant.insights.isNotEmpty && plant.insights.first != 'Todo esta bien';
+
     return Padding(
-      padding: const EdgeInsets.only(bottom: 12),
-      child: Material(
-        color: colorScheme.surface,
-        borderRadius: BorderRadius.circular(28),
-        elevation: 1, // Le damos un toque de profundidad
-        shadowColor: Colors.black12,
-        child: InkWell(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Container(
+        decoration: BoxDecoration(
+          color: colorScheme.surface,
           borderRadius: BorderRadius.circular(28),
-          onTap: onTap,
-          child: Padding(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                Hero(
-                  tag: 'plantHero_${plant.id}',
-                  child: Container(
-                    width: 56,
-                    height: 56,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: colorScheme.primary.withOpacity(0.08),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.04),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            )
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(28),
+            onTap: onTap,
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+              child: Row(
+                children: [
+                  Hero(
+                    tag: 'plantHero_${plant.id}',
+                    child: Container(
+                      width: 64,
+                      height: 64,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: hasAlert ? Colors.orange.shade50 : colorScheme.primary.withOpacity(0.08),
+                        border: Border.all(
+                          color: hasAlert ? Colors.orange.shade200 : Colors.transparent,
+                          width: 2,
+                        ),
+                      ),
+                      padding: const EdgeInsets.all(12),
+                      child: plant.image.isNotEmpty
+                          ? Image.network(
+                              plant.image,
+                              errorBuilder: (context, error, stackTrace) =>
+                                  Icon(Icons.eco, color: hasAlert ? Colors.orange : Colors.green),
+                            )
+                          : Icon(Icons.eco, color: hasAlert ? Colors.orange : Colors.green),
                     ),
-                    padding: const EdgeInsets.all(10),
-                    child: plant.image.isNotEmpty
-                        ? Image.network(
-                            plant.image,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const Icon(Icons.eco, color: Colors.green),
-                          )
-                        : const Icon(Icons.eco, color: Colors.green),
                   ),
-                ),
-                const SizedBox(width: 14),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        plant.name,
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: colorScheme.onSurface,
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              plant.name,
+                              style: TextStyle(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w800,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            if (hasAlert)
+                              Container(
+                                width: 8,
+                                height: 8,
+                                decoration: const BoxDecoration(
+                                  color: Colors.orange,
+                                  shape: BoxShape.circle,
+                                ),
+                              ),
+                          ],
                         ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        plant.insights.isNotEmpty
-                            ? plant.insights.first
-                            : 'Todo esta bien',
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
-                        style: TextStyle(
-                          fontSize: 13,
-                          color: colorScheme.onSurface.withOpacity(0.6),
+                        const SizedBox(height: 6),
+                        Text(
+                          plant.insights.isNotEmpty
+                              ? plant.insights.first
+                              : 'Todo esta bien',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w500,
+                            color: hasAlert ? Colors.orange.shade700 : Colors.grey.shade500,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                Icon(
-                  Icons.chevron_right_rounded,
-                  color: colorScheme.onSurface.withOpacity(0.25),
-                ),
-              ],
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: Colors.grey.shade50,
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Icons.arrow_forward_ios_rounded,
+                      size: 14,
+                      color: colorScheme.onSurface.withOpacity(0.3),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         ),
