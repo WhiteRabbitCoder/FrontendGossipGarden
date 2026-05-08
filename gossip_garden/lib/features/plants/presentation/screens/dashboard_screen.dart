@@ -3,6 +3,8 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/plant_providers.dart';
 import '../widgets/plant_feed_card.dart';
 import '../widgets/summary_banner.dart';
+import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_text_styles.dart';
 
 class DashboardScreen extends ConsumerWidget {
   final Function(String) onSelectPlant;
@@ -21,38 +23,51 @@ class DashboardScreen extends ConsumerWidget {
     final plantsAsync = ref.watch(plantsProvider);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDFCF8),
+      backgroundColor: GardenColors.cream,
       body: CustomScrollView(
         slivers: [
           SliverAppBar(
             floating: true,
-            backgroundColor: const Color(0xFFFDFCF8),
+            backgroundColor: GardenColors.cream,
             elevation: 0,
-            toolbarHeight: 70,
+            toolbarHeight: 80,
             title: Row(
               children: [
                 Container(
-                  width: 44,
-                  height: 44,
+                  width: 50,
+                  height: 50,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: Colors.green.shade100,
-                    image: const DecorationImage(
-                      image: NetworkImage(''),
-                      fit: BoxFit.cover,
-                    ),
+                    color: GardenColors.sageLight,
+                    border: Border.all(color: GardenColors.sage, width: 2),
                   ),
+                  child: const Icon(Icons.person, color: GardenColors.forest),
                 ),
                 const SizedBox(width: 16),
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('¡Hola, Juliana!', 
-                      style: TextStyle(color: Colors.black87, fontSize: 18, fontWeight: FontWeight.w800)),
-                    Text('Tu jardín está vivo', 
-                      style: TextStyle(color: Colors.grey.shade500, fontSize: 13, fontWeight: FontWeight.w500)),
+                    Text('¡Hola, Jardinero!', 
+                      style: GardenTextStyles.title.copyWith(color: GardenColors.charcoal, fontSize: 24)),
+                    Text('Tu jardín está susurrando...', 
+                      style: GardenTextStyles.bodySmall.copyWith(color: GardenColors.dust, fontSize: 14)),
                   ],
                 ),
+                const Spacer(),
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                      )
+                    ],
+                  ),
+                  child: const Icon(Icons.notifications_none_rounded, color: GardenColors.forest),
+                )
               ],
             ),
           ),
@@ -67,10 +82,10 @@ class DashboardScreen extends ConsumerWidget {
               padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
               child: Row(
                 children: [
-                  const Text('HOY TE DICEN...', 
-                    style: TextStyle(fontSize: 12, fontWeight: FontWeight.w800, color: Colors.black45, letterSpacing: 1.2)),
+                  Text('HOY TE DICEN...', 
+                    style: GardenTextStyles.label.copyWith(color: GardenColors.dust, letterSpacing: 1.5)),
                   const SizedBox(width: 12),
-                  Expanded(child: Divider(color: Colors.grey.shade200)),
+                  Expanded(child: Divider(color: GardenColors.dustLight, thickness: 1)),
                 ],
               ),
             ),
@@ -85,10 +100,10 @@ class DashboardScreen extends ConsumerWidget {
                 childCount: plants.length,
               ),
             ),
-            loading: () => const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator())),
-            error: (e, _) => SliverToBoxAdapter(child: Center(child: Text('Error: $e'))),
+            loading: () => const SliverToBoxAdapter(child: Center(child: CircularProgressIndicator(color: GardenColors.moss))),
+            error: (e, _) => SliverToBoxAdapter(child: Center(child: Text('Error: $e', style: GardenTextStyles.bodySmall))),
           ),
-          const SliverToBoxAdapter(child: SizedBox(height: 100)),
+          const SliverToBoxAdapter(child: SizedBox(height: 120)),
         ],
       ),
     );

@@ -125,6 +125,33 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
     }
   }
 
+  Future<void> registerWithEmailAndPassword(String email, String password, String name) async {
+    state = const AsyncValue.loading();
+    try {
+      await _authService.registerWithEmailAndPassword(
+        email: email,
+        password: password,
+        name: name,
+      );
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<void> signInWithEmailAndPassword(String email, String password) async {
+    state = const AsyncValue.loading();
+    try {
+      await _authService.signInWithEmailAndPassword(
+        email: email,
+        password: password,
+      );
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+      rethrow;
+    }
+  }
+
   Future<void> signOut() async {
     if (FirebaseEnvironment.isConfigured) {
       await _authService.signOut();

@@ -2,6 +2,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../providers/navigation_provider.dart';
+import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_text_styles.dart';
 
 class AnimatedBottomNav extends StatelessWidget {
   final TabId activeTab;
@@ -15,62 +17,80 @@ class AnimatedBottomNav extends StatelessWidget {
 
   static const _tabs = [
     (TabId.dashboard, Icons.home_rounded, 'Inicio'),
-    (TabId.chat, Icons.chat_bubble_outline_rounded, 'Chat'),
-    (TabId.garden, Icons.local_florist_rounded, 'Mi Jardín'),
-    (TabId.profile, Icons.person_outline_rounded, 'Perfil'),
+    (TabId.garden, Icons.eco_rounded, 'Jardín'),
+    (TabId.chat, Icons.chat_bubble_rounded, 'Chats'),
+    (TabId.profile, Icons.person_rounded, 'Perfil'),
   ];
 
   @override
   Widget build(BuildContext context) {
-    return ClipRRect(
-      child: BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 15, sigmaY: 15),
-        child: Container(
-          height: 90,
-          padding: const EdgeInsets.only(top: 10, bottom: 20),
-          decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.85),
-            border:
-                Border(top: BorderSide(color: Colors.black.withOpacity(0.05))),
-          ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: _tabs.map((tab) {
-              final isActive = activeTab == tab.$1;
-              return GestureDetector(
-                onTap: () {
-                  HapticFeedback.selectionClick();
-                  onTabChange(tab.$1);
-                },
-                child: AnimatedScale(
-                  duration: const Duration(milliseconds: 200),
-                  scale: isActive ? 1.0 : 0.85,
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Icon(
-                        tab.$2,
-                        size: 26,
-                        color:
-                            isActive ? const Color(0xFF4A6741) : Colors.black26,
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        tab.$3,
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight:
-                              isActive ? FontWeight.w600 : FontWeight.w400,
-                          color: isActive
-                              ? const Color(0xFF4A6741)
-                              : Colors.black26,
-                        ),
-                      )
-                    ],
-                  ),
+    return Container(
+      height: 76,
+      margin: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(38),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+          child: Container(
+            decoration: BoxDecoration(
+              color: GardenColors.navBackground.withOpacity(0.85),
+              borderRadius: BorderRadius.circular(38),
+              border: Border.all(
+                color: GardenColors.sage.withOpacity(0.5),
+                width: 2,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: GardenColors.forest.withOpacity(0.1),
+                  blurRadius: 20,
+                  offset: const Offset(0, 8),
                 ),
-              );
-            }).toList(),
+              ],
+            ),
+            padding: const EdgeInsets.symmetric(horizontal: 8),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: _tabs.map((tab) {
+                final isActive = activeTab == tab.$1;
+                return Expanded(
+                  child: GestureDetector(
+                    behavior: HitTestBehavior.opaque,
+                    onTap: () {
+                      HapticFeedback.selectionClick();
+                      onTabChange(tab.$1);
+                    },
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        AnimatedContainer(
+                          duration: const Duration(milliseconds: 300),
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: isActive ? GardenColors.forest : Colors.transparent,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Icon(
+                            tab.$2,
+                            size: 24,
+                            color: isActive ? Colors.white : GardenColors.dust,
+                          ),
+                        ),
+                        if (isActive) const SizedBox(height: 2),
+                        if (isActive)
+                          Text(
+                            tab.$3,
+                            style: GardenTextStyles.label.copyWith(
+                              fontSize: 12,
+                              color: GardenColors.forest,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          )
+                      ],
+                    ),
+                  ),
+                );
+              }).toList(),
+            ),
           ),
         ),
       ),

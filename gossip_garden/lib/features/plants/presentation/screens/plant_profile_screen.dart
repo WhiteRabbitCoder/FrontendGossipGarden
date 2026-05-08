@@ -311,7 +311,7 @@ class PlantProfileScreen extends ConsumerWidget {
                       ],
                     ),
                   ))
-              .toList(),
+              ,
         ],
       ),
     );

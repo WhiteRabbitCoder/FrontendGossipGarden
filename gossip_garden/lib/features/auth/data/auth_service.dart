@@ -65,6 +65,63 @@ class AuthService {
     return userCredential;
   }
 
+  Future<UserCredential> registerWithEmailAndPassword({
+    required String email,
+    required String password,
+    required String name,
+  }) async {
+    if (_auth == null || _firestore == null) {
+      throw StateError('Firebase no esta configurado.');
+    }
+
+    final userCredential = await _auth!.createUserWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+
+    final user = userCredential.user;
+    if (user != null) {
+      await user.updateDisplayName(name);
+      await _firestore!.collection('users').doc(user.uid).set(
+        {
+          'uid': user.uid,
+          'displayName': name,
+          'email': email,
+          'createdAt': FieldValue.serverTimestamp(),
+          'updatedAt': FieldValue.serverTimestamp(),
+          'onboardingCompleted': false,
+        },
+        SetOptions(merge: true),
+      );
+    }
+    return userCredential;
+  }
+
+  Future<UserCredential> signInWithEmailAndPassword({
+    required String email,
+    required String password,
+  }) async {
+    if (_auth == null || _firestore == null) {
+      throw StateError('Firebase no esta configurado.');
+    }
+
+    final userCredential = await _auth!.signInWithEmailAndPassword(
+      email: email,
+      password: password,
+    );
+    
+    final user = userCredential.user;
+    if (user != null) {
+      await _firestore!.collection('users').doc(user.uid).set(
+        {
+          'lastLoginAt': FieldValue.serverTimestamp(),
+        },
+        SetOptions(merge: true),
+      );
+    }
+    return userCredential;
+  }
+
   Future<UserProfile?> loadProfile(String uid) async {
     final firestore = _firestore;
     if (firestore == null) {

@@ -44,14 +44,18 @@ class MainScreen extends ConsumerWidget {
 
           /// OVERLAY
           if (hasOverlay) _buildOverlay(nav, notifier),
+
+          /// BOTTOM NAV (True Floating)
+          if (!hasOverlay)
+            Align(
+              alignment: Alignment.bottomCenter,
+              child: AnimatedBottomNav(
+                activeTab: nav.activeTab,
+                onTabChange: notifier.changeTab,
+              ),
+            ),
         ],
       ),
-      bottomNavigationBar: hasOverlay
-          ? null
-          : AnimatedBottomNav(
-              activeTab: nav.activeTab,
-              onTabChange: notifier.changeTab,
-            ),
     );
   }
 

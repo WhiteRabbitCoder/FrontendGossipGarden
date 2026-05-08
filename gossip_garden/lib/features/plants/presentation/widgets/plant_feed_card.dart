@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-// Cámbialo por la ruta donde está tu clase Plant que definimos antes
 import '../../data/models/plant.dart';
+import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_text_styles.dart';
 
 class PlantFeedCard extends StatelessWidget {
   final Plant plant;
@@ -16,28 +17,30 @@ class PlantFeedCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
-
     final bool hasAlert = plant.insights.isNotEmpty && plant.insights.first != 'Todo esta bien';
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Container(
         decoration: BoxDecoration(
-          color: colorScheme.surface,
-          borderRadius: BorderRadius.circular(28),
+          color: GardenColors.parchment,
+          borderRadius: BorderRadius.circular(36), // Más redondo, estilo crayola/orgánico
+          border: Border.all(
+            color: hasAlert ? GardenColors.errorRose.withOpacity(0.3) : GardenColors.sageLight,
+            width: 2,
+          ),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.04),
+              color: GardenColors.forest.withOpacity(0.08),
               blurRadius: 16,
-              offset: const Offset(0, 4),
+              offset: const Offset(0, 8),
             )
           ],
         ),
         child: Material(
           color: Colors.transparent,
           child: InkWell(
-            borderRadius: BorderRadius.circular(28),
+            borderRadius: BorderRadius.circular(36),
             onTap: onTap,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
@@ -46,13 +49,13 @@ class PlantFeedCard extends StatelessWidget {
                   Hero(
                     tag: 'plantHero_${plant.id}',
                     child: Container(
-                      width: 64,
-                      height: 64,
+                      width: 68,
+                      height: 68,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: hasAlert ? Colors.orange.shade50 : colorScheme.primary.withOpacity(0.08),
+                        color: hasAlert ? GardenColors.errorRose.withOpacity(0.1) : GardenColors.sageLight,
                         border: Border.all(
-                          color: hasAlert ? Colors.orange.shade200 : Colors.transparent,
+                          color: hasAlert ? GardenColors.errorRose.withOpacity(0.5) : GardenColors.sage,
                           width: 2,
                         ),
                       ),
@@ -61,9 +64,9 @@ class PlantFeedCard extends StatelessWidget {
                           ? Image.network(
                               plant.image,
                               errorBuilder: (context, error, stackTrace) =>
-                                  Icon(Icons.eco, color: hasAlert ? Colors.orange : Colors.green),
+                                  Icon(Icons.park_rounded, color: hasAlert ? GardenColors.errorRose : GardenColors.moss, size: 32),
                             )
-                          : Icon(Icons.eco, color: hasAlert ? Colors.orange : Colors.green),
+                          : Icon(Icons.park_rounded, color: hasAlert ? GardenColors.errorRose : GardenColors.moss, size: 32),
                     ),
                   ),
                   const SizedBox(width: 16),
@@ -73,52 +76,53 @@ class PlantFeedCard extends StatelessWidget {
                       children: [
                         Row(
                           children: [
-                            Text(
-                              plant.name,
-                              style: TextStyle(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w800,
-                                color: colorScheme.onSurface,
+                            Expanded(
+                              child: Text(
+                                plant.name,
+                                style: GardenTextStyles.title.copyWith(
+                                  color: GardenColors.charcoal,
+                                  fontSize: 22,
+                                ),
+                                overflow: TextOverflow.ellipsis,
                               ),
                             ),
                             const SizedBox(width: 8),
                             if (hasAlert)
                               Container(
-                                width: 8,
-                                height: 8,
+                                width: 10,
+                                height: 10,
                                 decoration: const BoxDecoration(
-                                  color: Colors.orange,
+                                  color: GardenColors.errorRose,
                                   shape: BoxShape.circle,
                                 ),
                               ),
                           ],
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 4),
                         Text(
                           plant.insights.isNotEmpty
                               ? plant.insights.first
                               : 'Todo esta bien',
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
-                            color: hasAlert ? Colors.orange.shade700 : Colors.grey.shade500,
+                          style: GardenTextStyles.bodySmall.copyWith(
+                            color: hasAlert ? GardenColors.errorRose : GardenColors.dust,
+                            fontSize: 14,
                           ),
                         ),
                       ],
                     ),
                   ),
                   Container(
-                    padding: const EdgeInsets.all(8),
+                    padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Colors.grey.shade50,
+                      color: Colors.white.withOpacity(0.5),
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(
+                    child: const Icon(
                       Icons.arrow_forward_ios_rounded,
-                      size: 14,
-                      color: colorScheme.onSurface.withOpacity(0.3),
+                      size: 16,
+                      color: GardenColors.dust,
                     ),
                   ),
                 ],

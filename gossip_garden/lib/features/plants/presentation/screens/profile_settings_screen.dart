@@ -523,7 +523,7 @@ class ProfileSettingsScreen extends ConsumerWidget {
                         },
                       ),
                     ))
-                .toList(),
+                ,
             const SizedBox(height: 24),
             ElevatedButton(
               onPressed: () => Navigator.pop(context),

@@ -110,7 +110,7 @@ class _TelemetryPanelState extends State<TelemetryPanel> {
           crossAxisCount: 2,
           crossAxisSpacing: 16,
           mainAxisSpacing: 16,
-          childAspectRatio: 1.5,
+          childAspectRatio: 0.85,
         ),
         itemCount: widget.telemetryData.length,
         itemBuilder: (context, index) {
@@ -141,12 +141,15 @@ class _TelemetryPanelState extends State<TelemetryPanel> {
             children: [
               Icon(data.icon, size: 20, color: data.color),
               const SizedBox(width: 8),
-              Text(
-                data.label,
-                style: TextStyle(
-                  fontSize: 14,
-                  fontWeight: FontWeight.w600,
-                  color: data.color,
+              Flexible(
+                child: Text(
+                  data.label,
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: data.color,
+                  ),
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
             ],
@@ -212,47 +215,63 @@ class _TelemetryPanelState extends State<TelemetryPanel> {
   }
 
   Widget _buildRangeIndicator(TelemetryData data) {
-    return Stack(
-      children: [
-        Container(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final totalWidth = constraints.maxWidth;
+        final filledWidth = (data.percentage * totalWidth).clamp(0.0, totalWidth);
+        final thumbLeft = (filledWidth - 8).clamp(0.0, totalWidth - 16);
+        return SizedBox(
           height: 6,
-          decoration: BoxDecoration(
-            color: Colors.grey.shade200,
-            borderRadius: BorderRadius.circular(3),
-          ),
-        ),
-        AnimatedContainer(
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeOut,
-          height: 6,
-          width: data.percentage * 100,
-          decoration: BoxDecoration(
-            color: data.isInRange ? data.color : Colors.red,
-            borderRadius: BorderRadius.circular(3),
-          ),
-        ),
-        Positioned(
-          left: data.percentage * 100 - 8,
-          child: Container(
-            width: 16,
-            height: 16,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: data.isInRange ? data.color : Colors.red,
-                width: 2,
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Container(
+                height: 6,
+                decoration: BoxDecoration(
+                  color: Colors.grey.shade200,
+                  borderRadius: BorderRadius.circular(3),
+                ),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
-                  blurRadius: 4,
-                )
-              ],
-            ),
+              Positioned(
+                top: 0,
+                left: 0,
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 500),
+                  curve: Curves.easeOut,
+                  height: 6,
+                  width: filledWidth,
+                  decoration: BoxDecoration(
+                    color: data.isInRange ? data.color : Colors.red,
+                    borderRadius: BorderRadius.circular(3),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: thumbLeft,
+                top: -5,
+                child: Container(
+                  width: 16,
+                  height: 16,
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                      color: data.isInRange ? data.color : Colors.red,
+                      width: 2,
+                    ),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.1),
+                        blurRadius: 4,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ),
-      ],
+        );
+      },
     );
   }
 }

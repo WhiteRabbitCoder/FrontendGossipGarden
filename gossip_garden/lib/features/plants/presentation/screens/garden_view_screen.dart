@@ -5,7 +5,8 @@ import '../providers/plant_providers.dart';
 import '../providers/navigation_provider.dart';
 import '../../data/models/plant.dart';
 import '../../data/models/plant_enums.dart';
-import 'package:gossip_garden/core/theme/app_design_system.dart';
+import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_text_styles.dart';
 
 class GardenViewScreen extends ConsumerWidget {
   const GardenViewScreen({super.key});
@@ -16,13 +17,24 @@ class GardenViewScreen extends ConsumerWidget {
     final navNotifier = ref.read(navigationProvider.notifier);
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDFCF8),
+      backgroundColor: GardenColors.cream,
       appBar: AppBar(
-        title: const Text('Mi Jardín'),
+        title: Text('Mi Jardín', style: GardenTextStyles.display.copyWith(color: GardenColors.forest, fontSize: 32)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        centerTitle: false,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.add),
-            onPressed: () {},
+          Container(
+            margin: const EdgeInsets.only(right: 16),
+            decoration: BoxDecoration(
+              color: GardenColors.sageLight,
+              shape: BoxShape.circle,
+              border: Border.all(color: GardenColors.sage, width: 2),
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.add_rounded, color: GardenColors.forest),
+              onPressed: () {},
+            ),
           ),
         ],
       ),
@@ -49,7 +61,7 @@ class GardenViewScreen extends ConsumerWidget {
                   crossAxisCount: 2,
                   crossAxisSpacing: 16,
                   mainAxisSpacing: 16,
-                  childAspectRatio: 0.9,
+                  childAspectRatio: 0.85,
                 ),
                 delegate: SliverChildBuilderDelegate(
                   (context, index) =>
@@ -58,11 +70,11 @@ class GardenViewScreen extends ConsumerWidget {
                 ),
               ),
             ),
-            const SliverToBoxAdapter(child: SizedBox(height: 100)),
+            const SliverToBoxAdapter(child: SizedBox(height: 120)),
           ],
         ),
-        loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        loading: () => const Center(child: CircularProgressIndicator(color: GardenColors.moss)),
+        error: (e, _) => Center(child: Text('Error: $e', style: GardenTextStyles.bodySmall)),
       ),
     );
   }
@@ -76,9 +88,16 @@ class GardenViewScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
-        boxShadow: AppDesignSystem.shadowSoft,
+        color: GardenColors.parchment,
+        borderRadius: BorderRadius.circular(36),
+        border: Border.all(color: GardenColors.sageLight, width: 2),
+        boxShadow: [
+          BoxShadow(
+            color: GardenColors.forest.withOpacity(0.08),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          )
+        ],
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -87,7 +106,7 @@ class GardenViewScreen extends ConsumerWidget {
           _buildStatItem(
               FontAwesomeIcons.heartPulse, '$healthyCount', 'Saludables'),
           _buildStatItem(
-              FontAwesomeIcons.towerBroadcast, '$onlineCount', 'En linea'),
+              FontAwesomeIcons.towerBroadcast, '$onlineCount', 'En línea'),
         ],
       ),
     );
@@ -96,12 +115,12 @@ class GardenViewScreen extends ConsumerWidget {
   Widget _buildStatItem(IconData icon, String value, String label) {
     return Column(
       children: [
-        FaIcon(icon, size: 24, color: const Color(0xFF4A6741)),
-        const SizedBox(height: 8),
+        FaIcon(icon, size: 28, color: GardenColors.forest),
+        const SizedBox(height: 12),
         Text(value,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w700)),
+            style: GardenTextStyles.title.copyWith(fontSize: 28, color: GardenColors.charcoal)),
         Text(label,
-            style: const TextStyle(fontSize: 12, color: Colors.black54)),
+            style: GardenTextStyles.label.copyWith(fontSize: 14, color: GardenColors.dust)),
       ],
     );
   }
@@ -110,17 +129,17 @@ class GardenViewScreen extends ConsumerWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text('Acciones rápidas',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 12),
+        Text('Acciones rápidas',
+            style: GardenTextStyles.title.copyWith(fontSize: 22, color: GardenColors.charcoal)),
+        const SizedBox(height: 16),
         Wrap(
           spacing: 12,
           runSpacing: 12,
           children: [
-            _actionButton('Regar todas', Icons.water_drop, Colors.blue),
-            _actionButton('Reporte', Icons.assessment, Colors.green),
-            _actionButton('Luz', Icons.light_mode, Colors.amber),
-            _actionButton('Alertas', Icons.notifications, Colors.orange),
+            _actionButton('Regar', Icons.water_drop_rounded, GardenColors.waterBlue),
+            _actionButton('Reporte', Icons.assessment_rounded, GardenColors.moss),
+            _actionButton('Luz', Icons.light_mode_rounded, GardenColors.golden),
+            _actionButton('Alertas', Icons.notifications_rounded, GardenColors.errorRose),
           ],
         ),
       ],
@@ -134,15 +153,22 @@ class GardenViewScreen extends ConsumerWidget {
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          boxShadow: AppDesignSystem.shadowSoft,
+          borderRadius: BorderRadius.circular(24),
+          border: Border.all(color: color.withOpacity(0.3), width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: color.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            )
+          ],
         ),
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
             Icon(icon, size: 20, color: color),
             const SizedBox(width: 8),
-            Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
+            Text(label, style: GardenTextStyles.label.copyWith(color: color, fontWeight: FontWeight.w800)),
           ],
         ),
       ),
@@ -155,30 +181,35 @@ class GardenViewScreen extends ConsumerWidget {
       child: Container(
         decoration: BoxDecoration(
           color: Colors.white,
-          borderRadius: BorderRadius.circular(24),
-          boxShadow: AppDesignSystem.shadowSoft,
+          borderRadius: BorderRadius.circular(32),
+          border: Border.all(color: GardenColors.sageLight, width: 2),
+          boxShadow: [
+            BoxShadow(
+              color: GardenColors.forest.withOpacity(0.05),
+              blurRadius: 16,
+              offset: const Offset(0, 8),
+            )
+          ],
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              height: 120,
-              decoration: BoxDecoration(
-                borderRadius:
-                    const BorderRadius.vertical(top: Radius.circular(24)),
-                color: const Color(0xFF4A6741).withOpacity(0.1),
-                image: plant.image.isNotEmpty
-                    ? DecorationImage(
-                        image: AssetImage(plant.image),
-                        fit: BoxFit.cover,
+            Expanded(
+              child: Container(
+                decoration: BoxDecoration(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(30)),
+                  color: GardenColors.sageLight,
+                ),
+                child: Center(
+                  child: plant.image.isNotEmpty
+                    ? Image.network(
+                        plant.image,
+                        errorBuilder: (context, error, stackTrace) =>
+                            const Icon(Icons.park_rounded, size: 48, color: GardenColors.forest),
                       )
-                    : null,
+                    : const Icon(Icons.park_rounded, size: 48, color: GardenColors.forest),
+                ),
               ),
-              child: plant.image.isEmpty
-                  ? const Center(
-                      child: Icon(Icons.local_florist,
-                          size: 60, color: Color(0xFF4A6741)))
-                  : null,
             ),
             Padding(
               padding: const EdgeInsets.all(16),
@@ -186,46 +217,24 @@ class GardenViewScreen extends ConsumerWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(plant.name,
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w600)),
-                  const SizedBox(height: 4),
+                      style: GardenTextStyles.title.copyWith(fontSize: 18, color: GardenColors.charcoal),
+                      maxLines: 1, overflow: TextOverflow.ellipsis),
                   Text(plant.species,
-                      style:
-                          const TextStyle(fontSize: 12, color: Colors.black54)),
+                      style: GardenTextStyles.bodySmall.copyWith(fontSize: 12, color: GardenColors.dust),
+                      maxLines: 1, overflow: TextOverflow.ellipsis),
                   const SizedBox(height: 12),
-                  LinearProgressIndicator(
-                    value: plant.health / 100,
-                    backgroundColor: Colors.grey.shade200,
-                    color: plant.health > 70
-                        ? Colors.green
-                        : plant.health > 40
-                            ? Colors.orange
-                            : Colors.red,
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: _moodColor(plant.mood).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        child: Text(
-                          plant.mood.name.toUpperCase(),
-                          style: TextStyle(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w600,
-                            color: _moodColor(plant.mood),
-                          ),
-                        ),
-                      ),
-                      Text('${plant.health.toInt()}%',
-                          style: const TextStyle(
-                              fontSize: 14, fontWeight: FontWeight.w700)),
-                    ],
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: LinearProgressIndicator(
+                      value: plant.health / 100,
+                      backgroundColor: GardenColors.sageLight,
+                      color: plant.health > 70
+                          ? GardenColors.moss
+                          : plant.health > 40
+                              ? GardenColors.golden
+                              : GardenColors.errorRose,
+                      minHeight: 8,
+                    ),
                   ),
                 ],
               ),
@@ -234,24 +243,5 @@ class GardenViewScreen extends ConsumerWidget {
         ),
       ),
     );
-  }
-
-  Color _moodColor(PlantMood mood) {
-    switch (mood) {
-      case PlantMood.happy:
-        return Colors.green;
-      case PlantMood.thirsty:
-        return Colors.orange;
-      case PlantMood.stressed:
-        return Colors.red;
-      case PlantMood.cold:
-        return Colors.blue;
-      case PlantMood.hot:
-        return Colors.deepOrange;
-      case PlantMood.perfect:
-        return const Color(0xFF8BC34A);
-      default:
-        return Colors.grey;
-    }
   }
 }
