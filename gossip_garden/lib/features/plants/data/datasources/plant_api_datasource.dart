@@ -17,6 +17,9 @@ class PlantApiDatasource implements PlantDatasource {
       : _httpClient = httpClient ?? http.Client();
 
   final http.Client _httpClient;
+  
+  // Cambia esto a 'false' para volver a conectar con el servidor real
+  static const bool useMockData = true;
 
   @override
   Future<List<Plant>> getPlants() async {
@@ -89,6 +92,67 @@ class PlantApiDatasource implements PlantDatasource {
   }
 
   Future<Map<String, dynamic>> _getJson(String path) async {
+    if (useMockData) {
+      if (path == '/plants') {
+        return {
+          "plants": [
+            {"plant_id": 1, "plant_species_id": 1, "name": "Ferny"},
+            {"plant_id": 2, "plant_species_id": 2, "name": "Spiky"}
+          ]
+        };
+      }
+      if (path == '/plant_species') {
+        return {
+          "plant_species_profiles": [
+            {
+              "plant_species_id": 1,
+              "specie_name": "Helecho",
+              "min_humidity": 60.0,
+              "max_humidity": 80.0,
+              "min_temperature": 18.0,
+              "max_temperature": 25.0,
+              "min_soil_moisture": 50.0,
+              "max_soil_moisture": 70.0,
+              "min_light": 100.0,
+              "max_light": 500.0,
+              "personality": "Dramatica"
+            },
+            {
+              "plant_species_id": 2,
+              "specie_name": "Cactus",
+              "min_humidity": 20.0,
+              "max_humidity": 40.0,
+              "min_temperature": 20.0,
+              "max_temperature": 35.0,
+              "min_soil_moisture": 10.0,
+              "max_soil_moisture": 30.0,
+              "min_light": 800.0,
+              "max_light": 2000.0,
+              "personality": "Fuerte"
+            }
+          ]
+        };
+      }
+      if (path.startsWith('/sensor_data/')) {
+        return {
+          "sensor_data": {
+            "humidity": 65.0,
+            "temperature": 22.0,
+            "light": 300.0,
+            "soil_moisture": 55.0,
+            "timestamp": DateTime.now().toUtc().toIso8601String()
+          },
+          "averages": {
+            "humidity": 64.0,
+            "temperature": 21.5,
+            "light": 280.0,
+            "soil_moisture": 53.0
+          },
+          "readings_count": 100
+        };
+      }
+    }
+
     final uri = Uri.parse('${AppConfig.backendBaseUrl}$path');
     final response = await _httpClient.get(uri);
 
