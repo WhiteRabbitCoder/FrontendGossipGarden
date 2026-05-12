@@ -23,8 +23,7 @@ class PlantProfileScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final plantsAsync = ref.watch(plantsProvider);
-    final realtimeAsync =
-        ref.watch(plantRealtimeSensorProvider(int.tryParse(plantId) ?? 0));
+    final realtimeAsync = ref.watch(plantRealtimeSensorProvider(plantId));
 
     return plantsAsync.when(
       data: (plants) {

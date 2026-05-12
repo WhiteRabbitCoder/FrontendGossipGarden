@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import 'package:gossip_garden/core/config/firebase_environment.dart';
+import 'package:gossip_garden/core/services/backend_auth_service.dart';
 
 import '../../data/auth_service.dart';
 import '../../data/user_profile.dart';
@@ -23,11 +24,16 @@ class AuthSession {
   });
 }
 
+/// JWT de Supabase devuelto por el backend. Null cuando no hay sesión activa.
+final backendTokenProvider = StateProvider<String?>((_) => null);
+
+final backendAuthServiceProvider =
+    Provider<BackendAuthService>((_) => BackendAuthService());
+
 final authServiceProvider = Provider<AuthService>((ref) {
   if (!FirebaseEnvironment.isConfigured || Firebase.apps.isEmpty) {
     return AuthService();
   }
-
   return AuthService(
     auth: FirebaseAuth.instance,
     googleSignIn: GoogleSignIn(),
@@ -37,11 +43,15 @@ final authServiceProvider = Provider<AuthService>((ref) {
 
 final authStateProvider =
     StateNotifierProvider<AuthNotifier, AsyncValue<AuthSession>>(
-  (ref) => AuthNotifier(ref.read(authServiceProvider)),
+  (ref) => AuthNotifier(
+    ref.read(authServiceProvider),
+    ref.read(backendAuthServiceProvider),
+    ref,
+  ),
 );
 
 class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
-  AuthNotifier(this._authService)
+  AuthNotifier(this._authService, this._backendAuth, this._ref)
       : super(
           AsyncValue.data(
             AuthSession(
@@ -54,12 +64,12 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
   }
 
   final AuthService _authService;
+  final BackendAuthService _backendAuth;
+  final Ref _ref;
   StreamSubscription<User?>? _subscription;
 
   void _bindFirebaseAuth() {
-    if (!FirebaseEnvironment.isConfigured) {
-      return;
-    }
+    if (!FirebaseEnvironment.isConfigured) return;
 
     _subscription = _authService.authStateChanges().listen((user) async {
       if (user == null) {
@@ -88,8 +98,8 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
                 notificationPreference: 'important',
               ),
           firebaseEnabled: true,
-          onboardingCompleted: profile?.onboardingCompleted ??
-              (user.emailVerified ? true : false),
+          onboardingCompleted:
+              profile?.onboardingCompleted ?? (user.emailVerified ? true : false),
         ),
       );
     });
@@ -125,14 +135,19 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
     }
   }
 
-  Future<void> registerWithEmailAndPassword(String email, String password, String name) async {
+  Future<void> registerWithEmailAndPassword(
+      String email, String password, String name) async {
     state = const AsyncValue.loading();
     try {
-      await _authService.registerWithEmailAndPassword(
-        email: email,
-        password: password,
-        name: name,
-      );
+      if (FirebaseEnvironment.isConfigured) {
+        await _authService.registerWithEmailAndPassword(
+          email: email,
+          password: password,
+          name: name,
+        );
+      }
+      // Intentar registrar en backend también
+      // (el endpoint de registro no devuelve token, el login sí)
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
       rethrow;
@@ -142,10 +157,34 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
   Future<void> signInWithEmailAndPassword(String email, String password) async {
     state = const AsyncValue.loading();
     try {
-      await _authService.signInWithEmailAndPassword(
-        email: email,
-        password: password,
-      );
+      if (FirebaseEnvironment.isConfigured) {
+        // Firebase maneja el estado vía _bindFirebaseAuth
+        await _authService.signInWithEmailAndPassword(
+          email: email,
+          password: password,
+        );
+      } else {
+        // Sin Firebase: crear sesión local mínima
+        state = AsyncValue.data(
+          AuthSession(
+            profile: UserProfile(
+              uid: email,
+              displayName: email.split('@').first,
+              email: email,
+              onboardingCompleted: true,
+              favoritePlantIds: const [],
+              useGridView: true,
+              notificationPreference: 'important',
+            ),
+            firebaseEnabled: false,
+            onboardingCompleted: true,
+          ),
+        );
+      }
+
+      // Siempre intentar obtener JWT del backend
+      final token = await _backendAuth.login(email, password);
+      _ref.read(backendTokenProvider.notifier).state = token;
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
       rethrow;
@@ -153,6 +192,8 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
   }
 
   Future<void> signOut() async {
+    _ref.read(backendTokenProvider.notifier).state = null;
+
     if (FirebaseEnvironment.isConfigured) {
       await _authService.signOut();
     }
@@ -171,13 +212,10 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
 
     if (FirebaseEnvironment.isConfigured) {
       final uid = current.profile?.uid;
-      if (uid != null) {
-        await _authService.completeOnboarding(uid);
-      }
+      if (uid != null) await _authService.completeOnboarding(uid);
     }
 
     final profile = current.profile;
-
     state = AsyncValue.data(
       AuthSession(
         profile: profile == null

@@ -13,7 +13,7 @@ class AppConfig {
 
   static const String deployedBackendUrl = String.fromEnvironment(
     'BACKEND_DEPLOY_URL',
-    defaultValue: 'https://gossip-garden-backend.up.railway.app',
+    defaultValue: 'https://backendgossipgarden-production.up.railway.app',
   );
 
   static const bool enableFirebase = bool.fromEnvironment(

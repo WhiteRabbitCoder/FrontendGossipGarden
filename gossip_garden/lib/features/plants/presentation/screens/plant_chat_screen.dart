@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/plant_providers.dart';
 import '../providers/chat_providers.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/telemetry_panel.dart';
 import '../../data/models/plant.dart';
@@ -24,15 +25,21 @@ class PlantChatScreen extends ConsumerStatefulWidget {
 class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  bool _waitingForPlant = false;
 
   Plant? _plant;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _scrollToBottom();
-    });
+    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+  }
+
+  @override
+  void dispose() {
+    _textController.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 
   void _scrollToBottom() {
@@ -45,33 +52,59 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
     }
   }
 
-  void _sendMessage() {
+  Future<void> _sendMessage() async {
     final text = _textController.text.trim();
-    if (text.isEmpty || _plant == null) return;
+    if (text.isEmpty || _plant == null || _waitingForPlant) return;
 
-    ref.read(chatMessagesProvider(widget.plantId).notifier).addMessage(text);
     _textController.clear();
-    setState(() {});
 
-    // Simular respuesta de la planta después de un retraso
-    Future.delayed(const Duration(seconds: 1), () {
-      ref.read(chatMessagesProvider(widget.plantId).notifier).addMessage(
-            '¡Gracias por tu mensaje! Mi sensor de humedad marca ${_plant?.sensors.soilMoisture.toStringAsFixed(1)}%.',
-            sender: 'plant',
-            source: 'sensor',
-            confidence: 'high',
-          );
-      _scrollToBottom();
-    });
+    // 1. Añadir mensaje del usuario al estado local
+    ref.read(chatMessagesProvider(widget.plantId).notifier).addMessage(text);
+    setState(() => _waitingForPlant = true);
+
+    // 2. Llamar al backend
+    final token = ref.read(backendTokenProvider);
+    final chatService = ref.read(backendChatServiceProvider);
+
+    try {
+      final response = await chatService.chat(
+        plantId: widget.plantId,
+        message: text,
+        token: token,
+      );
+
+      if (mounted) {
+        ref.read(chatMessagesProvider(widget.plantId).notifier).addMessage(
+              response,
+              sender: 'plant',
+              source: 'ai',
+              confidence: 'high',
+            );
+      }
+    } catch (e) {
+      if (mounted) {
+        ref.read(chatMessagesProvider(widget.plantId).notifier).addMessage(
+              'No pude conectar con el servidor. Intenta de nuevo.',
+              sender: 'plant',
+              source: 'error',
+              confidence: 'low',
+            );
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _waitingForPlant = false);
+        WidgetsBinding.instance
+            .addPostFrameCallback((_) => _scrollToBottom());
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final plantsAsync = ref.watch(plantsProvider);
     final messages = ref.watch(chatMessagesProvider(widget.plantId));
-    final realtimeAsync = ref.watch(
-      plantRealtimeSensorProvider(int.tryParse(widget.plantId) ?? 0),
-    );
+    final realtimeAsync =
+        ref.watch(plantRealtimeSensorProvider(widget.plantId));
 
     return plantsAsync.when(
       data: (plants) {
@@ -142,14 +175,6 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                 ),
               ],
             ),
-            actions: [
-              IconButton(
-                icon: const Icon(Icons.info_outline),
-                onPressed: () {
-                  // Mostrar panel de telemetría
-                },
-              ),
-            ],
           ),
           body: Column(
             children: [
@@ -157,9 +182,29 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                 child: ListView.builder(
                   controller: _scrollController,
                   padding: const EdgeInsets.only(bottom: 16),
-                  itemCount: messages.length,
-                  itemBuilder: (context, index) =>
-                      MessageBubble(message: messages[index]),
+                  itemCount: messages.length + (_waitingForPlant ? 1 : 0),
+                  itemBuilder: (context, index) {
+                    if (index == messages.length && _waitingForPlant) {
+                      return const Padding(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            SizedBox(width: 8),
+                            Text('La planta está pensando...',
+                                style: TextStyle(
+                                    color: Colors.grey, fontSize: 13)),
+                          ],
+                        ),
+                      );
+                    }
+                    return MessageBubble(message: messages[index]);
+                  },
                 ),
               ),
               if (_plant != null) ...[
@@ -215,6 +260,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                     Expanded(
                       child: TextField(
                         controller: _textController,
+                        enabled: !_waitingForPlant,
                         decoration: InputDecoration(
                           hintText: 'Escribe un mensaje...',
                           border: OutlineInputBorder(
@@ -231,12 +277,14 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                     ),
                     const SizedBox(width: 8),
                     GestureDetector(
-                      onTap: _sendMessage,
+                      onTap: _waitingForPlant ? null : _sendMessage,
                       child: Container(
                         width: 48,
                         height: 48,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF4A6741),
+                          color: _waitingForPlant
+                              ? Colors.grey.shade300
+                              : const Color(0xFF4A6741),
                           borderRadius: BorderRadius.circular(24),
                         ),
                         child: const Icon(Icons.send, color: Colors.white),

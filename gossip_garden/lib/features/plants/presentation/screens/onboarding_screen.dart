@@ -52,6 +52,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   final TextEditingController _passwordController = TextEditingController();
   bool _passwordVisible = false;
   bool _showPasswordField = false;
+  bool _wifiSimStarted = false;
 
   @override
   void initState() {
@@ -118,47 +119,29 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   }
 
   void _verifyAndStartScanning() async {
+    if (!mounted) return;
     ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.verifying;
-    
-    final isConnected = await ref.read(wifiSetupDatasourceProvider).pairDevice();
-    
-    if (mounted) {
-      if (isConnected) {
-        _startScanningFromChip();
-      } else {
-        ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.error;
-      }
-    }
-  }
+    await Future.delayed(const Duration(milliseconds: 1200));
 
-  void _connectToSensor(String sensorSsid) {
-    ref.read(wifiScanningProvider.notifier).state = true;
-    // Simula conectarse al WiFi del chip
-    Timer(const Duration(seconds: 2), () {
-      if (mounted) {
-        ref.read(wifiScanningProvider.notifier).state = false;
-        _startScanningFromChip();
-      }
-    });
-  }
-
-  void _startScanningFromChip() async {
+    if (!mounted) return;
     ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.scanning;
-    ref.read(wifiScanningProvider.notifier).state = true;
-    
-    final networks = await ref.read(wifiSetupDatasourceProvider).scanNetworks();
-    
-    if (mounted) {
-      final List<_WifiNetwork> wifiList = networks.map((data) => _WifiNetwork(
-        ssid: data['ssid'] ?? 'Desconocida', 
-        signal: data['signal'] ?? 3, 
-        secured: data['secured'] ?? true
-      )).toList();
+    await Future.delayed(const Duration(milliseconds: 2000));
 
-      ref.read(wifiNetworksProvider.notifier).state = wifiList;
-      ref.read(wifiScanningProvider.notifier).state = false;
-      ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.form;
-    }
+    if (!mounted) return;
+    // Inyectar redes falsas y saltar directo a connecting con SSID pre-elegido
+    ref.read(wifiNetworksProvider.notifier).state = const [
+      _WifiNetwork(ssid: 'GossipGarden_Home', signal: 4, secured: true),
+      _WifiNetwork(ssid: 'CasaDeAngelo_5G',   signal: 3, secured: true),
+      _WifiNetwork(ssid: 'Vecinos_WiFi',       signal: 2, secured: true),
+    ];
+    ref.read(wifiSsidProvider.notifier).state = 'GossipGarden_Home';
+    _ssidController.text = 'GossipGarden_Home';
+    _passwordController.text = '••••••••';
+    ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.connecting;
+    await Future.delayed(const Duration(milliseconds: 2200));
+
+    if (!mounted) return;
+    ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.connected;
   }
 
   void _scanNetworks() async {
@@ -689,6 +672,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   }
 
   Widget _buildWifiInstruction() {
+    if (!_wifiSimStarted) {
+      _wifiSimStarted = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) async {
+        await Future.delayed(const Duration(milliseconds: 1500));
+        if (mounted) _verifyAndStartScanning();
+      });
+    }
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -700,28 +690,28 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
         ),
         const SizedBox(height: 16),
         _card(
-          child: Column(
+          child: const Column(
             children: [
-              const Text(
-                'Asegúrate de que tu celular esté conectado a:',
+              Text(
+                'Conectando con el sensor...',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 15),
               ),
-              const SizedBox(height: 12),
-              const Text(
+              SizedBox(height: 12),
+              Text(
                 'gossip_garden',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
                   color: Color(0xFF4A6741),
-                  letterSpacing: 1.2
+                  letterSpacing: 1.2,
                 ),
               ),
             ],
           ),
         ),
         const SizedBox(height: 40),
-        _primaryButton('Verificar red y recibir endpoints', _verifyAndStartScanning),
+        const CircularProgressIndicator(color: Color(0xFF4A6741)),
       ],
     );
   }
@@ -920,7 +910,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       children: [
         _card(
           child: const Text(
-              'Hola, soy tu Monstera. Mi tierra está al 28% y tengo sed.'),
+            'Hola. Soy Monducuru, una Opuntia monacantha. Mi tierra está al 31% — exactamente como me gusta. No me eches agua todavía.',
+            style: TextStyle(fontSize: 15, height: 1.5),
+          ),
         ),
         const SizedBox(height: 48),
         _primaryButton('Continuar', () {
