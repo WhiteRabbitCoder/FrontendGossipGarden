@@ -147,7 +147,10 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
         );
       }
       // Intentar registrar en backend también
-      // (el endpoint de registro no devuelve token, el login sí)
+      final userId = await _backendAuth.register(email, password, name);
+      if (userId == null) {
+        throw Exception('Error al registrar en el backend.');
+      }
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
       rethrow;

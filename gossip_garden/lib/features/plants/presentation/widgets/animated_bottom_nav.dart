@@ -66,14 +66,28 @@ class AnimatedBottomNav extends StatelessWidget {
                           duration: const Duration(milliseconds: 300),
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: isActive ? GardenColors.forest : Colors.transparent,
+                            color: (isActive && tab.$1 != TabId.dashboard) ? GardenColors.forest : Colors.transparent,
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(
-                            tab.$2,
-                            size: 24,
-                            color: isActive ? Colors.white : GardenColors.dust,
-                          ),
+                          child: tab.$1 == TabId.dashboard
+                              ? AnimatedScale(
+                                  scale: isActive ? 1.3 : 1.0,
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeOutBack,
+                                  child: Opacity(
+                                    opacity: isActive ? 1.0 : 0.6,
+                                    child: Image.asset(
+                                      'images/house_icon.png',
+                                      width: 32,
+                                      height: 32,
+                                    ),
+                                  ),
+                                )
+                              : Icon(
+                                  tab.$2,
+                                  size: 24,
+                                  color: isActive ? Colors.white : GardenColors.dust,
+                                ),
                         ),
                         if (isActive) const SizedBox(height: 2),
                         if (isActive)
