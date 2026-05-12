@@ -39,13 +39,21 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       return;
     }
 
-    ref.read(authStateProvider.notifier).signInWithEmailAndPassword(email, password);
+    ref.read(authStateProvider.notifier).registerWithEmailAndPassword(email, password, email.split('@').first);
   }
 
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
     final isLoading = authState.isLoading;
+
+    ref.listen<AsyncValue<AuthSession>>(authStateProvider, (previous, next) {
+      if (next.hasError) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(next.error.toString())),
+        );
+      }
+    });
 
     return Scaffold(
       backgroundColor: GardenColors.cream,
