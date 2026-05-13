@@ -166,8 +166,14 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
           email: email,
           password: password,
         );
-      } else {
-        // Sin Firebase: crear sesión local mínima
+      }
+
+      // Siempre intentar obtener JWT del backend
+      final token = await _backendAuth.login(email, password);
+      _ref.read(backendTokenProvider.notifier).state = token;
+
+      // Si no hay Firebase, creamos la sesión local basada en el éxito del backend
+      if (!FirebaseEnvironment.isConfigured) {
         state = AsyncValue.data(
           AuthSession(
             profile: UserProfile(
@@ -184,10 +190,6 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
           ),
         );
       }
-
-      // Siempre intentar obtener JWT del backend
-      final token = await _backendAuth.login(email, password);
-      _ref.read(backendTokenProvider.notifier).state = token;
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
       rethrow;

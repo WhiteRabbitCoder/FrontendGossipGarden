@@ -10,20 +10,19 @@ class BackendAuthService {
 
   /// Llama a POST /api/v1/auth/login y devuelve el JWT de Supabase, o null si falla.
   Future<String?> login(String email, String password) async {
-    try {
-      final uri = Uri.parse('${AppConfig.backendBaseUrl}/api/v1/auth/login');
-      final response = await _httpClient.post(
-        uri,
-        headers: {'Content-Type': 'application/json'},
-        body: jsonEncode({'email': email, 'password': password}),
-      );
-      if (response.statusCode == 200) {
-        final data = jsonDecode(response.body) as Map<String, dynamic>;
-        return data['access_token'] as String?;
-      }
-      return null;
-    } catch (_) {
-      return null;
+    final uri = Uri.parse('${AppConfig.backendBaseUrl}/api/v1/auth/login');
+    final response = await _httpClient.post(
+      uri,
+      headers: {'Content-Type': 'application/json'},
+      body: jsonEncode({'email': email, 'password': password}),
+    );
+    if (response.statusCode == 200) {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      return data['access_token'] as String?;
+    } else {
+      final data = jsonDecode(response.body) as Map<String, dynamic>;
+      final message = data['detail'] as String? ?? 'Error desconocido';
+      throw Exception(message);
     }
   }
 
