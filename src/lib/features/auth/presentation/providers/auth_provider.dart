@@ -4,10 +4,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import 'package:gossip_garden/core/config/firebase_environment.dart';
 import 'package:gossip_garden/core/services/backend_auth_service.dart';
+import 'package:gossip_garden/core/services/token_storage.dart';
 
 import '../../data/auth_service.dart';
 import '../../data/user_profile.dart';
@@ -26,6 +28,8 @@ class AuthSession {
 
 /// JWT de Supabase devuelto por el backend. Null cuando no hay sesión activa.
 final backendTokenProvider = StateProvider<String?>((_) => null);
+
+final _tokenStorageProvider = Provider<TokenStorage>((_) => const TokenStorage());
 
 final backendAuthServiceProvider =
     Provider<BackendAuthService>((_) => BackendAuthService());
@@ -46,13 +50,18 @@ final authStateProvider =
   (ref) => AuthNotifier(
     ref.read(authServiceProvider),
     ref.read(backendAuthServiceProvider),
+    ref.read(_tokenStorageProvider),
     ref,
   ),
 );
 
 class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
-  AuthNotifier(this._authService, this._backendAuth, this._ref)
-      : super(
+  AuthNotifier(
+    this._authService,
+    this._backendAuth,
+    this._tokenStorage,
+    this._ref,
+  ) : super(
           AsyncValue.data(
             AuthSession(
               profile: null,
@@ -60,13 +69,23 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
             ),
           ),
         ) {
-    _bindFirebaseAuth();
+    _bootstrap();
   }
 
   final AuthService _authService;
   final BackendAuthService _backendAuth;
+  final TokenStorage _tokenStorage;
   final Ref _ref;
   StreamSubscription<User?>? _subscription;
+
+  /// Al arrancar, restaura el token persistido y enlaza el stream de Firebase Auth.
+  Future<void> _bootstrap() async {
+    final saved = await _tokenStorage.readToken();
+    if (saved != null) {
+      _ref.read(backendTokenProvider.notifier).state = saved;
+    }
+    _bindFirebaseAuth();
+  }
 
   void _bindFirebaseAuth() {
     if (!FirebaseEnvironment.isConfigured) return;
@@ -109,12 +128,56 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
     state = const AsyncValue.loading();
 
     if (!FirebaseEnvironment.isConfigured) {
+      // Sin Firebase: flujo directo con backend Google OAuth.
+      try {
+        await _signInWithBackendGoogle();
+      } catch (error, stackTrace) {
+        state = AsyncValue.error(error, stackTrace);
+        rethrow;
+      }
+      return;
+    }
+
+    try {
+      // Obtener JWT de Supabase vía deep link.
+      await _signInWithBackendGoogle();
+      // Firebase sign-in para mantener Firestore.
+      await _authService.signInWithGoogle();
+    } catch (error, stackTrace) {
+      state = AsyncValue.error(error, stackTrace);
+      rethrow;
+    }
+  }
+
+  Future<void> _signInWithBackendGoogle() async {
+    const callbackScheme = 'gossipgarden';
+    const redirectTo = '$callbackScheme://auth/callback';
+
+    final authUrl = await _backendAuth.getGoogleAuthUrl(redirectTo: redirectTo);
+    final callbackUrl = await FlutterWebAuth2.authenticate(
+      url: authUrl,
+      callbackUrlScheme: callbackScheme,
+    );
+
+    // Supabase devuelve el token en el fragment: #access_token=...&...
+    final fragment = Uri.parse(callbackUrl).fragment;
+    final params = Uri.splitQueryString(fragment);
+    final token = params['access_token'];
+    if (token == null || token.isEmpty) {
+      throw BackendAuthException('No se recibió access_token en el callback de Google');
+    }
+
+    await _tokenStorage.saveToken(token);
+    _ref.read(backendTokenProvider.notifier).state = token;
+
+    // Si Firebase NO está activo, construir sesión local mínima.
+    if (!FirebaseEnvironment.isConfigured) {
       state = AsyncValue.data(
         AuthSession(
           profile: const UserProfile(
-            uid: 'local-user',
+            uid: 'google-user',
             displayName: 'Garden User',
-            email: 'user@example.com',
+            email: '',
             onboardingCompleted: false,
             favoritePlantIds: [],
             useGridView: true,
@@ -124,30 +187,36 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
           onboardingCompleted: false,
         ),
       );
-      return;
     }
-
-    try {
-      await _authService.signInWithGoogle();
-    } catch (error, stackTrace) {
-      state = AsyncValue.error(error, stackTrace);
-      rethrow;
-    }
+    // Si Firebase SÍ está activo, el stream de _bindFirebaseAuth actualizará el estado.
   }
 
   Future<void> registerWithEmailAndPassword(
-      String email, String password, String name) async {
+      String email, String password, String username) async {
     state = const AsyncValue.loading();
     try {
+      // Registrar en backend (Supabase).
+      await _backendAuth.register(
+        email: email,
+        password: password,
+        username: username,
+      );
+
+      // Si Firebase está activo, también registrar ahí (para Firestore).
       if (FirebaseEnvironment.isConfigured) {
-        await _authService.registerWithEmailAndPassword(
-          email: email,
-          password: password,
-          name: name,
-        );
+        try {
+          await _authService.registerWithEmailAndPassword(
+            email: email,
+            password: password,
+            name: username,
+          );
+        } catch (_) {
+          // Firebase puede fallar si Supabase ya lo creó; no es bloqueante.
+        }
       }
-      // Intentar registrar en backend también
-      // (el endpoint de registro no devuelve token, el login sí)
+
+      // Auto-login para obtener JWT (el endpoint de registro no devuelve token).
+      await _doLogin(email, password);
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
       rethrow;
@@ -158,13 +227,13 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
     state = const AsyncValue.loading();
     try {
       if (FirebaseEnvironment.isConfigured) {
-        // Firebase maneja el estado vía _bindFirebaseAuth
+        // Firebase maneja el estado vía _bindFirebaseAuth.
         await _authService.signInWithEmailAndPassword(
           email: email,
           password: password,
         );
       } else {
-        // Sin Firebase: crear sesión local mínima
+        // Sin Firebase: construir sesión local mínima.
         state = AsyncValue.data(
           AuthSession(
             profile: UserProfile(
@@ -182,16 +251,22 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
         );
       }
 
-      // Siempre intentar obtener JWT del backend
-      final token = await _backendAuth.login(email, password);
-      _ref.read(backendTokenProvider.notifier).state = token;
+      // Obtener JWT del backend para todas las llamadas API.
+      await _doLogin(email, password);
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
       rethrow;
     }
   }
 
+  Future<void> _doLogin(String email, String password) async {
+    final token = await _backendAuth.login(email, password);
+    await _tokenStorage.saveToken(token);
+    _ref.read(backendTokenProvider.notifier).state = token;
+  }
+
   Future<void> signOut() async {
+    await _tokenStorage.clearToken();
     _ref.read(backendTokenProvider.notifier).state = null;
 
     if (FirebaseEnvironment.isConfigured) {

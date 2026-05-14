@@ -1,8 +1,9 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
+import 'package:gossip_garden/core/config/app_config.dart';
 
-const _chatBaseUrl = 'https://deacon-graveless-conjugally.ngrok-free.dev';
-
+// PENDIENTE: endpoint POST /api/v1/chat/{plant_id} aún no implementado en el backend.
+// Ver PENDING_BACKEND.md — hasta que exista, PlantChatScreen usa Firestore como fallback.
 class BackendChatService {
   BackendChatService({http.Client? httpClient})
       : _httpClient = httpClient ?? http.Client();
@@ -14,7 +15,7 @@ class BackendChatService {
     required String message,
     String? token,
   }) async {
-    final uri = Uri.parse('$_chatBaseUrl/api/v1/chat/$plantId');
+    final uri = Uri.parse('${AppConfig.backendBaseUrl}/api/v1/chat/$plantId');
     final response = await _httpClient.post(
       uri,
       headers: {

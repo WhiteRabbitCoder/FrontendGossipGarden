@@ -1,3 +1,7 @@
+> ⚠️ **PARCIALMENTE DESACTUALIZADO** — La sección "Backend contract" describe el backend Railway antiguo.
+> El backend activo es `backendGossipGarden/` con endpoints `/api/v1/*` y JWT Supabase.
+> Contrato vigente: `backendGossipGarden/API_CONTRACT.md`. Gaps y pendientes: `PENDING_BACKEND.md`.
+
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
