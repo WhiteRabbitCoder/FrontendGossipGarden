@@ -24,6 +24,17 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFFFDFCF8),
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF4A6741)),
       ),
+      builder: (context, child) {
+        return Container(
+          color: const Color(0xFF1A2E1A),
+          child: Center(
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 430),
+              child: child!,
+            ),
+          ),
+        );
+      },
       home: const _AppGate(),
     );
   }
