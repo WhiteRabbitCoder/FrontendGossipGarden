@@ -4,6 +4,7 @@ import '../providers/plant_providers.dart';
 import '../providers/chat_providers.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../widgets/message_bubble.dart';
+import '../widgets/voice_note_bubble.dart';
 import '../widgets/telemetry_panel.dart';
 import '../../data/models/plant.dart';
 import '../../data/models/plant_enums.dart';
@@ -26,6 +27,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _waitingForPlant = false;
+  bool _showVoiceDemo = false;
 
   Plant? _plant;
 
@@ -182,28 +184,47 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                 child: ListView.builder(
                   controller: _scrollController,
                   padding: const EdgeInsets.only(bottom: 16),
-                  itemCount: messages.length + (_waitingForPlant ? 1 : 0),
+                  itemCount: messages.length + (_waitingForPlant ? 1 : 0) + (_showVoiceDemo ? 2 : 0),
                   itemBuilder: (context, index) {
-                    if (index == messages.length && _waitingForPlant) {
-                      return const Padding(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        child: Row(
-                          children: [
-                            SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                            SizedBox(width: 8),
-                            Text('La planta está pensando...',
-                                style: TextStyle(
-                                    color: Colors.grey, fontSize: 13)),
-                          ],
-                        ),
+                    // Mensajes normales primero
+                    if (index < messages.length) {
+                      return MessageBubble(message: messages[index]);
+                    }
+
+                    // Notas de voz al final del hilo
+                    if (_showVoiceDemo && index == messages.length) {
+                      return VoiceNoteBubble(
+                        isUser: true,
+                        durationSeconds: 21,
+                        timestamp: '17:19',
                       );
                     }
-                    return MessageBubble(message: messages[index]);
+                    if (_showVoiceDemo && index == messages.length + 1) {
+                      return VoiceNoteBubble(
+                        isUser: false,
+                        durationSeconds: 14,
+                        timestamp: '17:20',
+                      );
+                    }
+
+                    // Indicador "planta pensando..."
+                    return const Padding(
+                      padding:
+                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      child: Row(
+                        children: [
+                          SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          ),
+                          SizedBox(width: 8),
+                          Text('La planta está pensando...',
+                              style: TextStyle(
+                                  color: Colors.grey, fontSize: 13)),
+                        ],
+                      ),
+                    );
                   },
                 ),
               ),
@@ -257,6 +278,31 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                 color: Colors.white,
                 child: Row(
                   children: [
+                    // Mic button
+                    GestureDetector(
+                      onTap: () {
+                        setState(() => _showVoiceDemo = !_showVoiceDemo);
+                        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+                      },
+                      child: Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: _showVoiceDemo
+                              ? const Color(0xFF4A6741)
+                              : Colors.grey.shade100,
+                          borderRadius: BorderRadius.circular(22),
+                        ),
+                        child: Icon(
+                          Icons.mic_rounded,
+                          color: _showVoiceDemo
+                              ? Colors.white
+                              : const Color(0xFF4A6741),
+                          size: 22,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: TextField(
                         controller: _textController,
@@ -279,15 +325,15 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                     GestureDetector(
                       onTap: _waitingForPlant ? null : _sendMessage,
                       child: Container(
-                        width: 48,
-                        height: 48,
+                        width: 44,
+                        height: 44,
                         decoration: BoxDecoration(
                           color: _waitingForPlant
                               ? Colors.grey.shade300
                               : const Color(0xFF4A6741),
-                          borderRadius: BorderRadius.circular(24),
+                          borderRadius: BorderRadius.circular(22),
                         ),
-                        child: const Icon(Icons.send, color: Colors.white),
+                        child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
                       ),
                     ),
                   ],
