@@ -32,6 +32,8 @@ class SpeciesCandidate {
     this.family,
     this.genus,
     this.description,
+    this.imageUrl,
+    this.referenceImages = const [],
   });
 
   final String scientificName;
@@ -42,9 +44,15 @@ class SpeciesCandidate {
   final String? family;
   final String? genus;
   final String? description;
+  final String? imageUrl;
+  final List<String> referenceImages;
 
   factory SpeciesCandidate.fromJson(Map<String, dynamic> j) {
     final taxonomy = j['taxonomy'] as Map<String, dynamic>? ?? {};
+    final refImgs = (j['reference_images'] as List?)
+            ?.map((e) => e.toString())
+            .toList() ??
+        const <String>[];
     return SpeciesCandidate(
       scientificName: j['scientific_name'] as String? ?? '',
       commonNames: (j['common_names'] as List?)
@@ -57,6 +65,8 @@ class SpeciesCandidate {
       family: (taxonomy['family'] ?? j['family']) as String?,
       genus: (taxonomy['genus'] ?? j['genus']) as String?,
       description: j['description'] as String?,
+      imageUrl: j['image_url'] as String?,
+      referenceImages: refImgs,
     );
   }
 
