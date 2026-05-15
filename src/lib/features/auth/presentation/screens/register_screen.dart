@@ -13,6 +13,7 @@ class RegisterScreen extends ConsumerStatefulWidget {
 }
 
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
+  final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
@@ -20,6 +21,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   void dispose() {
+    _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmController.dispose();
@@ -27,11 +29,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   void _register() {
+    final username = _usernameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     final confirm = _confirmController.text;
 
-    if (email.isEmpty || password.isEmpty) return;
+    if (username.isEmpty || email.isEmpty || password.isEmpty) return;
     if (password != confirm) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Las contraseñas no coinciden')),
@@ -39,13 +42,16 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       return;
     }
 
-    ref.read(authStateProvider.notifier).signInWithEmailAndPassword(email, password);
+    ref
+        .read(authStateProvider.notifier)
+        .registerWithEmailAndPassword(email, password, username);
   }
 
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
     final isLoading = authState.isLoading;
+    final errorMsg = authState.hasError ? authState.error.toString() : null;
 
     return Scaffold(
       backgroundColor: GardenColors.cream,
@@ -64,109 +70,157 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                  Text(
-                    'Crear cuenta',
-                    textAlign: TextAlign.center,
-                    style: GardenTextStyles.display.copyWith(
-                      color: GardenColors.forest,
-                      fontSize: 36,
+                Text(
+                  'Crear cuenta',
+                  textAlign: TextAlign.center,
+                  style: GardenTextStyles.display.copyWith(
+                    color: GardenColors.forest,
+                    fontSize: 36,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Únete a Gossip Garden',
+                  textAlign: TextAlign.center,
+                  style: GardenTextStyles.body.copyWith(color: GardenColors.earth),
+                ),
+                const SizedBox(height: 32),
+
+                if (errorMsg != null)
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    margin: const EdgeInsets.only(bottom: 16),
+                    decoration: BoxDecoration(
+                      color: GardenColors.errorRose.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: GardenColors.errorRose.withOpacity(0.3)),
+                    ),
+                    child: Text(
+                      errorMsg,
+                      style: GardenTextStyles.bodySmall
+                          .copyWith(color: GardenColors.errorRose),
+                      textAlign: TextAlign.center,
                     ),
                   ),
-                  const SizedBox(height: 8),
-                  Text(
-                    'Únete a Gossip Garden',
-                    textAlign: TextAlign.center,
-                    style: GardenTextStyles.body.copyWith(color: GardenColors.earth),
-                  ),
-                  const SizedBox(height: 40),
 
-                  TextField(
-                    controller: _emailController,
-                    keyboardType: TextInputType.emailAddress,
-                    decoration: InputDecoration(
-                      hintText: 'Correo electrónico',
-                      hintStyle: GardenTextStyles.body.copyWith(color: GardenColors.dust),
-                      prefixIcon: const Icon(Icons.email_outlined, color: GardenColors.moss),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide.none,
+                // Username
+                TextField(
+                  controller: _usernameController,
+                  decoration: InputDecoration(
+                    hintText: 'Nombre de usuario',
+                    hintStyle: GardenTextStyles.body.copyWith(color: GardenColors.dust),
+                    prefixIcon:
+                        const Icon(Icons.person_outline, color: GardenColors.moss),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 20),
+                  ),
+                  style: GardenTextStyles.body,
+                ),
+                const SizedBox(height: 16),
+
+                // Email
+                TextField(
+                  controller: _emailController,
+                  keyboardType: TextInputType.emailAddress,
+                  decoration: InputDecoration(
+                    hintText: 'Correo electrónico',
+                    hintStyle: GardenTextStyles.body.copyWith(color: GardenColors.dust),
+                    prefixIcon:
+                        const Icon(Icons.email_outlined, color: GardenColors.moss),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 20),
+                  ),
+                  style: GardenTextStyles.body,
+                ),
+                const SizedBox(height: 16),
+
+                // Password
+                TextField(
+                  controller: _passwordController,
+                  obscureText: _obscurePassword,
+                  decoration: InputDecoration(
+                    hintText: 'Contraseña',
+                    hintStyle: GardenTextStyles.body.copyWith(color: GardenColors.dust),
+                    prefixIcon:
+                        const Icon(Icons.lock_outline, color: GardenColors.moss),
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        color: GardenColors.dust,
                       ),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 20),
+                      onPressed: () =>
+                          setState(() => _obscurePassword = !_obscurePassword),
                     ),
-                    style: GardenTextStyles.body,
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 20),
                   ),
-                  const SizedBox(height: 16),
+                  style: GardenTextStyles.body,
+                ),
+                const SizedBox(height: 16),
 
-                  TextField(
-                    controller: _passwordController,
-                    obscureText: _obscurePassword,
-                    decoration: InputDecoration(
-                      hintText: 'Contraseña',
-                      hintStyle: GardenTextStyles.body.copyWith(color: GardenColors.dust),
-                      prefixIcon: const Icon(Icons.lock_outline, color: GardenColors.moss),
-                      suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                          color: GardenColors.dust,
+                // Confirm password
+                TextField(
+                  controller: _confirmController,
+                  obscureText: true,
+                  decoration: InputDecoration(
+                    hintText: 'Confirmar contraseña',
+                    hintStyle: GardenTextStyles.body.copyWith(color: GardenColors.dust),
+                    prefixIcon:
+                        const Icon(Icons.lock_outline, color: GardenColors.moss),
+                    filled: true,
+                    fillColor: Colors.white,
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(24),
+                      borderSide: BorderSide.none,
+                    ),
+                    contentPadding: const EdgeInsets.symmetric(vertical: 20),
+                  ),
+                  style: GardenTextStyles.body,
+                ),
+                const SizedBox(height: 32),
+
+                ElevatedButton(
+                  onPressed: isLoading ? null : _register,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: GardenColors.forest,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 20),
+                    elevation: 0,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(24),
+                    ),
+                  ),
+                  child: isLoading
+                      ? const SizedBox(
+                          width: 24,
+                          height: 24,
+                          child: CircularProgressIndicator(
+                              color: Colors.white, strokeWidth: 2),
+                        )
+                      : Text(
+                          'Crear cuenta',
+                          style: GardenTextStyles.title
+                              .copyWith(color: Colors.white, fontSize: 20),
                         ),
-                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 20),
-                    ),
-                    style: GardenTextStyles.body,
-                  ),
-                  const SizedBox(height: 16),
-
-                  TextField(
-                    controller: _confirmController,
-                    obscureText: true,
-                    decoration: InputDecoration(
-                      hintText: 'Confirmar contraseña',
-                      hintStyle: GardenTextStyles.body.copyWith(color: GardenColors.dust),
-                      prefixIcon: const Icon(Icons.lock_outline, color: GardenColors.moss),
-                      filled: true,
-                      fillColor: Colors.white,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(24),
-                        borderSide: BorderSide.none,
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(vertical: 20),
-                    ),
-                    style: GardenTextStyles.body,
-                  ),
-                  const SizedBox(height: 32),
-
-                  ElevatedButton(
-                    onPressed: isLoading ? null : _register,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: GardenColors.forest,
-                      foregroundColor: Colors.white,
-                      padding: const EdgeInsets.symmetric(vertical: 20),
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(24),
-                      ),
-                    ),
-                    child: isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
-                          )
-                        : Text(
-                            'Crear cuenta',
-                            style: GardenTextStyles.title.copyWith(color: Colors.white, fontSize: 20),
-                          ),
-                  ),
-                ],
+                ),
+              ],
             ),
           ),
         ),

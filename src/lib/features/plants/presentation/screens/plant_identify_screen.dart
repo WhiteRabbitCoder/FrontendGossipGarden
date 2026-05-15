@@ -1,26 +1,48 @@
+import 'dart:io';
+
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image/image.dart' as img;
 
-enum _IdentifyState { idle, scanning, result }
+import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_text_styles.dart';
+import '../../data/models/identification.dart';
+import '../providers/plant_providers.dart';
 
-class PlantIdentifyScreen extends StatefulWidget {
+enum _IdentifyStep { idle, uploading, selectCandidate, confirm, creating }
+
+class PlantIdentifyScreen extends ConsumerStatefulWidget {
   final VoidCallback? onBack;
-  final VoidCallback? onCompleted;
+  final void Function(String plantId)? onPlantCreated;
 
-  const PlantIdentifyScreen({super.key, this.onBack, this.onCompleted});
+  const PlantIdentifyScreen({super.key, this.onBack, this.onPlantCreated});
 
   @override
-  State<PlantIdentifyScreen> createState() => _PlantIdentifyScreenState();
+  ConsumerState<PlantIdentifyScreen> createState() =>
+      _PlantIdentifyScreenState();
 }
 
-class _PlantIdentifyScreenState extends State<PlantIdentifyScreen>
-    with SingleTickerProviderStateMixin {
-  _IdentifyState _state = _IdentifyState.idle;
+class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
+  _IdentifyStep _step = _IdentifyStep.idle;
   late AnimationController _scanController;
   late Animation<double> _scanAnimation;
+
+  CameraController? _cameraController;
+  bool _cameraReady = false;
+
+  File? _imageFile;
+  IdentifyCompleted? _completed;
+  List<SpeciesCandidate> _candidates = [];
+  String? _errorMessage;
+
+  final _nicknameController = TextEditingController();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _scanController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
@@ -28,142 +50,343 @@ class _PlantIdentifyScreenState extends State<PlantIdentifyScreen>
     _scanAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _scanController, curve: Curves.easeInOut),
     );
+    _initCamera();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _cameraController?.dispose();
     _scanController.dispose();
+    _nicknameController.dispose();
     super.dispose();
   }
 
-  Future<void> _startIdentification() async {
-    setState(() => _state = _IdentifyState.scanning);
-    _scanController.repeat(reverse: true);
-    await Future.delayed(const Duration(milliseconds: 2400));
-    if (mounted) {
-      _scanController.stop();
-      setState(() => _state = _IdentifyState.result);
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final controller = _cameraController;
+    if (controller == null || !controller.value.isInitialized) return;
+    if (state == AppLifecycleState.inactive) {
+      controller.dispose();
+      _cameraController = null;
+      if (mounted) setState(() => _cameraReady = false);
+    } else if (state == AppLifecycleState.resumed) {
+      _initCamera();
     }
   }
+
+  Future<void> _initCamera() async {
+    final cameras = await availableCameras();
+    if (cameras.isEmpty || !mounted) return;
+
+    final back = cameras.firstWhere(
+      (c) => c.lensDirection == CameraLensDirection.back,
+      orElse: () => cameras.first,
+    );
+
+    final controller = CameraController(
+      back,
+      ResolutionPreset.high,
+      enableAudio: false,
+      imageFormatGroup: ImageFormatGroup.jpeg,
+    );
+    await controller.initialize();
+    if (!mounted) return;
+
+    setState(() {
+      _cameraController = controller;
+      _cameraReady = true;
+    });
+  }
+
+  // ─── Capture & identify ───────────────────────────────────────────────────
+
+  Future<void> _captureAndIdentify() async {
+    final controller = _cameraController;
+    if (controller == null || !controller.value.isInitialized) return;
+
+    // Tomar foto y procesar en memoria antes de cambiar step
+    final xFile = await controller.takePicture();
+    final bytes = await File(xFile.path).readAsBytes();
+
+    final original = img.decodeImage(bytes)!;
+    final oriented = img.bakeOrientation(original);
+
+    final w = oriented.width;
+    final h = oriented.height;
+    final side = w < h ? w : h;
+
+    final cropped = img.copyCrop(
+      oriented,
+      x: (w - side) ~/ 2,
+      y: (h - side) ~/ 2,
+      width: side,
+      height: side,
+    );
+    final resized = img.copyResize(cropped, width: 1024, height: 1024);
+
+    final outPath =
+        '${Directory.systemTemp.path}/plant_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    await File(outPath).writeAsBytes(img.encodeJpg(resized, quality: 92));
+
+    final file = File(outPath);
+
+    if (!mounted) return;
+    setState(() {
+      _imageFile = file;
+      _step = _IdentifyStep.uploading;
+      _errorMessage = null;
+    });
+    _scanController.repeat(reverse: true);
+
+    try {
+      final datasource = ref.read(identificationApiDatasourceProvider);
+      final result = await datasource.identify(image: file);
+
+      _scanController.stop();
+      if (!mounted) return;
+
+      switch (result) {
+        case NeedsMorePhotos(:final reason):
+          setState(() {
+            _step = _IdentifyStep.idle;
+            _errorMessage = reason;
+          });
+          _showNeedsMorePhotosDialog(reason);
+
+        case NeedsUserSelection(:final candidates):
+          setState(() {
+            _step = _IdentifyStep.selectCandidate;
+            _candidates = candidates;
+          });
+
+        case IdentifyCompleted():
+          setState(() {
+            _completed = result;
+            _nicknameController.text = result.profile.commonName;
+            _step = _IdentifyStep.confirm;
+          });
+      }
+    } catch (e) {
+      _scanController.stop();
+      if (mounted) {
+        setState(() {
+          _step = _IdentifyStep.idle;
+          _errorMessage = e.toString();
+        });
+      }
+    }
+  }
+
+  Future<void> _selectCandidate(SpeciesCandidate candidate) async {
+    setState(() {
+      _step = _IdentifyStep.uploading;
+      _errorMessage = null;
+    });
+    _scanController.repeat(reverse: true);
+
+    try {
+      final datasource = ref.read(identificationApiDatasourceProvider);
+      final result = await datasource.fromCandidate(candidate: candidate);
+      _scanController.stop();
+      if (!mounted) return;
+      setState(() {
+        _completed = result;
+        _nicknameController.text = result.profile.commonName;
+        _step = _IdentifyStep.confirm;
+      });
+    } catch (e) {
+      _scanController.stop();
+      if (mounted) {
+        setState(() {
+          _step = _IdentifyStep.selectCandidate;
+          _errorMessage = e.toString();
+        });
+      }
+    }
+  }
+
+  Future<void> _createPlant() async {
+    final completed = _completed;
+    if (completed == null) return;
+
+    final nickname = _nicknameController.text.trim();
+    if (nickname.isEmpty) return;
+
+    setState(() => _step = _IdentifyStep.creating);
+
+    try {
+      final createDs = ref.read(plantCreateDatasourceProvider);
+      final plant = await createDs.createPlant(
+        speciesId: completed.profile.speciesId,
+        nickname: nickname,
+        photoStoragePath: completed.photoStoragePath,
+      );
+
+      ref.invalidate(plantsProvider);
+
+      if (!mounted) return;
+      widget.onPlantCreated?.call(plant.id);
+      if (widget.onPlantCreated == null) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _step = _IdentifyStep.confirm;
+          _errorMessage = e.toString();
+        });
+      }
+    }
+  }
+
+  // ─── Dialogs ──────────────────────────────────────────────────────────────
+
+  void _showNeedsMorePhotosDialog(String reason) {
+    showDialog<void>(
+      context: context,
+      builder: (_) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: const Text('Foto insuficiente'),
+        content: Text(reason.isNotEmpty
+            ? reason
+            : 'No pudimos identificar la planta. Intenta con mejor iluminación o acércate más.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: const Text('Reintentar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ─── Build ────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFFDFCF8),
+      backgroundColor: GardenColors.cream,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFF4A6741)),
+          icon: const Icon(Icons.arrow_back, color: GardenColors.forest),
           onPressed: widget.onBack ?? () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Identificar planta',
-          style: TextStyle(color: Color(0xFF4A6741), fontWeight: FontWeight.w700),
+          style: GardenTextStyles.title.copyWith(color: GardenColors.forest),
         ),
       ),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 24),
         child: Column(
           children: [
-            const SizedBox(height: 16),
-            Expanded(child: _buildContent()),
+            const SizedBox(height: 8),
+            Expanded(child: _buildStep()),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildContent() {
-    switch (_state) {
-      case _IdentifyState.idle:
+  Widget _buildStep() {
+    switch (_step) {
+      case _IdentifyStep.idle:
         return _buildIdle();
-      case _IdentifyState.scanning:
-        return _buildScanning();
-      case _IdentifyState.result:
-        return _buildResult();
+      case _IdentifyStep.uploading:
+        return _buildUploading();
+      case _IdentifyStep.selectCandidate:
+        return _buildSelectCandidate();
+      case _IdentifyStep.confirm:
+        return _buildConfirm();
+      case _IdentifyStep.creating:
+        return _buildCreating();
     }
   }
+
+  // ─── Step: Idle ───────────────────────────────────────────────────────────
 
   Widget _buildIdle() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Viewfinder
+        // Viewfinder con preview de cámara embebido
         Container(
           width: double.infinity,
-          height: 300,
+          height: 280,
           decoration: BoxDecoration(
             color: const Color(0xFF1A2E1A),
             borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: const Color(0xFF4A6741), width: 3),
+            border: Border.all(color: GardenColors.forest, width: 3),
           ),
           child: Stack(
             children: [
-              // Fondo oscuro simulando cámara
               ClipRRect(
                 borderRadius: BorderRadius.circular(29),
-                child: Container(
-                  color: const Color(0xFF1A2E1A),
-                  child: Center(
-                    child: Icon(
-                      Icons.local_florist,
-                      size: 80,
-                      color: const Color(0xFF4A6741).withOpacity(0.4),
-                    ),
-                  ),
-                ),
+                child: _buildViewfinderContent(),
               ),
-              // Esquinas del visor
-              ..._buildViewfinderCorners(),
-              // Texto de instrucción
               Positioned(
-                bottom: 16,
-                left: 0,
-                right: 0,
+                bottom: 16, left: 0, right: 0,
                 child: Center(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: Colors.black.withOpacity(0.5),
                       borderRadius: BorderRadius.circular(20),
                     ),
-                    child: const Text(
-                      'Apunta a tu planta',
-                      style: TextStyle(color: Colors.white, fontSize: 13),
-                    ),
+                    child: const Text('Apunta a tu planta',
+                        style: TextStyle(color: Colors.white, fontSize: 13)),
                   ),
                 ),
               ),
+              ..._viewfinderCorners(),
             ],
           ),
         ),
-        const SizedBox(height: 32),
-        const Text(
-          'Enfoca tu planta',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: Color(0xFF2D2D2D)),
-        ),
+        const SizedBox(height: 24),
+
+        if (_errorMessage != null)
+          Container(
+            padding: const EdgeInsets.all(14),
+            margin: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              color: GardenColors.errorRose.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                  color: GardenColors.errorRose.withOpacity(0.3)),
+            ),
+            child: Text(_errorMessage!,
+                textAlign: TextAlign.center,
+                style: GardenTextStyles.bodySmall
+                    .copyWith(color: GardenColors.errorRose)),
+          ),
+
+        Text('Enfoca tu planta',
+            style: GardenTextStyles.title.copyWith(fontSize: 22)),
         const SizedBox(height: 8),
-        Text(
-          'Tocaremos el botón para identificarla con IA',
-          textAlign: TextAlign.center,
-          style: TextStyle(fontSize: 15, color: Colors.grey.shade600, height: 1.4),
-        ),
-        const SizedBox(height: 40),
+        Text('Tomaremos una foto para identificarla con IA',
+            textAlign: TextAlign.center,
+            style: GardenTextStyles.body
+                .copyWith(color: GardenColors.earth, fontSize: 15)),
+        const SizedBox(height: 32),
+
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
-            onPressed: _startIdentification,
+            onPressed: _cameraReady ? _captureAndIdentify : null,
             icon: const Icon(Icons.document_scanner_rounded),
-            label: const Text(
-              'Identificar',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-            ),
+            label: const Text('Identificar',
+                style: TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.w700)),
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4A6741),
+              backgroundColor: GardenColors.forest,
               foregroundColor: Colors.white,
+              disabledBackgroundColor:
+                  GardenColors.forest.withOpacity(0.4),
               padding: const EdgeInsets.symmetric(vertical: 18),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24)),
               elevation: 0,
             ),
           ),
@@ -172,211 +395,297 @@ class _PlantIdentifyScreenState extends State<PlantIdentifyScreen>
     );
   }
 
-  Widget _buildScanning() {
+  Widget _buildViewfinderContent() {
+    final controller = _cameraController;
+    if (_cameraReady && controller != null) {
+      final previewSize = controller.value.previewSize!;
+      return SizedBox.expand(
+        child: FittedBox(
+          fit: BoxFit.cover,
+          child: SizedBox(
+            width: previewSize.height,
+            height: previewSize.width,
+            child: CameraPreview(controller),
+          ),
+        ),
+      );
+    }
+    if (_imageFile != null) {
+      return Image.file(_imageFile!,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity);
+    }
+    return Center(
+      child: Icon(Icons.local_florist,
+          size: 80, color: GardenColors.forest.withOpacity(0.4)),
+    );
+  }
+
+  // ─── Step: Uploading / Scanning ───────────────────────────────────────────
+
+  Widget _buildUploading() {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Viewfinder con línea de escaneo animada
         Container(
           width: double.infinity,
-          height: 300,
+          height: 280,
           decoration: BoxDecoration(
             color: const Color(0xFF1A2E1A),
             borderRadius: BorderRadius.circular(32),
-            border: Border.all(color: const Color(0xFF4A6741), width: 3),
+            border: Border.all(color: GardenColors.forest, width: 3),
           ),
           child: Stack(
             children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(29),
-                child: Center(
-                  child: Icon(
-                    Icons.local_florist,
-                    size: 80,
-                    color: const Color(0xFF4A6741).withOpacity(0.4),
-                  ),
+              if (_imageFile != null)
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(29),
+                  child: Image.file(_imageFile!,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity),
+                )
+              else
+                Center(
+                  child: Icon(Icons.local_florist,
+                      size: 80,
+                      color: GardenColors.forest.withOpacity(0.4)),
                 ),
-              ),
-              // Línea de escaneo animada
               AnimatedBuilder(
                 animation: _scanAnimation,
                 builder: (_, __) => Positioned(
-                  top: _scanAnimation.value * 260,
-                  left: 0,
-                  right: 0,
+                  top: _scanAnimation.value * 240,
+                  left: 0, right: 0,
                   child: Container(
                     height: 2,
                     decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        colors: [
-                          Colors.transparent,
-                          const Color(0xFF8BC34A).withOpacity(0.8),
-                          Colors.transparent,
-                        ],
-                      ),
+                      gradient: LinearGradient(colors: [
+                        Colors.transparent,
+                        GardenColors.sage.withOpacity(0.8),
+                        Colors.transparent,
+                      ]),
                     ),
                   ),
                 ),
               ),
-              ..._buildViewfinderCorners(),
+              ..._viewfinderCorners(),
             ],
           ),
         ),
         const SizedBox(height: 40),
         const CircularProgressIndicator(
-          color: Color(0xFF4A6741),
-          strokeWidth: 3,
-        ),
+            color: GardenColors.forest, strokeWidth: 3),
         const SizedBox(height: 20),
-        const Text(
-          'Analizando...',
-          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-        ),
+        Text('Analizando...',
+            style: GardenTextStyles.title.copyWith(fontSize: 18)),
         const SizedBox(height: 6),
-        Text(
-          'Consultando base de datos botánica',
-          style: TextStyle(fontSize: 14, color: Colors.grey.shade500),
+        Text('Consultando base de datos botánica',
+            style: GardenTextStyles.body
+                .copyWith(color: GardenColors.dust, fontSize: 14)),
+      ],
+    );
+  }
+
+  // ─── Step: Select candidate ───────────────────────────────────────────────
+
+  Widget _buildSelectCandidate() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text('¿Cuál es tu planta?',
+            style: GardenTextStyles.title.copyWith(fontSize: 22)),
+        const SizedBox(height: 4),
+        Text('Selecciona la que más se parezca',
+            style:
+                GardenTextStyles.body.copyWith(color: GardenColors.earth)),
+        const SizedBox(height: 16),
+
+        if (_errorMessage != null)
+          Container(
+            padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: GardenColors.errorRose.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Text(_errorMessage!,
+                style: GardenTextStyles.bodySmall
+                    .copyWith(color: GardenColors.errorRose)),
+          ),
+
+        Expanded(
+          child: ListView.separated(
+            itemCount: _candidates.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 12),
+            itemBuilder: (_, i) => _CandidateCard(
+              candidate: _candidates[i],
+              onTap: () => _selectCandidate(_candidates[i]),
+            ),
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildResult() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        // Imagen con check overlay
-        Stack(
-          alignment: Alignment.center,
-          children: [
-            Container(
-              width: 140,
-              height: 140,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                color: const Color(0xFF4A6741).withOpacity(0.1),
-                border: Border.all(color: const Color(0xFF4A6741), width: 3),
-              ),
-              child: const Icon(Icons.local_florist, size: 64, color: Color(0xFF4A6741)),
+  // ─── Step: Confirm ────────────────────────────────────────────────────────
+
+  Widget _buildConfirm() {
+    final profile = _completed!.profile;
+    return SingleChildScrollView(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(20),
+            decoration: BoxDecoration(
+              color: GardenColors.sageLight,
+              borderRadius: BorderRadius.circular(24),
             ),
-            Positioned(
-              bottom: 4,
-              right: 4,
-              child: Container(
-                width: 36,
-                height: 36,
-                decoration: const BoxDecoration(
-                  color: Color(0xFF4CAF50),
-                  shape: BoxShape.circle,
-                ),
-                child: const Icon(Icons.check, color: Colors.white, size: 22),
+            child: Column(
+              children: [
+                Icon(Icons.verified_rounded,
+                    color: GardenColors.forest, size: 32),
+                const SizedBox(height: 8),
+                Text('¡Identificada!',
+                    style: GardenTextStyles.bodySmall
+                        .copyWith(color: GardenColors.forest)),
+                const SizedBox(height: 4),
+                Text(profile.commonName,
+                    textAlign: TextAlign.center,
+                    style:
+                        GardenTextStyles.display.copyWith(fontSize: 28)),
+                const SizedBox(height: 2),
+                Text(profile.scientificName,
+                    textAlign: TextAlign.center,
+                    style: GardenTextStyles.body.copyWith(
+                        fontStyle: FontStyle.italic,
+                        color: GardenColors.forest,
+                        fontSize: 15)),
+                const SizedBox(height: 8),
+                Text(profile.family,
+                    style: GardenTextStyles.bodySmall
+                        .copyWith(color: GardenColors.earth)),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 16),
+
+          if (profile.careSummary.isNotEmpty)
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
               ),
+              child: Text(profile.careSummary,
+                  style: GardenTextStyles.body
+                      .copyWith(fontSize: 14, height: 1.5)),
+            ),
+
+          const SizedBox(height: 20),
+
+          Text('Ponle un apodo',
+              style: GardenTextStyles.title.copyWith(fontSize: 16)),
+          const SizedBox(height: 8),
+          TextField(
+            controller: _nicknameController,
+            decoration: InputDecoration(
+              hintText: profile.commonName,
+              hintStyle: GardenTextStyles.body
+                  .copyWith(color: GardenColors.dust),
+              prefixIcon: const Icon(Icons.local_florist,
+                  color: GardenColors.moss),
+              filled: true,
+              fillColor: Colors.white,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(vertical: 18),
+            ),
+            style: GardenTextStyles.body,
+          ),
+
+          if (_errorMessage != null) ...[
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: GardenColors.errorRose.withOpacity(0.1),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Text(_errorMessage!,
+                  style: GardenTextStyles.bodySmall
+                      .copyWith(color: GardenColors.errorRose)),
             ),
           ],
-        ),
-        const SizedBox(height: 28),
-        const Text(
-          '¡Identificada!',
-          style: TextStyle(fontSize: 14, fontWeight: FontWeight.w600, color: Color(0xFF4CAF50)),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 8),
-        const Text(
-          'Monducuru',
-          style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800, color: Color(0xFF2D2D2D)),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 4),
-        const Text(
-          'Opuntia monacantha',
-          style: TextStyle(
-            fontSize: 18,
-            fontStyle: FontStyle.italic,
-            color: Color(0xFF4A6741),
-            fontWeight: FontWeight.w500,
-          ),
-          textAlign: TextAlign.center,
-        ),
-        const SizedBox(height: 16),
-        // Barra de confianza
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-          decoration: BoxDecoration(
-            color: const Color(0xFF4A6741).withOpacity(0.08),
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.verified_rounded, color: Color(0xFF4A6741), size: 20),
-              const SizedBox(width: 8),
-              const Text(
-                '97% de confianza',
-                style: TextStyle(
-                  fontSize: 15,
-                  fontWeight: FontWeight.w700,
-                  color: Color(0xFF4A6741),
-                ),
-              ),
-            ],
-          ),
-        ),
-        const SizedBox(height: 12),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: Text(
-            'Cactus nativo de Sudamérica. Espinas prominentes. Resistente a la sequía. Con personalidad.',
-            textAlign: TextAlign.center,
-            style: TextStyle(fontSize: 14, color: Colors.grey.shade600, height: 1.5),
-          ),
-        ),
-        const SizedBox(height: 40),
-        SizedBox(
-          width: double.infinity,
-          child: ElevatedButton(
-            onPressed: widget.onCompleted ?? () => Navigator.pop(context),
+
+          const SizedBox(height: 24),
+
+          ElevatedButton(
+            onPressed: _createPlant,
             style: ElevatedButton.styleFrom(
-              backgroundColor: const Color(0xFF4A6741),
+              backgroundColor: GardenColors.forest,
               foregroundColor: Colors.white,
               padding: const EdgeInsets.symmetric(vertical: 18),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24)),
               elevation: 0,
             ),
-            child: const Text(
-              '¡Esta es mi planta!',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
-            ),
+            child: Text('¡Esta es mi planta!',
+                style: GardenTextStyles.title
+                    .copyWith(color: Colors.white, fontSize: 18)),
           ),
-        ),
-      ],
+          const SizedBox(height: 24),
+        ],
+      ),
     );
   }
 
-  List<Widget> _buildViewfinderCorners() {
+  // ─── Step: Creating ───────────────────────────────────────────────────────
+
+  Widget _buildCreating() {
+    return const Center(
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(
+              color: GardenColors.forest, strokeWidth: 3),
+          SizedBox(height: 20),
+          Text('Registrando tu planta...'),
+        ],
+      ),
+    );
+  }
+
+  // ─── Viewfinder corners ───────────────────────────────────────────────────
+
+  List<Widget> _viewfinderCorners() {
     const color = Color(0xFF8BC34A);
     const size = 24.0;
     const thickness = 3.0;
     return [
-      // Top-left
       Positioned(
-        top: 12, left: 12,
-        child: _corner(color, size, thickness, top: true, left: true),
-      ),
-      // Top-right
+          top: 12,
+          left: 12,
+          child: _corner(color, size, thickness, top: true, left: true)),
       Positioned(
-        top: 12, right: 12,
-        child: _corner(color, size, thickness, top: true, left: false),
-      ),
-      // Bottom-left
+          top: 12,
+          right: 12,
+          child:
+              _corner(color, size, thickness, top: true, left: false)),
       Positioned(
-        bottom: 12, left: 12,
-        child: _corner(color, size, thickness, top: false, left: true),
-      ),
-      // Bottom-right
+          bottom: 12,
+          left: 12,
+          child:
+              _corner(color, size, thickness, top: false, left: true)),
       Positioned(
-        bottom: 12, right: 12,
-        child: _corner(color, size, thickness, top: false, left: false),
-      ),
+          bottom: 12,
+          right: 12,
+          child:
+              _corner(color, size, thickness, top: false, left: false)),
     ];
   }
 
@@ -386,11 +695,114 @@ class _PlantIdentifyScreenState extends State<PlantIdentifyScreen>
       width: size,
       height: size,
       child: CustomPaint(
-        painter: _CornerPainter(color, thickness, top: top, left: left),
+          painter:
+              _CornerPainter(color, thickness, top: top, left: left)),
+    );
+  }
+}
+
+// ─── Candidate card ───────────────────────────────────────────────────────────
+
+class _CandidateCard extends StatelessWidget {
+  const _CandidateCard({required this.candidate, required this.onTap});
+
+  final SpeciesCandidate candidate;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final pct = (candidate.probability * 100).toStringAsFixed(0);
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border:
+              Border.all(color: GardenColors.sageLight, width: 1.5),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 52,
+              height: 52,
+              decoration: BoxDecoration(
+                color: GardenColors.sageLight,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.local_florist,
+                  color: GardenColors.forest, size: 26),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          candidate.commonNames.isNotEmpty
+                              ? candidate.commonNames.first
+                              : candidate.scientificName,
+                          style: GardenTextStyles.title
+                              .copyWith(fontSize: 15),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 8, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: GardenColors.forest.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Text('$pct%',
+                            style: GardenTextStyles.bodySmall.copyWith(
+                                color: GardenColors.forest,
+                                fontWeight: FontWeight.w700)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    candidate.scientificName,
+                    style: GardenTextStyles.bodySmall.copyWith(
+                        fontStyle: FontStyle.italic,
+                        color: GardenColors.earth),
+                  ),
+                  if (candidate.family != null)
+                    Text(
+                      candidate.family!,
+                      style: GardenTextStyles.bodySmall
+                          .copyWith(color: GardenColors.dust),
+                    ),
+                  if (candidate.description != null &&
+                      candidate.description!.isNotEmpty) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      candidate.description!,
+                      style: GardenTextStyles.bodySmall.copyWith(
+                          color: GardenColors.earth, fontSize: 12),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(Icons.chevron_right, color: GardenColors.dust),
+          ],
+        ),
       ),
     );
   }
 }
+
+// ─── Corner painter ───────────────────────────────────────────────────────────
 
 class _CornerPainter extends CustomPainter {
   final Color color;
@@ -398,7 +810,8 @@ class _CornerPainter extends CustomPainter {
   final bool top;
   final bool left;
 
-  _CornerPainter(this.color, this.thickness, {required this.top, required this.left});
+  _CornerPainter(this.color, this.thickness,
+      {required this.top, required this.left});
 
   @override
   void paint(Canvas canvas, Size size) {
