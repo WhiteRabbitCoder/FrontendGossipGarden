@@ -54,19 +54,37 @@ class BackendAuthService {
     throw BackendAuthException(detail ?? 'Error al registrar (${response.statusCode})');
   }
 
-  /// Llama a GET /api/v1/auth/google-url y devuelve la URL OAuth de Supabase.
-  /// Lanza [BackendAuthException] si falla.
-  Future<String> getGoogleAuthUrl({required String redirectTo}) async {
-    final uri = Uri.parse('$_base/api/v1/auth/google-url')
-        .replace(queryParameters: {'redirect_to': redirectTo});
-    final response = await _httpClient.get(uri);
+  /// Intercambia el idToken de Google Sign-In nativo por un JWT de Supabase.
+  /// Llama directamente a Supabase — sin pasar por el backend de negocio.
+  Future<String> signInWithGoogleIdToken(String idToken) async {
+    const supabaseUrl = 'https://tslrtebdziilekddalcr.supabase.co';
+    const supabaseAnonKey = 'sb_publishable_GlaX3ksF4ct_akaW5q4bWA_QItqdrqg';
+    const googleClientId =
+        '845769881632-43t9sgnt5d25qddc2ur23at78m909c6t.apps.googleusercontent.com';
+
+    final uri = Uri.parse('$supabaseUrl/auth/v1/token?grant_type=id_token');
+    final response = await _httpClient.post(
+      uri,
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': supabaseAnonKey,
+      },
+      body: jsonEncode({
+        'provider': 'google',
+        'id_token': idToken,
+        'client_id': googleClientId,
+      }),
+    );
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final url = data['url'] as String?;
-      if (url == null) throw BackendAuthException('URL de Google inválida');
-      return url;
+      final token = data['access_token'] as String?;
+      if (token == null) throw BackendAuthException('Respuesta de Supabase inválida');
+      return token;
     }
-    throw BackendAuthException('Error al obtener URL de Google (${response.statusCode})');
+    // ignore: avoid_print
+    print('[Supabase Google] ${response.statusCode}: ${response.body}');
+    final detail = _extractDetail(response.body);
+    throw BackendAuthException(detail ?? 'Error al autenticar con Google (${response.statusCode})');
   }
 
   String? _extractDetail(String body) {

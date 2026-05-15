@@ -1,33 +1,41 @@
 {
   "project_info": {
-    "project_number": "809133708296",
-    "project_id": "gossip-garden-3bbec",
-    "storage_bucket": "gossip-garden-3bbec.firebasestorage.app"
+    "project_number": "845769881632",
+    "project_id": "gossipgarden-e2879",
+    "storage_bucket": "gossipgarden-e2879.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:809133708296:android:dff358dadc706e6f842dbd",
+        "mobilesdk_app_id": "1:845769881632:android:23e9b564da83c8c9362445",
         "android_client_info": {
           "package_name": "shadow.gossip_garden"
         }
       },
       "oauth_client": [
         {
-          "client_id": "809133708296-bqpv5gvasf37i8g8471qh6gfb8f3nbur.apps.googleusercontent.com",
+          "client_id": "845769881632-268k2lc327ekkuei1l1b4l8gfi0osvqf.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "shadow.gossip_garden",
+            "certificate_hash": "addc9d0e83238c07dc1cab34273827aa721f9209"
+          }
+        },
+        {
+          "client_id": "845769881632-43t9sgnt5d25qddc2ur23at78m909c6t.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyC6V4h6Ld--0QBqsgwn3bFc6srt5Bg8h1k"
+          "current_key": "AIzaSyAC2etOT0kWwRelT83YSHBfi9MmxkNLCcc"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "809133708296-bqpv5gvasf37i8g8471qh6gfb8f3nbur.apps.googleusercontent.com",
+              "client_id": "845769881632-43t9sgnt5d25qddc2ur23at78m909c6t.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

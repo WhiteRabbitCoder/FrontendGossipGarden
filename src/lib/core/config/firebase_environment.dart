@@ -6,7 +6,7 @@ class FirebaseEnvironment {
 
   static const bool enableFirebase = bool.fromEnvironment(
     'ENABLE_FIREBASE',
-    defaultValue: true,
+    defaultValue: false,
   );
 
   static const String apiKey = String.fromEnvironment('FIREBASE_API_KEY');

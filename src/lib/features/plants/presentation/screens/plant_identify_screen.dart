@@ -1,8 +1,9 @@
 import 'dart:io';
 
+import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:image/image.dart' as img;
 
 import '../../../../core/theme/garden_colors.dart';
 import '../../../../core/theme/garden_text_styles.dart';
@@ -23,10 +24,13 @@ class PlantIdentifyScreen extends ConsumerStatefulWidget {
 }
 
 class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
-    with SingleTickerProviderStateMixin {
+    with SingleTickerProviderStateMixin, WidgetsBindingObserver {
   _IdentifyStep _step = _IdentifyStep.idle;
   late AnimationController _scanController;
   late Animation<double> _scanAnimation;
+
+  CameraController? _cameraController;
+  bool _cameraReady = false;
 
   File? _imageFile;
   IdentifyCompleted? _completed;
@@ -38,6 +42,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _scanController = AnimationController(
       duration: const Duration(seconds: 2),
       vsync: this,
@@ -45,28 +50,90 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
     _scanAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _scanController, curve: Curves.easeInOut),
     );
+    _initCamera();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    _cameraController?.dispose();
     _scanController.dispose();
     _nicknameController.dispose();
     super.dispose();
   }
 
-  // ─── Image picker ─────────────────────────────────────────────────────────
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    final controller = _cameraController;
+    if (controller == null || !controller.value.isInitialized) return;
+    if (state == AppLifecycleState.inactive) {
+      controller.dispose();
+      _cameraController = null;
+      if (mounted) setState(() => _cameraReady = false);
+    } else if (state == AppLifecycleState.resumed) {
+      _initCamera();
+    }
+  }
 
-  Future<void> _pickAndIdentify() async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(
-      source: ImageSource.camera,
-      imageQuality: 85,
-      maxWidth: 1920,
+  Future<void> _initCamera() async {
+    final cameras = await availableCameras();
+    if (cameras.isEmpty || !mounted) return;
+
+    final back = cameras.firstWhere(
+      (c) => c.lensDirection == CameraLensDirection.back,
+      orElse: () => cameras.first,
     );
-    if (picked == null) return;
+
+    final controller = CameraController(
+      back,
+      ResolutionPreset.high,
+      enableAudio: false,
+      imageFormatGroup: ImageFormatGroup.jpeg,
+    );
+    await controller.initialize();
+    if (!mounted) return;
 
     setState(() {
-      _imageFile = File(picked.path);
+      _cameraController = controller;
+      _cameraReady = true;
+    });
+  }
+
+  // ─── Capture & identify ───────────────────────────────────────────────────
+
+  Future<void> _captureAndIdentify() async {
+    final controller = _cameraController;
+    if (controller == null || !controller.value.isInitialized) return;
+
+    // Tomar foto y procesar en memoria antes de cambiar step
+    final xFile = await controller.takePicture();
+    final bytes = await File(xFile.path).readAsBytes();
+
+    final original = img.decodeImage(bytes)!;
+    final oriented = img.bakeOrientation(original);
+
+    final w = oriented.width;
+    final h = oriented.height;
+    final side = w < h ? w : h;
+
+    final cropped = img.copyCrop(
+      oriented,
+      x: (w - side) ~/ 2,
+      y: (h - side) ~/ 2,
+      width: side,
+      height: side,
+    );
+    final resized = img.copyResize(cropped, width: 1024, height: 1024);
+
+    final outPath =
+        '${Directory.systemTemp.path}/plant_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    await File(outPath).writeAsBytes(img.encodeJpg(resized, quality: 92));
+
+    final file = File(outPath);
+
+    if (!mounted) return;
+    setState(() {
+      _imageFile = file;
       _step = _IdentifyStep.uploading;
       _errorMessage = null;
     });
@@ -74,7 +141,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
 
     try {
       final datasource = ref.read(identificationApiDatasourceProvider);
-      final result = await datasource.identify(image: _imageFile!);
+      final result = await datasource.identify(image: file);
 
       _scanController.stop();
       if (!mounted) return;
@@ -156,7 +223,6 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
         photoStoragePath: completed.photoStoragePath,
       );
 
-      // Invalidar la lista de plantas para que se refresque.
       ref.invalidate(plantsProvider);
 
       if (!mounted) return;
@@ -244,7 +310,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        // Viewfinder
+        // Viewfinder con preview de cámara embebido
         Container(
           width: double.infinity,
           height: 280,
@@ -257,19 +323,14 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(29),
-                child: _imageFile != null
-                    ? Image.file(_imageFile!, fit: BoxFit.cover,
-                        width: double.infinity, height: double.infinity)
-                    : Center(
-                        child: Icon(Icons.local_florist, size: 80,
-                            color: GardenColors.forest.withOpacity(0.4)),
-                      ),
+                child: _buildViewfinderContent(),
               ),
               Positioned(
                 bottom: 16, left: 0, right: 0,
                 child: Center(
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
                       color: Colors.black.withOpacity(0.5),
                       borderRadius: BorderRadius.circular(20),
@@ -292,7 +353,8 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
             decoration: BoxDecoration(
               color: GardenColors.errorRose.withOpacity(0.1),
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: GardenColors.errorRose.withOpacity(0.3)),
+              border: Border.all(
+                  color: GardenColors.errorRose.withOpacity(0.3)),
             ),
             child: Text(_errorMessage!,
                 textAlign: TextAlign.center,
@@ -305,20 +367,23 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
         const SizedBox(height: 8),
         Text('Tomaremos una foto para identificarla con IA',
             textAlign: TextAlign.center,
-            style: GardenTextStyles.body.copyWith(
-                color: GardenColors.earth, fontSize: 15)),
+            style: GardenTextStyles.body
+                .copyWith(color: GardenColors.earth, fontSize: 15)),
         const SizedBox(height: 32),
 
         SizedBox(
           width: double.infinity,
           child: ElevatedButton.icon(
-            onPressed: _pickAndIdentify,
+            onPressed: _cameraReady ? _captureAndIdentify : null,
             icon: const Icon(Icons.document_scanner_rounded),
             label: const Text('Identificar',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700)),
+                style: TextStyle(
+                    fontSize: 16, fontWeight: FontWeight.w700)),
             style: ElevatedButton.styleFrom(
               backgroundColor: GardenColors.forest,
               foregroundColor: Colors.white,
+              disabledBackgroundColor:
+                  GardenColors.forest.withOpacity(0.4),
               padding: const EdgeInsets.symmetric(vertical: 18),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(24)),
@@ -327,6 +392,33 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildViewfinderContent() {
+    final controller = _cameraController;
+    if (_cameraReady && controller != null) {
+      final previewSize = controller.value.previewSize!;
+      return SizedBox.expand(
+        child: FittedBox(
+          fit: BoxFit.cover,
+          child: SizedBox(
+            width: previewSize.height,
+            height: previewSize.width,
+            child: CameraPreview(controller),
+          ),
+        ),
+      );
+    }
+    if (_imageFile != null) {
+      return Image.file(_imageFile!,
+          fit: BoxFit.cover,
+          width: double.infinity,
+          height: double.infinity);
+    }
+    return Center(
+      child: Icon(Icons.local_florist,
+          size: 80, color: GardenColors.forest.withOpacity(0.4)),
     );
   }
 
@@ -349,12 +441,15 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
               if (_imageFile != null)
                 ClipRRect(
                   borderRadius: BorderRadius.circular(29),
-                  child: Image.file(_imageFile!, fit: BoxFit.cover,
-                      width: double.infinity, height: double.infinity),
+                  child: Image.file(_imageFile!,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: double.infinity),
                 )
               else
                 Center(
-                  child: Icon(Icons.local_florist, size: 80,
+                  child: Icon(Icons.local_florist,
+                      size: 80,
                       color: GardenColors.forest.withOpacity(0.4)),
                 ),
               AnimatedBuilder(
@@ -382,7 +477,8 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
         const CircularProgressIndicator(
             color: GardenColors.forest, strokeWidth: 3),
         const SizedBox(height: 20),
-        Text('Analizando...', style: GardenTextStyles.title.copyWith(fontSize: 18)),
+        Text('Analizando...',
+            style: GardenTextStyles.title.copyWith(fontSize: 18)),
         const SizedBox(height: 6),
         Text('Consultando base de datos botánica',
             style: GardenTextStyles.body
@@ -401,7 +497,8 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
             style: GardenTextStyles.title.copyWith(fontSize: 22)),
         const SizedBox(height: 4),
         Text('Selecciona la que más se parezca',
-            style: GardenTextStyles.body.copyWith(color: GardenColors.earth)),
+            style:
+                GardenTextStyles.body.copyWith(color: GardenColors.earth)),
         const SizedBox(height: 16),
 
         if (_errorMessage != null)
@@ -439,7 +536,6 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // Cabecera de la planta identificada
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -448,7 +544,8 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
             ),
             child: Column(
               children: [
-                Icon(Icons.verified_rounded, color: GardenColors.forest, size: 32),
+                Icon(Icons.verified_rounded,
+                    color: GardenColors.forest, size: 32),
                 const SizedBox(height: 8),
                 Text('¡Identificada!',
                     style: GardenTextStyles.bodySmall
@@ -456,7 +553,8 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
                 const SizedBox(height: 4),
                 Text(profile.commonName,
                     textAlign: TextAlign.center,
-                    style: GardenTextStyles.display.copyWith(fontSize: 28)),
+                    style:
+                        GardenTextStyles.display.copyWith(fontSize: 28)),
                 const SizedBox(height: 2),
                 Text(profile.scientificName,
                     textAlign: TextAlign.center,
@@ -474,7 +572,6 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
 
           const SizedBox(height: 16),
 
-          // Resumen de cuidado
           if (profile.careSummary.isNotEmpty)
             Container(
               padding: const EdgeInsets.all(16),
@@ -483,12 +580,12 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Text(profile.careSummary,
-                  style: GardenTextStyles.body.copyWith(fontSize: 14, height: 1.5)),
+                  style: GardenTextStyles.body
+                      .copyWith(fontSize: 14, height: 1.5)),
             ),
 
           const SizedBox(height: 20),
 
-          // Campo de nickname
           Text('Ponle un apodo',
               style: GardenTextStyles.title.copyWith(fontSize: 16)),
           const SizedBox(height: 8),
@@ -496,8 +593,10 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
             controller: _nicknameController,
             decoration: InputDecoration(
               hintText: profile.commonName,
-              hintStyle: GardenTextStyles.body.copyWith(color: GardenColors.dust),
-              prefixIcon: const Icon(Icons.local_florist, color: GardenColors.moss),
+              hintStyle: GardenTextStyles.body
+                  .copyWith(color: GardenColors.dust),
+              prefixIcon: const Icon(Icons.local_florist,
+                  color: GardenColors.moss),
               filled: true,
               fillColor: Colors.white,
               border: OutlineInputBorder(
@@ -552,7 +651,8 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(color: GardenColors.forest, strokeWidth: 3),
+          CircularProgressIndicator(
+              color: GardenColors.forest, strokeWidth: 3),
           SizedBox(height: 20),
           Text('Registrando tu planta...'),
         ],
@@ -567,19 +667,36 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
     const size = 24.0;
     const thickness = 3.0;
     return [
-      Positioned(top: 12, left: 12, child: _corner(color, size, thickness, top: true, left: true)),
-      Positioned(top: 12, right: 12, child: _corner(color, size, thickness, top: true, left: false)),
-      Positioned(bottom: 12, left: 12, child: _corner(color, size, thickness, top: false, left: true)),
-      Positioned(bottom: 12, right: 12, child: _corner(color, size, thickness, top: false, left: false)),
+      Positioned(
+          top: 12,
+          left: 12,
+          child: _corner(color, size, thickness, top: true, left: true)),
+      Positioned(
+          top: 12,
+          right: 12,
+          child:
+              _corner(color, size, thickness, top: true, left: false)),
+      Positioned(
+          bottom: 12,
+          left: 12,
+          child:
+              _corner(color, size, thickness, top: false, left: true)),
+      Positioned(
+          bottom: 12,
+          right: 12,
+          child:
+              _corner(color, size, thickness, top: false, left: false)),
     ];
   }
 
   Widget _corner(Color color, double size, double thickness,
       {required bool top, required bool left}) {
     return SizedBox(
-      width: size, height: size,
+      width: size,
+      height: size,
       child: CustomPaint(
-          painter: _CornerPainter(color, thickness, top: top, left: left)),
+          painter:
+              _CornerPainter(color, thickness, top: top, left: left)),
     );
   }
 }
@@ -602,11 +719,11 @@ class _CandidateCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: GardenColors.sageLight, width: 1.5),
+          border:
+              Border.all(color: GardenColors.sageLight, width: 1.5),
         ),
         child: Row(
           children: [
-            // Icono especie
             Container(
               width: 52,
               height: 52,
@@ -618,7 +735,6 @@ class _CandidateCard extends StatelessWidget {
                   color: GardenColors.forest, size: 26),
             ),
             const SizedBox(width: 14),
-            // Info
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -630,7 +746,8 @@ class _CandidateCard extends StatelessWidget {
                           candidate.commonNames.isNotEmpty
                               ? candidate.commonNames.first
                               : candidate.scientificName,
-                          style: GardenTextStyles.title.copyWith(fontSize: 15),
+                          style: GardenTextStyles.title
+                              .copyWith(fontSize: 15),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -667,8 +784,8 @@ class _CandidateCard extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       candidate.description!,
-                      style: GardenTextStyles.bodySmall
-                          .copyWith(color: GardenColors.earth, fontSize: 12),
+                      style: GardenTextStyles.bodySmall.copyWith(
+                          color: GardenColors.earth, fontSize: 12),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),

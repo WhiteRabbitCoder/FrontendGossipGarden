@@ -4,7 +4,6 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:flutter_web_auth_2/flutter_web_auth_2.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
 import 'package:gossip_garden/core/config/firebase_environment.dart';
@@ -102,7 +101,13 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
         return;
       }
 
-      final profile = await _authService.loadProfile(user.uid);
+      UserProfile? profile;
+      try {
+        profile = await _authService.loadProfile(user.uid);
+      } catch (_) {
+        // Firestore puede denegar acceso si las reglas aún no están configuradas.
+        // Usamos perfil mínimo de Firebase Auth para no bloquear el login.
+      }
       state = AsyncValue.data(
         AuthSession(
           profile: profile ??
@@ -150,36 +155,34 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
   }
 
   Future<void> _signInWithBackendGoogle() async {
-    const callbackScheme = 'gossipgarden';
-    const redirectTo = '$callbackScheme://auth/callback';
+    // Selector nativo de cuentas Google en el dispositivo.
+    const serverClientId =
+        '845769881632-43t9sgnt5d25qddc2ur23at78m909c6t.apps.googleusercontent.com';
+    final googleSignIn = GoogleSignIn(serverClientId: serverClientId);
 
-    final authUrl = await _backendAuth.getGoogleAuthUrl(redirectTo: redirectTo);
-    final callbackUrl = await FlutterWebAuth2.authenticate(
-      url: authUrl,
-      callbackUrlScheme: callbackScheme,
-    );
+    final googleUser = await googleSignIn.signIn();
+    if (googleUser == null) throw BackendAuthException('Inicio de sesión con Google cancelado');
 
-    // Supabase devuelve el token en el fragment: #access_token=...&...
-    final fragment = Uri.parse(callbackUrl).fragment;
-    final params = Uri.splitQueryString(fragment);
-    final token = params['access_token'];
-    if (token == null || token.isEmpty) {
-      throw BackendAuthException('No se recibió access_token en el callback de Google');
-    }
+    final googleAuth = await googleUser.authentication;
+    final idToken = googleAuth.idToken;
+    if (idToken == null) throw BackendAuthException('No se recibió idToken de Google');
 
-    await _tokenStorage.saveToken(token);
-    _ref.read(backendTokenProvider.notifier).state = token;
+    // Intercambiar idToken por JWT de Supabase directamente (sin pasar por el backend).
+    final supabaseJwt = await _backendAuth.signInWithGoogleIdToken(idToken);
+    await _tokenStorage.saveToken(supabaseJwt);
+    _ref.read(backendTokenProvider.notifier).state = supabaseJwt;
 
     // Si Firebase NO está activo, construir sesión local mínima.
     if (!FirebaseEnvironment.isConfigured) {
       state = AsyncValue.data(
         AuthSession(
-          profile: const UserProfile(
-            uid: 'google-user',
-            displayName: 'Garden User',
-            email: '',
+          profile: UserProfile(
+            uid: googleUser.id,
+            displayName: googleUser.displayName,
+            email: googleUser.email,
+            photoUrl: googleUser.photoUrl,
             onboardingCompleted: false,
-            favoritePlantIds: [],
+            favoritePlantIds: const [],
             useGridView: true,
             notificationPreference: 'important',
           ),

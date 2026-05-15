@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:http/http.dart' as http;
+import 'package:http_parser/http_parser.dart';
 
 import 'package:gossip_garden/core/config/app_config.dart';
 import '../models/identification.dart';
@@ -31,7 +32,11 @@ class IdentificationApiDatasource {
     final request = http.MultipartRequest('POST', uri)
       ..headers.addAll(_authHeaders)
       ..fields['output_language'] = outputLanguage
-      ..files.add(await http.MultipartFile.fromPath('image', image.path));
+      ..files.add(await http.MultipartFile.fromPath(
+        'image',
+        image.path,
+        contentType: MediaType('image', 'jpeg'),
+      ));
 
     if (latitude != null) request.fields['latitude'] = latitude.toString();
     if (longitude != null) request.fields['longitude'] = longitude.toString();
