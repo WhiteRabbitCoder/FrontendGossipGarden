@@ -515,12 +515,10 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
           ),
 
         Expanded(
-          child: ListView.separated(
-            itemCount: _candidates.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 12),
-            itemBuilder: (_, i) => _CandidateCard(
-              candidate: _candidates[i],
-              onTap: () => _selectCandidate(_candidates[i]),
+          child: Center(
+            child: Text(
+              'Se encontraron ${_candidates.length} candidatos',
+              style: GardenTextStyles.body,
             ),
           ),
         ),
