@@ -33,15 +33,15 @@ class AnimatedBottomNav extends StatelessWidget {
           filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
           child: Container(
             decoration: BoxDecoration(
-              color: GardenColors.navBackground.withOpacity(0.85),
+              color: GardenColors.navBackground.withValues(alpha: 0.85),
               borderRadius: BorderRadius.circular(38),
               border: Border.all(
-                color: GardenColors.sage.withOpacity(0.5),
+                color: GardenColors.sage.withValues(alpha: 0.5),
                 width: 2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: GardenColors.forest.withOpacity(0.1),
+                  color: GardenColors.forest.withValues(alpha: 0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),

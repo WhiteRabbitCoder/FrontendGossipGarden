@@ -19,7 +19,7 @@ class SummaryBanner extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFF4A6741).withOpacity(0.3),
+            color: const Color(0xFF4A6741).withValues(alpha: 0.3),
             blurRadius: 24,
             offset: const Offset(0, 8),
           ),
@@ -37,7 +37,7 @@ class SummaryBanner extends StatelessWidget {
                     const SizedBox(width: 8),
                     Text(
                       'ATENCIÓN REQUERIDA',
-                      style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.0),
+                      style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.0),
                     ),
                   ],
                 ),
@@ -49,7 +49,7 @@ class SummaryBanner extends StatelessWidget {
                 const SizedBox(height: 8),
                 Text(
                   'Te tomará menos de 3 minutos',
-                  style: TextStyle(color: Colors.white.withOpacity(0.75), fontSize: 14, fontWeight: FontWeight.w500),
+                  style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 14, fontWeight: FontWeight.w500),
                 ),
                 const SizedBox(height: 24),
                 ElevatedButton(

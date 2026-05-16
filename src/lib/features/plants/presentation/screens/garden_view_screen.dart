@@ -93,7 +93,7 @@ class GardenViewScreen extends ConsumerWidget {
         border: Border.all(color: GardenColors.sageLight, width: 2),
         boxShadow: [
           BoxShadow(
-            color: GardenColors.forest.withOpacity(0.08),
+            color: GardenColors.forest.withValues(alpha: 0.08),
             blurRadius: 16,
             offset: const Offset(0, 8),
           )
@@ -154,10 +154,10 @@ class GardenViewScreen extends ConsumerWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(24),
-          border: Border.all(color: color.withOpacity(0.3), width: 2),
+          border: Border.all(color: color.withValues(alpha: 0.3), width: 2),
           boxShadow: [
             BoxShadow(
-              color: color.withOpacity(0.1),
+              color: color.withValues(alpha: 0.1),
               blurRadius: 8,
               offset: const Offset(0, 4),
             )
@@ -185,7 +185,7 @@ class GardenViewScreen extends ConsumerWidget {
           border: Border.all(color: GardenColors.sageLight, width: 2),
           boxShadow: [
             BoxShadow(
-              color: GardenColors.forest.withOpacity(0.05),
+              color: GardenColors.forest.withValues(alpha: 0.05),
               blurRadius: 16,
               offset: const Offset(0, 8),
             )

@@ -121,7 +121,7 @@ class ProfileSettingsScreen extends ConsumerWidget {
         children: [
           CircleAvatar(
             radius: 24,
-            backgroundColor: const Color(0xFF4A6741).withOpacity(0.1),
+            backgroundColor: const Color(0xFF4A6741).withValues(alpha: 0.1),
             child: const Icon(Icons.person, color: Color(0xFF4A6741)),
           ),
           const SizedBox(width: 16),
@@ -277,7 +277,7 @@ class ProfileSettingsScreen extends ConsumerWidget {
                 height: 80,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  color: const Color(0xFF4A6741).withOpacity(0.1),
+                  color: const Color(0xFF4A6741).withValues(alpha: 0.1),
                   image: plant.image.isNotEmpty
                       ? DecorationImage(
                           image: AssetImage(plant.image),
@@ -343,7 +343,7 @@ class ProfileSettingsScreen extends ConsumerWidget {
           foregroundColor: const Color(0xFF4A6741),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(20),
-            side: BorderSide(color: const Color(0xFF4A6741).withOpacity(0.2)),
+            side: BorderSide(color: const Color(0xFF4A6741).withValues(alpha: 0.2)),
           ),
           padding: const EdgeInsets.symmetric(vertical: 16),
         ),
@@ -403,7 +403,7 @@ class ProfileSettingsScreen extends ConsumerWidget {
             Container(
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
-                color: color.withOpacity(0.1),
+                color: color.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(icon, size: 24, color: color),
@@ -426,7 +426,7 @@ class ProfileSettingsScreen extends ConsumerWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
@@ -503,7 +503,7 @@ class ProfileSettingsScreen extends ConsumerWidget {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF4A6741).withOpacity(0.1),
+                          color: const Color(0xFF4A6741).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: plant.image.isNotEmpty

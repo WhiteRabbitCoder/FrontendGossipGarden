@@ -287,7 +287,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.green.withOpacity(0.3),
+                  color: Colors.green.withValues(alpha: 0.3),
                   blurRadius: 25,
                 )
               ],
@@ -394,7 +394,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4A6741).withOpacity(0.1),
+                  color: const Color(0xFF4A6741).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(Icons.sensors, size: 28, color: Color(0xFF4A6741)),
@@ -473,7 +473,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0xFF4A6741).withOpacity(0.3)),
+                border: Border.all(color: const Color(0xFF4A6741).withValues(alpha: 0.3)),
               ),
               child: Column(
                 children: [
@@ -491,7 +491,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(color: Colors.grey.shade200),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12)],
+                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12)],
               ),
               child: Column(
                 children: networks.asMap().entries.map((e) {
@@ -579,7 +579,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF4A6741).withOpacity(0.06) : Colors.transparent,
+          color: isSelected ? const Color(0xFF4A6741).withValues(alpha: 0.06) : Colors.transparent,
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(isSelected ? 18 : 0),
             bottom: Radius.circular(isSelected ? 18 : 0),
@@ -744,7 +744,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             height: 140,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.blue.withOpacity(0.1),
+              color: Colors.blue.withValues(alpha: 0.1),
             ),
             child: const Icon(Icons.wifi_find_rounded,
                 size: 64, color: Colors.blue),
@@ -787,7 +787,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               height: 140,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.orange.withOpacity(0.1),
+                color: Colors.orange.withValues(alpha: 0.1),
               ),
               child: const Icon(Icons.cloud_upload_rounded,
                   size: 64, color: Colors.orange),
@@ -825,7 +825,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             height: 140,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.green.withOpacity(0.1),
+              color: Colors.green.withValues(alpha: 0.1),
             ),
             child: const Icon(Icons.check_circle_outline_rounded,
                 size: 64, color: Colors.green),
@@ -864,7 +864,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             height: 140,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.red.withOpacity(0.1),
+              color: Colors.red.withValues(alpha: 0.1),
             ),
             child: const Icon(Icons.error_outline_rounded,
                 size: 64, color: Colors.red),
@@ -1023,7 +1023,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 20,
           )
         ],

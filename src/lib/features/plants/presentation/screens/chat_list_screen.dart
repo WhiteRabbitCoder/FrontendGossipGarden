@@ -74,7 +74,7 @@ class ChatListScreen extends ConsumerWidget {
           border: Border.all(color: GardenColors.sageLight, width: 2),
           boxShadow: [
             BoxShadow(
-              color: GardenColors.forest.withOpacity(0.05),
+              color: GardenColors.forest.withValues(alpha: 0.05),
               blurRadius: 16,
               offset: const Offset(0, 8),
             )
@@ -160,9 +160,9 @@ class ChatListScreen extends ConsumerWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: _moodColor(plant.mood).withOpacity(0.1),
+                          color: _moodColor(plant.mood).withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: _moodColor(plant.mood).withOpacity(0.3)),
+                          border: Border.all(color: _moodColor(plant.mood).withValues(alpha: 0.3)),
                         ),
                         child: Text(
                           plant.mood.name.toUpperCase(),
@@ -238,8 +238,6 @@ class ChatListScreen extends ConsumerWidget {
         return GardenColors.earth;
       case PlantMood.perfect:
         return GardenColors.forest;
-      default:
-        return GardenColors.dust;
     }
   }
 }

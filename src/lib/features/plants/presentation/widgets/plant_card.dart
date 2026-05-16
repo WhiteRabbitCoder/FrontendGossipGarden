@@ -42,7 +42,7 @@ class PlantCard extends StatelessWidget {
       width: 48,
       height: 48,
       decoration: BoxDecoration(
-        color: const Color(0xFF4A6741).withOpacity(0.1),
+        color: const Color(0xFF4A6741).withValues(alpha: 0.1),
         shape: BoxShape.circle,
         image: plant.image.isNotEmpty
             ? DecorationImage(
@@ -86,10 +86,10 @@ class PlantCard extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: plant.health > 70
-            ? Colors.green.withOpacity(0.1)
+            ? Colors.green.withValues(alpha: 0.1)
             : plant.health > 40
-                ? Colors.orange.withOpacity(0.1)
-                : Colors.red.withOpacity(0.1),
+                ? Colors.orange.withValues(alpha: 0.1)
+                : Colors.red.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Text(

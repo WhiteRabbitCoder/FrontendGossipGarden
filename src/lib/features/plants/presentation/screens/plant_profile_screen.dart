@@ -132,7 +132,7 @@ class PlantProfileScreen extends ConsumerWidget {
           height: 80,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
-            color: const Color(0xFF4A6741).withOpacity(0.1),
+            color: const Color(0xFF4A6741).withValues(alpha: 0.1),
             image: plant.image.isNotEmpty
                 ? DecorationImage(
                     image: AssetImage(plant.image),
@@ -162,7 +162,7 @@ class PlantProfileScreen extends ConsumerWidget {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
-                      color: _moodColor(plant.mood).withOpacity(0.1),
+                      color: _moodColor(plant.mood).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -180,7 +180,7 @@ class PlantProfileScreen extends ConsumerWidget {
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                     decoration: BoxDecoration(
                       color:
-                          _personalityColor(plant.personality).withOpacity(0.1),
+                          _personalityColor(plant.personality).withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
@@ -387,8 +387,6 @@ class PlantProfileScreen extends ConsumerWidget {
         return Colors.deepOrange;
       case PlantMood.perfect:
         return const Color(0xFF8BC34A);
-      default:
-        return Colors.grey;
     }
   }
 
@@ -400,8 +398,6 @@ class PlantProfileScreen extends ConsumerWidget {
         return Colors.brown;
       case PlantPersonality.dramatic:
         return Colors.pink;
-      default:
-        return Colors.grey;
     }
   }
 }

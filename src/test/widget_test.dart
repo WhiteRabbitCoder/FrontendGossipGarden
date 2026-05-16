@@ -1,19 +1,20 @@
-// This is a basic Flutter widget test.
+// Smoke test de arranque de la app.
 //
-// To perform an interaction with a widget in your test, use the WidgetTester
-// utility in the flutter_test package. For example, you can send tap and scroll
-// gestures. You can also use WidgetTester to find child widgets in the widget
-// tree, read text, and verify that the values of widget properties are correct.
+// No depende de auth async, secure-storage ni red: solo verifica que el
+// árbol de widgets monta sin excepciones y que el gate inicial de auth
+// muestra el indicador de carga.
 
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import 'package:gossip_garden/main.dart';
 
 void main() {
-  testWidgets('App renders login entry point', (WidgetTester tester) async {
+  testWidgets('App arranca sin excepciones', (WidgetTester tester) async {
     await tester.pumpWidget(const ProviderScope(child: MyApp()));
 
-    expect(find.text('Continuar con Google'), findsOneWidget);
+    expect(find.byType(MaterialApp), findsOneWidget);
+    expect(find.byType(CircularProgressIndicator), findsOneWidget);
   });
 }
