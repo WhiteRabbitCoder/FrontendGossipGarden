@@ -98,9 +98,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       padding: const EdgeInsets.all(16),
                       margin: const EdgeInsets.only(bottom: 24),
                       decoration: BoxDecoration(
-                        color: GardenColors.errorRose.withOpacity(0.1),
+                        color: GardenColors.errorRose.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: GardenColors.errorRose.withOpacity(0.3)),
+                        border: Border.all(color: GardenColors.errorRose.withValues(alpha: 0.3)),
                       ),
                       child: Text(
                         themeError,

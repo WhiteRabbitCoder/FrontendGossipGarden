@@ -29,9 +29,9 @@ class AnimatedBottomNav extends StatelessWidget {
           height: 90,
           padding: const EdgeInsets.only(top: 10, bottom: 20),
           decoration: BoxDecoration(
-            color: Colors.white.withOpacity(0.85),
+            color: Colors.white.withValues(alpha: 0.85),
             border:
-                Border(top: BorderSide(color: Colors.black.withOpacity(0.05))),
+                Border(top: BorderSide(color: Colors.black.withValues(alpha: 0.05))),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,

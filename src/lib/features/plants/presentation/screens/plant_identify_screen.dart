@@ -332,7 +332,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.5),
+                      color: Colors.black.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text('Apunta a tu planta',
@@ -351,10 +351,10 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
             padding: const EdgeInsets.all(14),
             margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
-              color: GardenColors.errorRose.withOpacity(0.1),
+              color: GardenColors.errorRose.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                  color: GardenColors.errorRose.withOpacity(0.3)),
+                  color: GardenColors.errorRose.withValues(alpha: 0.3)),
             ),
             child: Text(_errorMessage!,
                 textAlign: TextAlign.center,
@@ -383,7 +383,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
               backgroundColor: GardenColors.forest,
               foregroundColor: Colors.white,
               disabledBackgroundColor:
-                  GardenColors.forest.withOpacity(0.4),
+                  GardenColors.forest.withValues(alpha: 0.4),
               padding: const EdgeInsets.symmetric(vertical: 18),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(24)),
@@ -418,7 +418,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
     }
     return Center(
       child: Icon(Icons.local_florist,
-          size: 80, color: GardenColors.forest.withOpacity(0.4)),
+          size: 80, color: GardenColors.forest.withValues(alpha: 0.4)),
     );
   }
 
@@ -450,7 +450,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
                 Center(
                   child: Icon(Icons.local_florist,
                       size: 80,
-                      color: GardenColors.forest.withOpacity(0.4)),
+                      color: GardenColors.forest.withValues(alpha: 0.4)),
                 ),
               AnimatedBuilder(
                 animation: _scanAnimation,
@@ -462,7 +462,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
                     decoration: BoxDecoration(
                       gradient: LinearGradient(colors: [
                         Colors.transparent,
-                        GardenColors.sage.withOpacity(0.8),
+                        GardenColors.sage.withValues(alpha: 0.8),
                         Colors.transparent,
                       ]),
                     ),
@@ -506,7 +506,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
             padding: const EdgeInsets.all(12),
             margin: const EdgeInsets.only(bottom: 12),
             decoration: BoxDecoration(
-              color: GardenColors.errorRose.withOpacity(0.1),
+              color: GardenColors.errorRose.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Text(_errorMessage!,
@@ -613,7 +613,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: GardenColors.errorRose.withOpacity(0.1),
+                color: GardenColors.errorRose.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(_errorMessage!,
@@ -756,7 +756,7 @@ class _CandidateCard extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 2),
                         decoration: BoxDecoration(
-                          color: GardenColors.forest.withOpacity(0.1),
+                          color: GardenColors.forest.withValues(alpha: 0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Text('$pct%',

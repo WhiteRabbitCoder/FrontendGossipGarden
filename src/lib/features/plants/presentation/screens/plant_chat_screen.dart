@@ -150,7 +150,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
             title: Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: const Color(0xFF4A6741).withOpacity(0.1),
+                  backgroundColor: const Color(0xFF4A6741).withValues(alpha: 0.1),
                   child: Text(_plant?.name.substring(0, 1) ?? 'P'),
                 ),
                 const SizedBox(width: 12),
