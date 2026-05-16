@@ -26,12 +26,12 @@ class PlantFeedCard extends StatelessWidget {
           color: GardenColors.parchment,
           borderRadius: BorderRadius.circular(36), // Más redondo, estilo crayola/orgánico
           border: Border.all(
-            color: hasAlert ? GardenColors.errorRose.withOpacity(0.3) : GardenColors.sageLight,
+            color: hasAlert ? GardenColors.errorRose.withValues(alpha: 0.3) : GardenColors.sageLight,
             width: 2,
           ),
           boxShadow: [
             BoxShadow(
-              color: GardenColors.forest.withOpacity(0.08),
+              color: GardenColors.forest.withValues(alpha: 0.08),
               blurRadius: 16,
               offset: const Offset(0, 8),
             )
@@ -53,9 +53,9 @@ class PlantFeedCard extends StatelessWidget {
                       height: 68,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: hasAlert ? GardenColors.errorRose.withOpacity(0.1) : GardenColors.sageLight,
+                        color: hasAlert ? GardenColors.errorRose.withValues(alpha: 0.1) : GardenColors.sageLight,
                         border: Border.all(
-                          color: hasAlert ? GardenColors.errorRose.withOpacity(0.5) : GardenColors.sage,
+                          color: hasAlert ? GardenColors.errorRose.withValues(alpha: 0.5) : GardenColors.sage,
                           width: 2,
                         ),
                       ),
@@ -116,7 +116,7 @@ class PlantFeedCard extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(10),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.5),
+                      color: Colors.white.withValues(alpha: 0.5),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(

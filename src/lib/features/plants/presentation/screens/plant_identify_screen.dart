@@ -411,7 +411,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: Colors.black.withOpacity(0.5),
+                      color: Colors.black.withValues(alpha: 0.5),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: const Text('Apunta a tu planta',
@@ -430,10 +430,10 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
             padding: const EdgeInsets.all(14),
             margin: const EdgeInsets.only(bottom: 16),
             decoration: BoxDecoration(
-              color: GardenColors.errorRose.withOpacity(0.1),
+              color: GardenColors.errorRose.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                  color: GardenColors.errorRose.withOpacity(0.3)),
+                  color: GardenColors.errorRose.withValues(alpha: 0.3)),
             ),
             child: Text(_errorMessage!,
                 textAlign: TextAlign.center,
@@ -462,7 +462,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
               backgroundColor: GardenColors.forest,
               foregroundColor: Colors.white,
               disabledBackgroundColor:
-                  GardenColors.forest.withOpacity(0.4),
+                  GardenColors.forest.withValues(alpha: 0.4),
               padding: const EdgeInsets.symmetric(vertical: 18),
               shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(24)),
@@ -514,7 +514,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
     }
     return Center(
       child: Icon(Icons.local_florist,
-          size: 80, color: GardenColors.forest.withOpacity(0.4)),
+          size: 80, color: GardenColors.forest.withValues(alpha: 0.4)),
     );
   }
 
@@ -546,7 +546,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
                 Center(
                   child: Icon(Icons.local_florist,
                       size: 80,
-                      color: GardenColors.forest.withOpacity(0.4)),
+                      color: GardenColors.forest.withValues(alpha: 0.4)),
                 ),
               AnimatedBuilder(
                 animation: _scanAnimation,
@@ -558,7 +558,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
                     decoration: BoxDecoration(
                       gradient: LinearGradient(colors: [
                         Colors.transparent,
-                        GardenColors.sage.withOpacity(0.8),
+                        GardenColors.sage.withValues(alpha: 0.8),
                         Colors.transparent,
                       ]),
                     ),
@@ -731,7 +731,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: GardenColors.errorRose.withOpacity(0.1),
+                color: GardenColors.errorRose.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(_errorMessage!,
@@ -815,143 +815,6 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
       child: CustomPaint(
           painter:
               _CornerPainter(color, thickness, top: top, left: left)),
-    );
-  }
-}
-
-// ─── Candidate card ───────────────────────────────────────────────────────────
-
-class _CandidateCard extends StatelessWidget {
-  const _CandidateCard({required this.candidate, required this.onTap});
-
-  final SpeciesCandidate candidate;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final pct = (candidate.probability * 100).toStringAsFixed(0);
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(20),
-          border:
-              Border.all(color: GardenColors.sageLight, width: 1.5),
-        ),
-        child: Row(
-          children: [
-            ClipOval(
-              child: candidate.imageUrl != null
-                  ? Image.network(
-                      candidate.imageUrl!,
-                      width: 52,
-                      height: 52,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Container(
-                        width: 52,
-                        height: 52,
-                        color: GardenColors.sageLight,
-                        child: const Icon(Icons.local_florist,
-                            color: GardenColors.forest, size: 26),
-                      ),
-                    )
-                  : Container(
-                      width: 52,
-                      height: 52,
-                      color: GardenColors.sageLight,
-                      child: const Icon(Icons.local_florist,
-                          color: GardenColors.forest, size: 26),
-                    ),
-            ),
-            const SizedBox(width: 14),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          candidate.commonNames.isNotEmpty
-                              ? candidate.commonNames.first
-                              : candidate.scientificName,
-                          style: GardenTextStyles.title
-                              .copyWith(fontSize: 15),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 2),
-                        decoration: BoxDecoration(
-                          color: GardenColors.forest.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(10),
-                        ),
-                        child: Text('$pct%',
-                            style: GardenTextStyles.bodySmall.copyWith(
-                                color: GardenColors.forest,
-                                fontWeight: FontWeight.w700)),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    candidate.scientificName,
-                    style: GardenTextStyles.bodySmall.copyWith(
-                        fontStyle: FontStyle.italic,
-                        color: GardenColors.earth),
-                  ),
-                  if (candidate.family != null)
-                    Text(
-                      candidate.family!,
-                      style: GardenTextStyles.bodySmall
-                          .copyWith(color: GardenColors.dust),
-                    ),
-                  if (candidate.description != null &&
-                      candidate.description!.isNotEmpty) ...[
-                    const SizedBox(height: 4),
-                    Text(
-                      candidate.description!,
-                      style: GardenTextStyles.bodySmall.copyWith(
-                          color: GardenColors.earth, fontSize: 12),
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ],
-                  if (candidate.referenceImages.isNotEmpty) ...[
-                    const SizedBox(height: 8),
-                    SizedBox(
-                      height: 48,
-                      child: ListView.separated(
-                        scrollDirection: Axis.horizontal,
-                        physics: const BouncingScrollPhysics(),
-                        itemCount: candidate.referenceImages.length,
-                        separatorBuilder: (_, __) => const SizedBox(width: 6),
-                        itemBuilder: (_, i) => ClipRRect(
-                          borderRadius: BorderRadius.circular(8),
-                          child: Image.network(
-                            candidate.referenceImages[i],
-                            width: 48,
-                            height: 48,
-                            fit: BoxFit.cover,
-                            errorBuilder: (_, __, ___) =>
-                                const SizedBox.shrink(),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Icon(Icons.chevron_right, color: GardenColors.dust),
-          ],
-        ),
-      ),
     );
   }
 }

@@ -54,7 +54,7 @@ class _TelemetryPanelState extends State<TelemetryPanel> {
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 20,
           )
         ],
@@ -125,12 +125,12 @@ class _TelemetryPanelState extends State<TelemetryPanel> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: data.color.withOpacity(0.05),
+        color: data.color.withValues(alpha: 0.05),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
           color: data.isInRange
-              ? data.color.withOpacity(0.2)
-              : Colors.red.withOpacity(0.3),
+              ? data.color.withValues(alpha: 0.2)
+              : Colors.red.withValues(alpha: 0.3),
           width: 1,
         ),
       ),
@@ -189,7 +189,7 @@ class _TelemetryPanelState extends State<TelemetryPanel> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: Colors.red.withOpacity(0.1),
+                color: Colors.red.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Row(
@@ -261,7 +261,7 @@ class _TelemetryPanelState extends State<TelemetryPanel> {
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: Colors.black.withOpacity(0.1),
+                        color: Colors.black.withValues(alpha: 0.1),
                         blurRadius: 4,
                       ),
                     ],
