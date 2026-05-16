@@ -61,12 +61,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
     this._tokenStorage,
     this._ref,
   ) : super(
-          AsyncValue.data(
-            AuthSession(
-              profile: null,
-              firebaseEnabled: FirebaseEnvironment.isConfigured,
-            ),
-          ),
+          const AsyncValue.loading(),
         ) {
     _bootstrap();
   }
@@ -82,9 +77,61 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
     final saved = await _tokenStorage.readToken();
     if (saved != null) {
       _ref.read(backendTokenProvider.notifier).state = saved;
+      // Si hay token guardado y no hay Firebase, usuario está autenticado
+      if (!FirebaseEnvironment.isConfigured) {
+        final profileData = await _tokenStorage.readProfile();
+        final profile = profileData != null
+            ? UserProfile(
+                uid: profileData['uid'] as String? ?? '',
+                displayName: profileData['displayName'] as String?,
+                email: profileData['email'] as String?,
+                photoUrl: profileData['photoUrl'] as String?,
+                onboardingCompleted:
+                    profileData['onboardingCompleted'] as bool? ?? false,
+                favoritePlantIds: (profileData['favoritePlantIds'] as List?)
+                        ?.cast<String>() ??
+                    const [],
+                useGridView: profileData['useGridView'] as bool? ?? true,
+                notificationPreference:
+                    profileData['notificationPreference'] as String? ?? 'important',
+              )
+            : null;
+
+        state = AsyncValue.data(
+          AuthSession(
+            profile: profile,
+            firebaseEnabled: false,
+            onboardingCompleted: profile?.onboardingCompleted ?? true,
+          ),
+        );
+        return;
+      }
+    } else {
+      // No hay token, mostrar login si Firebase está deshabilitado
+      if (!FirebaseEnvironment.isConfigured) {
+        state = AsyncValue.data(
+          AuthSession(
+            profile: null,
+            firebaseEnabled: false,
+            onboardingCompleted: false,
+          ),
+        );
+        return;
+      }
     }
     _bindFirebaseAuth();
   }
+
+  Map<String, dynamic> _profileToMap(UserProfile profile) => {
+        'uid': profile.uid,
+        'displayName': profile.displayName,
+        'email': profile.email,
+        'photoUrl': profile.photoUrl,
+        'onboardingCompleted': profile.onboardingCompleted,
+        'favoritePlantIds': profile.favoritePlantIds,
+        'useGridView': profile.useGridView,
+        'notificationPreference': profile.notificationPreference,
+      };
 
   void _bindFirebaseAuth() {
     if (!FirebaseEnvironment.isConfigured) return;
@@ -174,18 +221,20 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
 
     // Si Firebase NO está activo, construir sesión local mínima.
     if (!FirebaseEnvironment.isConfigured) {
+      final profile = UserProfile(
+        uid: googleUser.id,
+        displayName: googleUser.displayName,
+        email: googleUser.email,
+        photoUrl: googleUser.photoUrl,
+        onboardingCompleted: false,
+        favoritePlantIds: const [],
+        useGridView: true,
+        notificationPreference: 'important',
+      );
+      await _tokenStorage.saveProfile(_profileToMap(profile));
       state = AsyncValue.data(
         AuthSession(
-          profile: UserProfile(
-            uid: googleUser.id,
-            displayName: googleUser.displayName,
-            email: googleUser.email,
-            photoUrl: googleUser.photoUrl,
-            onboardingCompleted: false,
-            favoritePlantIds: const [],
-            useGridView: true,
-            notificationPreference: 'important',
-          ),
+          profile: profile,
           firebaseEnabled: false,
           onboardingCompleted: false,
         ),
@@ -237,17 +286,19 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
         );
       } else {
         // Sin Firebase: construir sesión local mínima.
+        final profile = UserProfile(
+          uid: email,
+          displayName: email.split('@').first,
+          email: email,
+          onboardingCompleted: true,
+          favoritePlantIds: const [],
+          useGridView: true,
+          notificationPreference: 'important',
+        );
+        await _tokenStorage.saveProfile(_profileToMap(profile));
         state = AsyncValue.data(
           AuthSession(
-            profile: UserProfile(
-              uid: email,
-              displayName: email.split('@').first,
-              email: email,
-              onboardingCompleted: true,
-              favoritePlantIds: const [],
-              useGridView: true,
-              notificationPreference: 'important',
-            ),
+            profile: profile,
             firebaseEnabled: false,
             onboardingCompleted: true,
           ),
@@ -270,6 +321,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
 
   Future<void> signOut() async {
     await _tokenStorage.clearToken();
+    await _tokenStorage.clearProfile();
     _ref.read(backendTokenProvider.notifier).state = null;
 
     if (FirebaseEnvironment.isConfigured) {
@@ -294,20 +346,26 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
     }
 
     final profile = current.profile;
+    final updated = profile == null
+        ? null
+        : UserProfile(
+            uid: profile.uid,
+            displayName: profile.displayName,
+            email: profile.email,
+            photoUrl: profile.photoUrl,
+            onboardingCompleted: true,
+            favoritePlantIds: profile.favoritePlantIds,
+            useGridView: profile.useGridView,
+            notificationPreference: profile.notificationPreference,
+          );
+
+    if (updated != null && !FirebaseEnvironment.isConfigured) {
+      await _tokenStorage.saveProfile(_profileToMap(updated));
+    }
+
     state = AsyncValue.data(
       AuthSession(
-        profile: profile == null
-            ? null
-            : UserProfile(
-                uid: profile.uid,
-                displayName: profile.displayName,
-                email: profile.email,
-                photoUrl: profile.photoUrl,
-                onboardingCompleted: true,
-                favoritePlantIds: profile.favoritePlantIds,
-                useGridView: profile.useGridView,
-                notificationPreference: profile.notificationPreference,
-              ),
+        profile: updated,
         firebaseEnabled: current.firebaseEnabled,
         onboardingCompleted: true,
       ),
