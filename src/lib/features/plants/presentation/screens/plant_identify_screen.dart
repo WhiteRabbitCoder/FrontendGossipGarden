@@ -4,6 +4,7 @@ import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:image/image.dart' as img;
+import 'package:image_picker/image_picker.dart';
 
 import '../../../../core/theme/garden_colors.dart';
 import '../../../../core/theme/garden_text_styles.dart';
@@ -39,6 +40,9 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
 
   final _nicknameController = TextEditingController();
 
+  late PageController _pageController;
+  int _currentPage = 0;
+
   @override
   void initState() {
     super.initState();
@@ -50,6 +54,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
     _scanAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
       CurvedAnimation(parent: _scanController, curve: Curves.easeInOut),
     );
+    _pageController = PageController();
     _initCamera();
   }
 
@@ -59,6 +64,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
     _cameraController?.dispose();
     _scanController.dispose();
     _nicknameController.dispose();
+    _pageController.dispose();
     super.dispose();
   }
 
@@ -131,6 +137,79 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
 
     final file = File(outPath);
 
+    if (!mounted) return;
+    setState(() {
+      _imageFile = file;
+      _step = _IdentifyStep.uploading;
+      _errorMessage = null;
+    });
+    _scanController.repeat(reverse: true);
+
+    try {
+      final datasource = ref.read(identificationApiDatasourceProvider);
+      final result = await datasource.identify(image: file);
+
+      _scanController.stop();
+      if (!mounted) return;
+
+      switch (result) {
+        case NeedsMorePhotos(:final reason):
+          setState(() {
+            _step = _IdentifyStep.idle;
+            _errorMessage = reason;
+          });
+          _showNeedsMorePhotosDialog(reason);
+
+        case NeedsUserSelection(:final candidates):
+          setState(() {
+            _step = _IdentifyStep.selectCandidate;
+            _candidates = candidates;
+          });
+
+        case IdentifyCompleted():
+          setState(() {
+            _completed = result;
+            _nicknameController.text = result.profile.commonName;
+            _step = _IdentifyStep.confirm;
+          });
+      }
+    } catch (e) {
+      _scanController.stop();
+      if (mounted) {
+        setState(() {
+          _step = _IdentifyStep.idle;
+          _errorMessage = e.toString();
+        });
+      }
+    }
+  }
+
+  Future<void> _pickFromGallery() async {
+    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+    if (picked == null || !mounted) return;
+
+    final bytes = await File(picked.path).readAsBytes();
+    final original = img.decodeImage(bytes)!;
+    final oriented = img.bakeOrientation(original);
+
+    final w = oriented.width;
+    final h = oriented.height;
+    final side = w < h ? w : h;
+
+    final cropped = img.copyCrop(
+      oriented,
+      x: (w - side) ~/ 2,
+      y: (h - side) ~/ 2,
+      width: side,
+      height: side,
+    );
+    final resized = img.copyResize(cropped, width: 1024, height: 1024);
+
+    final outPath =
+        '${Directory.systemTemp.path}/plant_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    await File(outPath).writeAsBytes(img.encodeJpg(resized, quality: 92));
+
+    final file = File(outPath);
     if (!mounted) return;
     setState(() {
       _imageFile = file;
@@ -391,6 +470,23 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
             ),
           ),
         ),
+        const SizedBox(height: 12),
+        SizedBox(
+          width: double.infinity,
+          child: OutlinedButton.icon(
+            onPressed: _pickFromGallery,
+            icon: const Icon(Icons.photo_library_outlined),
+            label: const Text('Elegir de galería',
+                style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: GardenColors.forest,
+              side: const BorderSide(color: GardenColors.forest, width: 1.5),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(24)),
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -515,13 +611,37 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
           ),
 
         Expanded(
-          child: Center(
-            child: Text(
-              'Se encontraron ${_candidates.length} candidatos',
-              style: GardenTextStyles.body,
+          child: PageView.builder(
+            controller: _pageController,
+            onPageChanged: (i) => setState(() => _currentPage = i),
+            itemCount: _candidates.length,
+            itemBuilder: (_, i) => _CandidatePageCard(
+              candidate: _candidates[i],
+              onSelect: () => _selectCandidate(_candidates[i]),
             ),
           ),
         ),
+
+        const SizedBox(height: 16),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            _candidates.length,
+            (i) => AnimatedContainer(
+              duration: const Duration(milliseconds: 250),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: _currentPage == i ? 24 : 8,
+              height: 8,
+              decoration: BoxDecoration(
+                color: _currentPage == i
+                    ? GardenColors.forest
+                    : GardenColors.sageLight,
+                borderRadius: BorderRadius.circular(4),
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(height: 8),
       ],
     );
   }
@@ -699,7 +819,127 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
   }
 }
 
-// ─── Candidate card ───────────────────────────────────────────────────────────
+// ─── Candidate page card (carrusel pantalla completa) ─────────────────────────
+
+class _CandidatePageCard extends StatelessWidget {
+  const _CandidatePageCard({required this.candidate, required this.onSelect});
+
+  final SpeciesCandidate candidate;
+  final VoidCallback onSelect;
+
+  @override
+  Widget build(BuildContext context) {
+    final pct = (candidate.probability * 100).toStringAsFixed(0);
+    final imageUrl = candidate.imageUrl;
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(24),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // 2/3 — imagen de referencia
+            Expanded(
+              flex: 2,
+              child: imageUrl != null
+                  ? Image.network(
+                      imageUrl,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => Container(
+                        color: GardenColors.sageLight,
+                        child: const Center(
+                          child: Icon(Icons.local_florist,
+                              size: 64, color: GardenColors.forest),
+                        ),
+                      ),
+                    )
+                  : Container(
+                      color: GardenColors.sageLight,
+                      child: const Center(
+                        child: Icon(Icons.local_florist,
+                            size: 64, color: GardenColors.forest),
+                      ),
+                    ),
+            ),
+            // 1/3 — texto + botón
+            Expanded(
+              flex: 1,
+              child: Container(
+                color: Colors.white,
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            candidate.commonNames.isNotEmpty
+                                ? candidate.commonNames.first
+                                : candidate.scientificName,
+                            style: GardenTextStyles.title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: GardenColors.forest.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Text(
+                            '$pct%',
+                            style: GardenTextStyles.label.copyWith(
+                                color: GardenColors.forest,
+                                fontWeight: FontWeight.w700),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      candidate.scientificName,
+                      style: GardenTextStyles.bodySmall.copyWith(
+                          fontStyle: FontStyle.italic,
+                          color: GardenColors.earth),
+                    ),
+                    if (candidate.family != null)
+                      Text(
+                        candidate.family!,
+                        style: GardenTextStyles.bodySmall
+                            .copyWith(color: GardenColors.dust),
+                      ),
+                    const Spacer(),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        style: FilledButton.styleFrom(
+                          backgroundColor: GardenColors.forest,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(14)),
+                          padding: const EdgeInsets.symmetric(vertical: 14),
+                        ),
+                        onPressed: onSelect,
+                        child: Text(
+                          'Elegir esta',
+                          style: GardenTextStyles.body.copyWith(
+                              color: Colors.white, fontWeight: FontWeight.w600),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
 
 // ─── Corner painter ───────────────────────────────────────────────────────────
 
