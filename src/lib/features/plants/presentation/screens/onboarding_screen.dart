@@ -895,6 +895,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
 
   Widget _buildIdentifyStep() {
     return PlantIdentifyScreen(
+      onBack: () {
+        ref.read(onboardingStepProvider.notifier).state =
+            OnboardingStep.connect;
+      },
       onPlantCreated: (_) {
         ref.read(onboardingStepProvider.notifier).state =
             OnboardingStep.firstInsight;
