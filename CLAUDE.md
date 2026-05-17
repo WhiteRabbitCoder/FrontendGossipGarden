@@ -76,7 +76,7 @@ FIREBASE_AUTH_DOMAIN=...      # optional
 - `domain/` — repository interfaces and `usecases/`.
 - `presentation/` — `screens/`, `widgets/`, `providers/` (Riverpod).
 
-Two features: `plants/` (bulk of the app) and `auth/`.
+Two features: `plants/` (plant management, identification, LLM chat, sensor telemetry) and `auth/`.
 
 ### State management
 
@@ -86,6 +86,7 @@ Riverpod (`flutter_riverpod`). Wired in `main.dart` via `ProviderScope`. Notable
 - `plantRealtimeSensorProvider` — `StreamProvider` polling `GET /api/v1/plants/{id}/sensor-data/latest` every 15s.
 - `identificationApiDatasourceProvider` — token-aware datasource for `POST /api/v1/identify`.
 - `plantCreateDatasourceProvider` — token-aware datasource for `POST /api/v1/plants/`.
+- `chatProviders` (`chat_providers.dart`) — providers for LLM chat with plant personality.
 
 `auth_provider.dart` — `AuthNotifier` exposes `AsyncValue<AuthSession>`; `_AppGate` in `main.dart` routes login → onboarding → main.
 
@@ -101,6 +102,8 @@ All calls go to `/api/v1/*` with `Authorization: Bearer <supabase_jwt>`.
 | `identification_api_datasource.dart` | `POST /api/v1/identify` (multipart, `image/jpeg`), `POST /api/v1/species/from-candidate` |
 | `plant_create_datasource.dart` | `POST /api/v1/plants/` |
 | `backend_auth_service.dart` | `POST /api/v1/auth/login`, `POST /api/v1/auth/register`; also `POST supabase.co/auth/v1/token` (Google) |
+| `backend_chat_service.dart` | `POST /api/v1/chat/{plant_id}`, `GET /api/v1/chat/{plant_id}/history` |
+| `sensor_stream_datasource.dart` | `GET /api/v1/plants/{id}/sensor-data/latest` (polling) |
 
 **Important:** `GET /api/v1/species` does NOT exist in the backend — do not call it. Comfort zone defaults are hardcoded in `plant_api_datasource.dart` until `GET /api/v1/species/{id}/profile` is implemented.
 
@@ -113,12 +116,70 @@ All calls go to `/api/v1/*` with `Authorization: Bearer <supabase_jwt>`.
 
 **Multipart note:** `MultipartFile.fromPath` on Android defaults to `application/octet-stream`. Always pass `contentType: MediaType('image', 'jpeg')` explicitly (requires `http_parser: ^4.0.2` in `pubspec.yaml`).
 
+### New screens and widgets
+
+**Screens:**
+- `chat_list_screen.dart` — list of all plant conversations.
+- `plant_chat_screen.dart` — LLM chat interface with individual plant personality.
+
+**Widgets:**
+- `telemetry_panel.dart` — real-time sensor data display.
+- `summary_banner.dart` — plant health summary.
+- `hero_stats_card.dart` — headline statistics card.
+- `voice_note_bubble.dart` — voice message UI component.
+
 ### Pending backend endpoints
 
 See `frontendGossipGarden/PENDING_BACKEND.md` for the full list. Key gaps:
 - `GET /api/v1/species/{id}/profile` — comfort zones (using defaults now)
 - JWT refresh — on expiry, user is forced to re-login
 - CRUD friendships
+
+---
+
+## Testing
+
+The project has **141+ automated tests** across 12 test files. Run from `src/`:
+
+```bash
+flutter test                        # all tests
+flutter test --coverage             # with lcov coverage
+flutter test test/features/plants/  # specific feature
+```
+
+### Stack
+- **mocktail** (`^1.0.4`) for mocking HTTP clients and services.
+- Fixtures in `test/fixtures/*.json` (API response snapshots).
+- Helpers: `test/helpers/fixture_loader.dart`, `test/helpers/fake_secure_storage.dart`.
+
+### Coverage
+Business logic coverage threshold: **40%** (enforced in CI). Excludes `screens/`, `widgets/`, and `main.dart` — those are covered by widget/integration tests.
+
+### Test structure
+```
+test/
+├── core/services/              # backend_auth_service, token_storage
+├── features/
+│   ├── auth/data/              # user_profile model
+│   ├── auth/presentation/      # auth_provider
+│   └── plants/
+│       ├── data/datasources/   # plant_api, plant_create, identification_api
+│       ├── data/models/        # plant, sensors, comfort_zones, identification
+│       └── presentation/providers/  # navigation_provider
+├── fixtures/                   # JSON response fixtures
+└── helpers/                    # fixture_loader, fake_secure_storage
+```
+
+---
+
+## CI (GitHub Actions — `.github/workflows/ci.yml`)
+
+Two parallel jobs triggered on push/PR to `main` or `qa`:
+
+1. **analyze** — `flutter analyze --fatal-infos` (zero warnings/infos allowed).
+2. **test** — `flutter test --coverage` + lcov threshold check (40% on business logic).
+
+Coverage report artifact uploaded for each run.
 
 ---
 
