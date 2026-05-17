@@ -64,11 +64,10 @@ jobs:
           # Excluir UI (screens, widgets, main) — se testean con widget/e2e tests,
           # no con unit tests. El umbral mide solo lógica de negocio.
           lcov --remove src/coverage/lcov.info \
-            '*/lib/features/*/presentation/screens/*' \
-            '*/lib/features/*/presentation/widgets/*' \
-            '*/lib/main.dart' \
-            --output-file src/coverage/lcov_filtered.info \
-            --ignore-errors unused 2>&1 || true
+            'lib/features/*/presentation/screens/*' \
+            'lib/features/*/presentation/widgets/*' \
+            'lib/main.dart' \
+            --output-file src/coverage/lcov_filtered.info 2>&1 || true
 
           COVERAGE=$(lcov --summary src/coverage/lcov_filtered.info 2>&1 | grep "lines" | grep -oP '[\d.]+(?=%)' | head -1)
           echo "Coverage (lógica de negocio): ${COVERAGE}%"
