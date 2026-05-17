@@ -7,9 +7,8 @@ on:
     branches: [main, qa]
 
 jobs:
-  flutter-ci:
+  analyze:
     runs-on: ubuntu-latest
-
     steps:
       - uses: actions/checkout@v4
 
@@ -23,9 +22,61 @@ jobs:
         working-directory: src
 
       - name: Analyze
-        run: flutter analyze
+        run: flutter analyze --fatal-infos
         working-directory: src
 
-      - name: Run tests
-        run: flutter test
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.x'
+          channel: 'stable'
+
+      - name: Install dependencies
+        run: flutter pub get
         working-directory: src
+
+      - name: Run tests with coverage
+        run: flutter test --coverage --reporter expanded
+        working-directory: src
+
+      - name: Install lcov
+        if: always()
+        run: sudo apt-get install -y lcov
+
+      - name: Generate HTML coverage report
+        if: always()
+        run: genhtml src/coverage/lcov.info -o coverage_report --no-function-coverage
+        continue-on-error: true
+
+      - name: Upload coverage report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage_report/
+
+      - name: Check coverage threshold (40%)
+        run: |
+          # Excluir UI (screens, widgets, main) — se testean con widget/e2e tests,
+          # no con unit tests. El umbral mide solo lógica de negocio.
+          lcov --remove src/coverage/lcov.info \
+            'lib/features/*/presentation/screens/*' \
+            'lib/features/*/presentation/widgets/*' \
+            'lib/main.dart' \
+            --output-file src/coverage/lcov_filtered.info 2>&1 || true
+
+          COVERAGE=$(lcov --summary src/coverage/lcov_filtered.info 2>&1 | grep "lines" | grep -oP '[\d.]+(?=%)' | head -1)
+          echo "Coverage (lógica de negocio): ${COVERAGE}%"
+          if [ -z "$COVERAGE" ]; then
+            echo "::warning::No se pudo calcular la cobertura"
+            exit 0
+          fi
+          if (( $(echo "$COVERAGE < 40" | bc -l) )); then
+            echo "::error::Cobertura ${COVERAGE}% por debajo del umbral mínimo de 40%"
+            exit 1
+          fi
+          echo "Cobertura ${COVERAGE}% supera el umbral de 40%"

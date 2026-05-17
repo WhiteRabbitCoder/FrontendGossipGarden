@@ -1,0 +1,34 @@
+{
+  "status": "needs_user_selection",
+  "candidates": [
+    {
+      "scientific_name": "Monstera deliciosa",
+      "common_names": ["Costilla de Adán", "Filodendro perforado"],
+      "probability": 0.62,
+      "gbif_id": 2684241,
+      "inaturalist_id": 119838,
+      "taxonomy": {"family": "Araceae", "genus": "Monstera"},
+      "description": "Planta tropical con hojas perforadas características.",
+      "image_url": "https://example.com/monstera.jpg",
+      "reference_images": ["https://example.com/ref1.jpg"]
+    },
+    {
+      "scientific_name": "Monstera adansonii",
+      "common_names": ["Monstera queso", "Ventana suiza"],
+      "probability": 0.32,
+      "gbif_id": 2684242,
+      "inaturalist_id": 119839,
+      "taxonomy": {"family": "Araceae", "genus": "Monstera"},
+      "description": "Planta con hojas más pequeñas y perforadas.",
+      "image_url": null,
+      "reference_images": []
+    },
+    {
+      "scientific_name": "Epipremnum aureum",
+      "common_names": ["Pothos", "Poto"],
+      "probability": 0.06,
+      "gbif_id": 2768737,
+      "taxonomy": {"family": "Araceae", "genus": "Epipremnum"}
+    }
+  ]
+}
