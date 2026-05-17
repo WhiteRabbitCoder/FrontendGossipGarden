@@ -20,11 +20,16 @@ class UnauthorizedException implements Exception {
 }
 
 class PlantApiDatasource implements PlantDatasource {
-  PlantApiDatasource({http.Client? httpClient, this.authToken})
-      : _httpClient = httpClient ?? http.Client();
+  PlantApiDatasource({
+    http.Client? httpClient,
+    this.authToken,
+    DateTime Function()? now,
+  })  : _httpClient = httpClient ?? http.Client(),
+        _now = now ?? DateTime.now;
 
   final http.Client _httpClient;
   final String? authToken;
+  final DateTime Function() _now;
 
   Map<String, String> get _authHeaders => {
         if (authToken != null) 'Authorization': 'Bearer $authToken',
@@ -191,7 +196,7 @@ class PlantApiDatasource implements PlantDatasource {
     final parsed = DateTime.tryParse(tsRaw)?.toUtc();
     if (parsed == null) return SensorStatus.degraded;
 
-    final age = DateTime.now().toUtc().difference(parsed);
+    final age = _now().toUtc().difference(parsed);
     if (age.inMinutes <= 20) return SensorStatus.online;
     if (age.inHours <= 3) return SensorStatus.degraded;
     return SensorStatus.offline;
