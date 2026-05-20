@@ -23,10 +23,11 @@ class FirebaseEnvironment {
 
   static bool get isConfigured =>
       enableFirebase &&
-      apiKey.isNotEmpty &&
-      appId.isNotEmpty &&
-      messagingSenderId.isNotEmpty &&
-      projectId.isNotEmpty;
+      (!kIsWeb ||
+          (apiKey.isNotEmpty &&
+              appId.isNotEmpty &&
+              messagingSenderId.isNotEmpty &&
+              projectId.isNotEmpty));
 
   static bool get hasWebOptions =>
       apiKey.isNotEmpty &&

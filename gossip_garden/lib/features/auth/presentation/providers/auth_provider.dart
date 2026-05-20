@@ -1,4 +1,6 @@
 import 'dart:async';
+import 'dart:io';
+import 'dart:convert';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -151,6 +153,21 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
       if (userId == null) {
         throw Exception('Error al registrar en el backend.');
       }
+
+      // Si no hay Firebase, persistimos localmente el nombre elegido y hacemos login
+      if (!FirebaseEnvironment.isConfigured) {
+        final profile = UserProfile(
+          uid: email,
+          displayName: name,
+          email: email,
+          onboardingCompleted: true,
+          favoritePlantIds: const [],
+          useGridView: true,
+          notificationPreference: 'important',
+        );
+        await _saveLocalProfile(profile);
+        await signInWithEmailAndPassword(email, password);
+      }
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
       rethrow;
@@ -174,17 +191,19 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
 
       // Si no hay Firebase, creamos la sesión local basada en el éxito del backend
       if (!FirebaseEnvironment.isConfigured) {
+        final cachedProfile = await _loadLocalProfile(email);
         state = AsyncValue.data(
           AuthSession(
-            profile: UserProfile(
-              uid: email,
-              displayName: email.split('@').first,
-              email: email,
-              onboardingCompleted: true,
-              favoritePlantIds: const [],
-              useGridView: true,
-              notificationPreference: 'important',
-            ),
+            profile: cachedProfile ??
+                UserProfile(
+                  uid: email,
+                  displayName: email.split('@').first,
+                  email: email,
+                  onboardingCompleted: true,
+                  favoritePlantIds: const [],
+                  useGridView: true,
+                  notificationPreference: 'important',
+                ),
             firebaseEnabled: false,
             onboardingCompleted: true,
           ),
@@ -239,6 +258,63 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
         onboardingCompleted: true,
       ),
     );
+  }
+
+  Future<void> updateProfile({String? displayName, String? photoUrl}) async {
+    final current = state.value;
+    if (current == null || current.profile == null) return;
+
+    final updatedProfile = UserProfile(
+      uid: current.profile!.uid,
+      displayName: displayName ?? current.profile!.displayName,
+      email: current.profile!.email,
+      photoUrl: photoUrl ?? current.profile!.photoUrl,
+      onboardingCompleted: current.profile!.onboardingCompleted,
+      favoritePlantIds: current.profile!.favoritePlantIds,
+      useGridView: current.profile!.useGridView,
+      notificationPreference: current.profile!.notificationPreference,
+    );
+
+    if (FirebaseEnvironment.isConfigured) {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user != null) {
+        if (displayName != null) await user.updateDisplayName(displayName);
+        if (photoUrl != null) await user.updatePhotoURL(photoUrl);
+
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
+          updatedProfile.toJson(),
+          SetOptions(merge: true),
+        );
+      }
+    } else {
+      await _saveLocalProfile(updatedProfile);
+    }
+
+    state = AsyncValue.data(
+      AuthSession(
+        profile: updatedProfile,
+        firebaseEnabled: current.firebaseEnabled,
+        onboardingCompleted: current.onboardingCompleted,
+      ),
+    );
+  }
+
+  Future<void> _saveLocalProfile(UserProfile profile) async {
+    try {
+      final file = File('${Directory.systemTemp.path}/gossip_garden_user_${profile.email}.json');
+      await file.writeAsString(jsonEncode(profile.toJson()));
+    } catch (_) {}
+  }
+
+  Future<UserProfile?> _loadLocalProfile(String email) async {
+    try {
+      final file = File('${Directory.systemTemp.path}/gossip_garden_user_$email.json');
+      if (await file.exists()) {
+        final content = await file.readAsString();
+        return UserProfile.fromJson(jsonDecode(content) as Map<String, dynamic>);
+      }
+    } catch (_) {}
+    return null;
   }
 
   @override

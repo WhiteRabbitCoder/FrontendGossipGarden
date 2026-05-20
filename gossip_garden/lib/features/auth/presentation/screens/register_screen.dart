@@ -13,6 +13,7 @@ class RegisterScreen extends ConsumerStatefulWidget {
 }
 
 class _RegisterScreenState extends ConsumerState<RegisterScreen> {
+  final _usernameController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
@@ -20,6 +21,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
   @override
   void dispose() {
+    _usernameController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
     _confirmController.dispose();
@@ -27,10 +29,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   }
 
   void _register() {
+    final username = _usernameController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     final confirm = _confirmController.text;
 
+    if (username.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Por favor, ingresa un nombre de usuario')),
+      );
+      return;
+    }
     if (email.isEmpty || password.isEmpty) return;
     if (password != confirm) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -39,7 +48,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       return;
     }
 
-    ref.read(authStateProvider.notifier).registerWithEmailAndPassword(email, password, email.split('@').first);
+    ref.read(authStateProvider.notifier).registerWithEmailAndPassword(email, password, username);
   }
 
   @override
@@ -89,6 +98,25 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     style: GardenTextStyles.body.copyWith(color: GardenColors.earth),
                   ),
                   const SizedBox(height: 40),
+
+                  TextField(
+                    controller: _usernameController,
+                    keyboardType: TextInputType.text,
+                    decoration: InputDecoration(
+                      hintText: 'Nombre de usuario',
+                      hintStyle: GardenTextStyles.body.copyWith(color: GardenColors.dust),
+                      prefixIcon: const Icon(Icons.person_outline, color: GardenColors.moss),
+                      filled: true,
+                      fillColor: Colors.white,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(24),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 20),
+                    ),
+                    style: GardenTextStyles.body,
+                  ),
+                  const SizedBox(height: 16),
 
                   TextField(
                     controller: _emailController,

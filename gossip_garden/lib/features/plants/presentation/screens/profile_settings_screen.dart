@@ -6,6 +6,7 @@ import '../../data/models/plant_enums.dart';
 import 'package:gossip_garden/features/auth/presentation/providers/auth_provider.dart';
 import '../../../../core/theme/garden_colors.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import 'personal_info_screen.dart';
 
 // ── Local providers (sin cambios) ────────────────────────────────────────────
 final favoritePlantsProvider =
@@ -43,7 +44,11 @@ class ProfileSettingsScreen extends ConsumerWidget {
                       userName: userName,
                       plantCount: plants.length,
                       onEditTap: () {
-                        // TODO(backend): navegar a editar perfil
+                        Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) => const PersonalInfoScreen(),
+                          ),
+                        );
                       },
                       onSettingsTap: () {
                         Navigator.of(context).push(
@@ -606,7 +611,13 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
                 icon: Icons.person_outline_rounded,
                 title: 'Información personal',
                 subtitle: 'Nombre, bio, avatar',
-                onTap: () {},
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const PersonalInfoScreen(),
+                    ),
+                  );
+                },
               ),
               _SettingsDivider(),
               _SettingsTile(
@@ -719,7 +730,10 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
 
           // ── Cerrar sesión ────────────────────────────────────────────────
           GestureDetector(
-            onTap: () => ref.read(authStateProvider.notifier).signOut(),
+            onTap: () {
+              Navigator.of(context).pop();
+              ref.read(authStateProvider.notifier).signOut();
+            },
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 16),
               decoration: BoxDecoration(
