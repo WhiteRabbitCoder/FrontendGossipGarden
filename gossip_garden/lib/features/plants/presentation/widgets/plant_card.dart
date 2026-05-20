@@ -41,20 +41,39 @@ class PlantCard extends StatelessWidget {
     return Container(
       width: 48,
       height: 48,
-      decoration: BoxDecoration(
-        color: const Color(0xFF4A6741).withOpacity(0.1),
+      decoration: const BoxDecoration(
+        color: Color(0xFFEBF2E8), // GardenColors.sageLight
         shape: BoxShape.circle,
-        image: plant.image.isNotEmpty
-            ? DecorationImage(
-                image: AssetImage(plant.image),
-                fit: BoxFit.cover,
-              )
-            : null,
       ),
-      child: plant.image.isEmpty
-          ? const Icon(Icons.local_florist, color: Color(0xFF4A6741))
-          : null,
+      child: plant.image.isNotEmpty
+          ? ClipOval(
+              child: Image.network(
+                plant.image,
+                fit: BoxFit.cover,
+                errorBuilder: (_, __, ___) => Icon(
+                  _getPlantIcon(plant.species),
+                  color: const Color(0xFF3D5E36), // GardenColors.forest
+                  size: 24,
+                ),
+              ),
+            )
+          : Icon(
+              _getPlantIcon(plant.species),
+              color: const Color(0xFF3D5E36), // GardenColors.forest
+              size: 24,
+            ),
     );
+  }
+
+  IconData _getPlantIcon(String species) {
+    final lower = species.toLowerCase();
+    if (lower.contains('echeveria') || lower.contains('suculenta')) {
+      return Icons.local_florist_outlined;
+    }
+    if (lower.contains('ficus')) {
+      return Icons.park_outlined;
+    }
+    return Icons.eco_outlined;
   }
 
   Widget _buildPlantInfo(Plant plant) {

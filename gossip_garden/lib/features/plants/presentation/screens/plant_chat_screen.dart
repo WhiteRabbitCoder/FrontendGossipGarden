@@ -148,8 +148,26 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
             title: Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: const Color(0xFF4A6741).withOpacity(0.1),
-                  child: Text(_plant?.name.substring(0, 1) ?? 'P'),
+                  backgroundColor: const Color(0xFFEBF2E8), // GardenColors.sageLight
+                  child: _plant?.image.isNotEmpty == true
+                      ? ClipOval(
+                          child: Image.network(
+                            _plant!.image,
+                            fit: BoxFit.cover,
+                            width: 40,
+                            height: 40,
+                            errorBuilder: (_, __, ___) => Icon(
+                              _getPlantIcon(_plant?.species ?? ''),
+                              color: const Color(0xFF3D5E36), // GardenColors.forest
+                              size: 20,
+                            ),
+                          ),
+                        )
+                      : Icon(
+                          _getPlantIcon(_plant?.species ?? ''),
+                          color: const Color(0xFF3D5E36), // GardenColors.forest
+                          size: 20,
+                        ),
                 ),
                 const SizedBox(width: 12),
                 Column(
@@ -301,5 +319,16 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (e, _) => Scaffold(body: Center(child: Text('Error: $e'))),
     );
+  }
+
+  IconData _getPlantIcon(String species) {
+    final lower = species.toLowerCase();
+    if (lower.contains('echeveria') || lower.contains('suculenta')) {
+      return Icons.local_florist_outlined;
+    }
+    if (lower.contains('ficus')) {
+      return Icons.park_outlined;
+    }
+    return Icons.eco_outlined;
   }
 }

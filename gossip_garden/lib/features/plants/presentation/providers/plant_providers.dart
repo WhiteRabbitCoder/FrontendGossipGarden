@@ -10,30 +10,59 @@ import '../../data/models/sensors.dart';
 import '../../data/models/comfort_zones.dart';
 import '../../data/models/realtime_sensor_snapshot.dart';
 
-// ── Demo plant ──────────────────────────────────────────────────────────────
+// ── Demo plants ──────────────────────────────────────────────────────────────
+// TODO(backend): Reemplazar el cuerpo del FutureProvider con:
+//   PlantApiDatasource().getPlants()
+// cuando el backend esté disponible. Los modelos Plant ya están mapeados al contrato.
 
-const _demoPlant = Plant(
-  id: 'demo-001',
-  name: 'Monducuru',
-  species: 'Opuntia monacantha',
+const _demoMonstera = Plant(
+  id: '1',
+  name: 'Monstera',
+  species: 'Monstera Deliciosa',
   image: '',
   personality: PlantPersonality.dramatic,
-  health: 82.0,
-  mood: PlantMood.happy,
-  lastWatered: 'Hace 2 días',
+  health: 78.0,
+  mood: PlantMood.thirsty,
+  lastWatered: 'Hace 3 días',
   sensors: Sensors(
-    humidity: 38.0,
-    temperature: 24.5,
-    light: 3400.0,
-    soilMoisture: 31.0,
+    humidity: 25.0,
+    temperature: 22.0,
+    light: 1500.0,
+    soilMoisture: 15.0,
+  ),
+  sensorStatus: SensorStatus.offline,
+  confidence: ConfidenceLevel.low,
+  actions: [],
+  insights: ['Necesito agua, la tierra está muy seca.'],
+  comfortZones: ComfortZones(
+    humidity: Range(40, 70),
+    temperature: Range(18, 27),
+    light: Range(500, 2000),
+    soilMoisture: Range(30, 60),
+  ),
+);
+
+const _demoSuculenta = Plant(
+  id: '2',
+  name: 'Suculenta Luna',
+  species: 'Echeveria Elegans',
+  image: '',
+  personality: PlantPersonality.wise,
+  health: 95.0,
+  mood: PlantMood.perfect,
+  lastWatered: 'Hace 1 semana',
+  sensors: Sensors(
+    humidity: 45.0,
+    temperature: 23.0,
+    light: 4000.0,
+    soilMoisture: 35.0,
   ),
   sensorStatus: SensorStatus.online,
   confidence: ConfidenceLevel.high,
   actions: [],
   insights: [
-    'Mi tierra está al 31% — perfectamente seca para alguien de mi linaje.',
-    'Luz en 3400 lux. Estoy en modo cactus zen. No me molestes.',
-    'Temperatura ideal. Aunque podría estar más cálido, no me quejo... mucho.',
+    'Todo perfecto, luz y humedad en nivel...',
+    'Suculenta Luna querrá un poquito de agua en 4 días según sus proyecciones de humedad.',
   ],
   comfortZones: ComfortZones(
     humidity: Range(20, 60),
@@ -43,9 +72,38 @@ const _demoPlant = Plant(
   ),
 );
 
+const _demoFicus = Plant(
+  id: '3',
+  name: 'Ficus Maestro',
+  species: 'Ficus Lyrata',
+  image: '',
+  personality: PlantPersonality.playful,
+  health: 55.0,
+  mood: PlantMood.stressed,
+  lastWatered: 'Hace 2 días',
+  sensors: Sensors(
+    humidity: 30.0,
+    temperature: 19.0,
+    light: 800.0,
+    soilMoisture: 40.0,
+  ),
+  sensorStatus: SensorStatus.online,
+  confidence: ConfidenceLevel.medium,
+  actions: [],
+  insights: ['La luz no es suficiente para mantener un crecimiento saludable.'],
+  comfortZones: ComfortZones(
+    humidity: Range(30, 65),
+    temperature: Range(18, 30),
+    light: Range(1500, 4000),
+    soilMoisture: Range(30, 60),
+  ),
+);
+
 // ── Providers ───────────────────────────────────────────────────────────────
 
-final plantsProvider = FutureProvider<List<Plant>>((_) async => [_demoPlant]);
+final plantsProvider = FutureProvider<List<Plant>>(
+  (_) async => [_demoMonstera, _demoSuculenta, _demoFicus],
+);
 
 final wifiSetupDatasourceProvider = Provider<WifiSetupDatasource>(
   (ref) => const WifiSetupDatasource(),

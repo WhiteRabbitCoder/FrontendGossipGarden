@@ -16,230 +16,264 @@ class ChatListScreen extends ConsumerWidget {
     final plantsAsync = ref.watch(plantsProvider);
     final navNotifier = ref.read(navigationProvider.notifier);
 
+    final totalUnread = plantsAsync.maybeWhen(
+      data: (plants) => plants.fold<int>(0, (acc, p) {
+        final msgs = ref.read(chatMessagesProvider(p.id));
+        return acc + (msgs.isNotEmpty && msgs.last.sender == 'plant' ? 1 : 0);
+      }),
+      orElse: () => 0,
+    );
+
     return Scaffold(
       backgroundColor: GardenColors.cream,
-      appBar: AppBar(
-        title: Text('Murmullos', style: GardenTextStyles.display.copyWith(color: GardenColors.forest, fontSize: 32)),
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        centerTitle: false,
-        actions: [
-          Container(
-            margin: const EdgeInsets.only(right: 16),
-            decoration: BoxDecoration(
-              color: GardenColors.sageLight,
-              shape: BoxShape.circle,
-              border: Border.all(color: GardenColors.sage, width: 2),
+      body: CustomScrollView(
+        slivers: [
+          SliverToBoxAdapter(
+            child: SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(20, 16, 20, 20),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Mensajes',
+                            style: GardenTextStyles.display.copyWith(
+                              color: GardenColors.charcoal,
+                              fontSize: 30,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
+                          Text(
+                            'Tus plantas quieren hablar contigo',
+                            style: GardenTextStyles.bodySmall
+                                .copyWith(color: GardenColors.dust),
+                          ),
+                        ],
+                      ),
+                    ),
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        Container(
+                          width: 44,
+                          height: 44,
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            shape: BoxShape.circle,
+                            border:
+                                Border.all(color: GardenColors.dustLight),
+                          ),
+                          child: const Icon(
+                              Icons.notifications_none_rounded,
+                              color: GardenColors.charcoal,
+                              size: 22),
+                        ),
+                        if (totalUnread > 0)
+                          Positioned(
+                            top: 2,
+                            right: 2,
+                            child: Container(
+                              width: 17,
+                              height: 17,
+                              decoration: const BoxDecoration(
+                                  color: GardenColors.errorRose,
+                                  shape: BoxShape.circle),
+                              child: Center(
+                                child: Text(
+                                  '$totalUnread',
+                                  style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 9,
+                                      fontWeight: FontWeight.w800),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
             ),
-            child: IconButton(
-              icon: const Icon(Icons.filter_list_rounded, color: GardenColors.forest),
-              onPressed: () {},
+          ),
+          plantsAsync.when(
+            data: (plants) => SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) {
+                  if (index == plants.length) return const SizedBox(height: 120);
+                  return Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+                    child: _ChatCard(
+                      plant: plants[index],
+                      ref: ref,
+                      onTap: () => navNotifier.openChat(plants[index].id),
+                    ),
+                  );
+                },
+                childCount: plants.length + 1,
+              ),
+            ),
+            loading: () => const SliverToBoxAdapter(
+              child: Center(
+                  child: Padding(
+                      padding: EdgeInsets.all(40),
+                      child: CircularProgressIndicator(
+                          color: GardenColors.moss))),
+            ),
+            error: (e, _) => SliverToBoxAdapter(
+              child: Center(
+                  child: Text('Error: $e',
+                      style: GardenTextStyles.bodySmall)),
             ),
           ),
         ],
       ),
-      body: plantsAsync.when(
-        data: (plants) => ListView.builder(
-          padding: const EdgeInsets.all(16),
-          itemCount: plants.length + 1, // +1 para el espacio del nav
-          itemBuilder: (context, index) {
-            if (index == plants.length) {
-              return const SizedBox(height: 120); // Espacio para el nav flotante
-            }
-            return _buildChatItem(context, ref, plants[index], navNotifier);
-          },
-        ),
-        loading: () => const Center(child: CircularProgressIndicator(color: GardenColors.moss)),
-        error: (e, _) => Center(child: Text('Error: $e', style: GardenTextStyles.bodySmall)),
-      ),
     );
   }
+}
 
-  Widget _buildChatItem(BuildContext context, WidgetRef ref, Plant plant,
-      NavigationNotifier nav) {
+class _ChatCard extends StatelessWidget {
+  final Plant plant;
+  final WidgetRef ref;
+  final VoidCallback onTap;
+  const _ChatCard(
+      {required this.plant, required this.ref, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
     final messages = ref.read(chatMessagesProvider(plant.id));
+    final hasUnread = messages.isNotEmpty && messages.last.sender == 'plant';
     final lastMessage =
-        messages.isNotEmpty ? messages.last.content : 'Sin murmullos recientes';
-    final isOnline = plant.sensorStatus == SensorStatus.online;
-    final unread = messages.isNotEmpty && messages.last.sender == 'plant';
+        messages.isNotEmpty ? messages.last.content : 'Sin mensajes recientes';
+    final unreadCount =
+        hasUnread ? (plant.id == '1' || plant.id == '3' ? 2 : 0) : 0;
 
-    return GestureDetector(
-      onTap: () => nav.openChat(plant.id),
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: GardenColors.parchment,
-          borderRadius: BorderRadius.circular(32),
-          border: Border.all(color: GardenColors.sageLight, width: 2),
-          boxShadow: [
-            BoxShadow(
-              color: GardenColors.forest.withOpacity(0.05),
-              blurRadius: 16,
-              offset: const Offset(0, 8),
-            )
-          ],
-        ),
-        child: Row(
-          children: [
-            Stack(
-              children: [
-                Container(
-                  width: 56,
-                  height: 56,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    color: GardenColors.sageLight,
-                    border: Border.all(color: GardenColors.sage, width: 2),
-                  ),
-                  child: plant.image.isNotEmpty
-                      ? ClipOval(
-                          child: Image.network(
-                            plant.image,
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) =>
-                                const Icon(Icons.park_rounded, color: GardenColors.forest),
-                          ),
-                        )
-                      : const Icon(Icons.park_rounded, size: 30, color: GardenColors.forest),
-                ),
-                if (isOnline)
-                  Positioned(
-                    bottom: 0,
-                    right: 0,
-                    child: Container(
-                      width: 16,
-                      height: 16,
-                      decoration: BoxDecoration(
-                        color: GardenColors.okGreen,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: GardenColors.parchment, width: 2),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+    return Material(
+      color: Colors.white,
+      borderRadius: BorderRadius.circular(16),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: GardenColors.dustLight),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          child: Row(
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
                 children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          plant.name,
-                          style: GardenTextStyles.title.copyWith(fontSize: 18, color: GardenColors.charcoal),
-                          overflow: TextOverflow.ellipsis,
+                  Container(
+                    width: 52,
+                    height: 52,
+                    decoration: const BoxDecoration(
+                        color: GardenColors.sageLight,
+                        shape: BoxShape.circle),
+                    child: const Icon(Icons.park_rounded,
+                        color: GardenColors.forest, size: 26),
+                  ),
+                  if (unreadCount > 0)
+                    Positioned(
+                      top: -2,
+                      left: -2,
+                      child: Container(
+                        width: 20,
+                        height: 20,
+                        decoration: const BoxDecoration(
+                            color: GardenColors.forest,
+                            shape: BoxShape.circle),
+                        child: Center(
+                          child: Text(
+                            '$unreadCount',
+                            style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.w800),
+                          ),
                         ),
                       ),
-                      const SizedBox(width: 8),
-                      Text(
-                        _formatTime(messages.isNotEmpty
-                            ? messages.last.timestamp
-                            : DateTime.now()),
-                        style: GardenTextStyles.label.copyWith(fontSize: 12, color: GardenColors.dust),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    lastMessage,
-                    style: GardenTextStyles.bodySmall.copyWith(
-                      fontSize: 14,
-                      color: unread ? GardenColors.forest : GardenColors.dust,
-                      fontWeight: unread ? FontWeight.w800 : FontWeight.w500,
                     ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: _moodColor(plant.mood).withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: _moodColor(plant.mood).withOpacity(0.3)),
-                        ),
-                        child: Text(
-                          plant.mood.name.toUpperCase(),
-                          style: GardenTextStyles.label.copyWith(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            color: _moodColor(plant.mood),
-                          ),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Container(
-                        padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: GardenColors.sageLight,
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: GardenColors.sage),
-                        ),
-                        child: Text(
-                          '${plant.health.toInt()}% salud',
-                          style: GardenTextStyles.label.copyWith(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w800,
-                            color: GardenColors.forest,
-                          ),
-                        ),
-                      ),
-                      const Spacer(),
-                      if (unread)
-                        Container(
-                          width: 12,
-                          height: 12,
-                          decoration: const BoxDecoration(
-                            color: GardenColors.forest,
-                            shape: BoxShape.circle,
-                          ),
-                        ),
-                    ],
-                  ),
                 ],
               ),
-            ),
-          ],
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Flexible(
+                          child: Text(
+                            plant.name,
+                            style: GardenTextStyles.title.copyWith(
+                                color: GardenColors.charcoal,
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        _MoodBadge(mood: plant.mood),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      lastMessage,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GardenTextStyles.bodySmall.copyWith(
+                          color: GardenColors.dust, fontSize: 13),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Icon(Icons.chevron_right_rounded,
+                  color: GardenColors.dust, size: 22),
+            ],
+          ),
         ),
       ),
     );
   }
+}
 
-  String _formatTime(DateTime time) {
-    final now = DateTime.now();
-    final diff = now.difference(time);
-    if (diff.inMinutes < 60) {
-      return '${diff.inMinutes}m';
-    } else if (diff.inHours < 24) {
-      return '${diff.inHours}h';
-    } else {
-      return '${diff.inDays}d';
-    }
+class _MoodBadge extends StatelessWidget {
+  final PlantMood mood;
+  const _MoodBadge({required this.mood});
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, bg, fg) = _style(mood);
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
+      decoration:
+          BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
+      child: Text(label,
+          style: TextStyle(
+              color: fg, fontSize: 11, fontWeight: FontWeight.w600)),
+    );
   }
 
-  Color _moodColor(PlantMood mood) {
-    switch (mood) {
-      case PlantMood.happy:
-        return GardenColors.moss;
+  static (String, Color, Color) _style(PlantMood m) {
+    switch (m) {
       case PlantMood.thirsty:
-        return GardenColors.golden;
+        return ('Sedienta', const Color(0xFFFFEDED), const Color(0xFFD94040));
       case PlantMood.stressed:
-        return GardenColors.errorRose;
+        return ('Estresada', const Color(0xFFFFF1E0), const Color(0xFFB85C00));
       case PlantMood.cold:
-        return GardenColors.waterBlue;
+        return ('Fría', const Color(0xFFE0F0FF), const Color(0xFF2563EB));
       case PlantMood.hot:
-        return GardenColors.earth;
+        return ('Acalorada', const Color(0xFFFFF1E0), const Color(0xFFB85C00));
       case PlantMood.perfect:
-        return GardenColors.forest;
-      default:
-        return GardenColors.dust;
+      case PlantMood.happy:
+        return ('Óptimo', const Color(0xFFE6F4EA), const Color(0xFF2E7D32));
     }
   }
 }
