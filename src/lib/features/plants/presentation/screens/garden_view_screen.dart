@@ -112,7 +112,7 @@ class GardenViewScreen extends ConsumerWidget {
     );
   }
 
-  Widget _buildStatItem(IconData icon, String value, String label) {
+  Widget _buildStatItem(FaIconData icon, String value, String label) {
     return Column(
       children: [
         FaIcon(icon, size: 28, color: GardenColors.forest),

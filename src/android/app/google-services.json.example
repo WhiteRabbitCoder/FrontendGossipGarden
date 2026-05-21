@@ -1,41 +1,41 @@
 {
   "project_info": {
-    "project_number": "845769881632",
-    "project_id": "gossipgarden-e2879",
-    "storage_bucket": "gossipgarden-e2879.firebasestorage.app"
+    "project_number": "YOUR_PROJECT_NUMBER",
+    "project_id": "YOUR_PROJECT_ID",
+    "storage_bucket": "YOUR_PROJECT_ID.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:845769881632:android:23e9b564da83c8c9362445",
+        "mobilesdk_app_id": "YOUR_MOBILE_SDK_APP_ID",
         "android_client_info": {
           "package_name": "shadow.gossip_garden"
         }
       },
       "oauth_client": [
         {
-          "client_id": "845769881632-268k2lc327ekkuei1l1b4l8gfi0osvqf.apps.googleusercontent.com",
+          "client_id": "YOUR_ANDROID_OAUTH_CLIENT_ID",
           "client_type": 1,
           "android_info": {
             "package_name": "shadow.gossip_garden",
-            "certificate_hash": "addc9d0e83238c07dc1cab34273827aa721f9209"
+            "certificate_hash": "YOUR_SHA1_HASH"
           }
         },
         {
-          "client_id": "845769881632-43t9sgnt5d25qddc2ur23at78m909c6t.apps.googleusercontent.com",
+          "client_id": "YOUR_WEB_OAUTH_CLIENT_ID",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyAC2etOT0kWwRelT83YSHBfi9MmxkNLCcc"
+          "current_key": "YOUR_FIREBASE_API_KEY"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "845769881632-43t9sgnt5d25qddc2ur23at78m909c6t.apps.googleusercontent.com",
+              "client_id": "YOUR_WEB_OAUTH_CLIENT_ID",
               "client_type": 3
             }
           ]

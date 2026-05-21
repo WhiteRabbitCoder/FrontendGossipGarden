@@ -302,4 +302,58 @@ void main() {
       expect(state.value!.profile!.onboardingCompleted, isTrue);
     });
   });
+
+  group('updateProfile', () {
+    setUp(() {
+      when(() => mockTokenStorage.readToken())
+          .thenAnswer((_) async => 'jwt_token');
+      when(() => mockTokenStorage.readProfile()).thenAnswer((_) async => {
+            'uid': 'u1',
+            'displayName': 'Original',
+            'email': 'test@example.com',
+            'onboardingCompleted': true,
+            'favoritePlantIds': <String>[],
+            'useGridView': true,
+            'notificationPreference': 'important',
+          });
+      when(() => mockTokenStorage.saveProfile(any())).thenAnswer((_) async {});
+    });
+
+    test('actualiza displayName en el estado y persiste en storage', () async {
+      final container = buildContainer(
+        mockBackendAuth: mockBackendAuth,
+        mockTokenStorage: mockTokenStorage,
+      );
+      addTearDown(container.dispose);
+      await pumpBootstrap(container);
+
+      await container
+          .read(authStateProvider.notifier)
+          .updateProfile(displayName: 'NuevoNombre');
+
+      final state = container.read(authStateProvider);
+      expect(state.value!.profile!.displayName, 'NuevoNombre');
+      verify(() => mockTokenStorage.saveProfile(any())).called(1);
+    });
+
+    test('no modifica estado si no hay sesion activa', () async {
+      when(() => mockTokenStorage.readToken()).thenAnswer((_) async => null);
+      when(() => mockTokenStorage.readProfile()).thenAnswer((_) async => null);
+
+      final container = buildContainer(
+        mockBackendAuth: mockBackendAuth,
+        mockTokenStorage: mockTokenStorage,
+      );
+      addTearDown(container.dispose);
+      await pumpBootstrap(container);
+
+      await container
+          .read(authStateProvider.notifier)
+          .updateProfile(displayName: 'Ignored');
+
+      final state = container.read(authStateProvider);
+      expect(state.value!.profile, isNull);
+      verifyNever(() => mockTokenStorage.saveProfile(any()));
+    });
+  });
 }

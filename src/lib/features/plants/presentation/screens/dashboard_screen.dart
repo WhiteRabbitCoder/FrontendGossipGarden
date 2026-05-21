@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gossip_garden/features/auth/presentation/providers/auth_provider.dart';
 import '../providers/plant_providers.dart';
 import '../widgets/plant_feed_card.dart';
 import '../widgets/summary_banner.dart';
@@ -21,6 +22,11 @@ class DashboardScreen extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final plantsAsync = ref.watch(plantsProvider);
+    final authSession = ref.watch(authStateProvider).value;
+    final displayName = authSession?.profile?.displayName;
+    final userName = (displayName != null && displayName.trim().isNotEmpty)
+        ? displayName
+        : (authSession?.profile?.email?.split('@').first ?? 'Jardinero');
 
     return Scaffold(
       backgroundColor: GardenColors.cream,
@@ -47,7 +53,7 @@ class DashboardScreen extends ConsumerWidget {
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('¡Hola, Jardinero!', 
+                    Text('¡Hola, $userName!',
                       style: GardenTextStyles.title.copyWith(color: GardenColors.charcoal, fontSize: 24)),
                     Text('Tu jardín está susurrando...', 
                       style: GardenTextStyles.bodySmall.copyWith(color: GardenColors.dust, fontSize: 14)),

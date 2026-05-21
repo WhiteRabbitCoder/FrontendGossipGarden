@@ -1,9 +1,8 @@
-import 'package:flutter/widgets.dart';
 import '../../data/models/plant_enums.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 extension PlantMoodX on PlantMood {
-  IconData get icon {
+  FaIconData get icon {
     switch (this) {
       case PlantMood.happy:
         return FontAwesomeIcons.faceSmile;
