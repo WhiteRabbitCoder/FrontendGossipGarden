@@ -91,7 +91,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
           profile: profile ??
               UserProfile(
                 uid: user.uid,
-                displayName: user.displayName,
+                displayName: user.displayName ?? user.email?.split('@').first,
                 email: user.email,
                 photoUrl: user.photoURL,
                 onboardingCompleted: false,
@@ -147,6 +147,27 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
           password: password,
           name: name,
         );
+
+        // Evitar condición de carrera con authStateChanges actualizando de inmediato la sesión local
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          state = AsyncValue.data(
+            AuthSession(
+              profile: UserProfile(
+                uid: user.uid,
+                displayName: name,
+                email: email,
+                photoUrl: user.photoURL,
+                onboardingCompleted: false,
+                favoritePlantIds: const [],
+                useGridView: true,
+                notificationPreference: 'important',
+              ),
+              firebaseEnabled: true,
+              onboardingCompleted: false,
+            ),
+          );
+        }
       }
       // Intentar registrar en backend también
       final userId = await _backendAuth.register(email, password, name);

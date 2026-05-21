@@ -12,7 +12,7 @@ import 'personal_info_screen.dart';
 final favoritePlantsProvider =
     StateProvider<List<String>>((ref) => ['1', '2']);
 
-// ── Profile Screen ────────────────────────────────────────────────────────────
+// ── Pantalla de perfil ────────────────────────────────────────────────────────────
 
 class ProfileSettingsScreen extends ConsumerWidget {
   const ProfileSettingsScreen({super.key});
@@ -23,8 +23,13 @@ class ProfileSettingsScreen extends ConsumerWidget {
     final favorites = ref.watch(favoritePlantsProvider);
     final authSession = ref.watch(authStateProvider).value;
 
-    final userName =
-        authSession?.profile?.displayName ?? 'Gabriela'; // TODO(backend): auth
+
+// traer el nombre del usuario
+
+    final displayName = authSession?.profile?.displayName;
+    final userName = (displayName != null && displayName.trim().isNotEmpty)
+        ? displayName
+        : (authSession?.profile?.email?.split('@').first ?? 'Usuario');
 
     return Scaffold(
       backgroundColor: GardenColors.cream,
