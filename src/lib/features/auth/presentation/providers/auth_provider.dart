@@ -371,6 +371,42 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
     );
   }
 
+  Future<void> updateProfile({String? displayName, String? photoUrl}) async {
+    final current = state.value;
+    if (current == null || current.profile == null) return;
+
+    final updatedProfile = UserProfile(
+      uid: current.profile!.uid,
+      displayName: displayName ?? current.profile!.displayName,
+      email: current.profile!.email,
+      photoUrl: photoUrl ?? current.profile!.photoUrl,
+      onboardingCompleted: current.profile!.onboardingCompleted,
+      favoritePlantIds: current.profile!.favoritePlantIds,
+      useGridView: current.profile!.useGridView,
+      notificationPreference: current.profile!.notificationPreference,
+    );
+
+    await _tokenStorage.saveProfile(_profileToMap(updatedProfile));
+
+    if (FirebaseEnvironment.isConfigured) {
+      try {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          if (displayName != null) await user.updateDisplayName(displayName);
+          if (photoUrl != null) await user.updatePhotoURL(photoUrl);
+        }
+      } catch (_) {}
+    }
+
+    state = AsyncValue.data(
+      AuthSession(
+        profile: updatedProfile,
+        firebaseEnabled: current.firebaseEnabled,
+        onboardingCompleted: current.onboardingCompleted,
+      ),
+    );
+  }
+
   @override
   void dispose() {
     _subscription?.cancel();
