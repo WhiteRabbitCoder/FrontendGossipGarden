@@ -13,18 +13,41 @@ flutter test
 ### Build & run
 
 ```bash
-# Production backend (Railway)
-flutter run --dart-define=BACKEND_TARGET=prod
+# Production backend (Railway) — must pass auth secrets via --dart-define
+flutter run \
+  --dart-define=BACKEND_TARGET=prod \
+  --dart-define=SUPABASE_URL=https://tslrtebdziilekddalcr.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=<your-anon-key> \
+  --dart-define=GOOGLE_CLIENT_ID=<your-google-client-id>
 
 # Local backend (Android emulator → host loopback)
-flutter run --dart-define=BACKEND_TARGET=local --dart-define=BACKEND_LOCAL_URL=http://10.0.2.2:8000
+flutter run \
+  --dart-define=BACKEND_TARGET=local \
+  --dart-define=BACKEND_LOCAL_URL=http://10.0.2.2:8000 \
+  --dart-define=SUPABASE_URL=https://tslrtebdziilekddalcr.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=<your-anon-key> \
+  --dart-define=GOOGLE_CLIENT_ID=<your-google-client-id>
 
 # Release APK for device
-flutter build apk --release --dart-define=BACKEND_TARGET=prod
+flutter build apk --release \
+  --dart-define=BACKEND_TARGET=prod \
+  --dart-define=SUPABASE_URL=https://tslrtebdziilekddalcr.supabase.co \
+  --dart-define=SUPABASE_ANON_KEY=<your-anon-key> \
+  --dart-define=GOOGLE_CLIENT_ID=<your-google-client-id>
 adb install build/app/outputs/flutter-apk/app-release.apk
 ```
 
 `BACKEND_TARGET` is consumed by `lib/core/config/app_config.dart`. Valid values: `local` | `prod` | `production` | `deploy` | `remote` (default `remote` → same as `prod`).
+
+### Auth secrets (required for Google Sign-In)
+
+| Flag | Description |
+|---|---|
+| `SUPABASE_URL` | Supabase project URL (e.g. `https://xxx.supabase.co`) |
+| `SUPABASE_ANON_KEY` | Supabase publishable anon key |
+| `GOOGLE_CLIENT_ID` | Web/server OAuth client ID from Firebase project |
+
+These are injected at build time via `--dart-define` and read by `AppConfig` in `lib/core/config/app_config.dart`. They default to empty strings — Google Sign-In will fail if not provided.
 
 Production backend URL: `https://backendgossipgarden-production.up.railway.app`
 
@@ -43,9 +66,9 @@ Production backend URL: `https://backendgossipgarden-production.up.railway.app`
 The Supabase JWT is saved in `flutter_secure_storage` (key: `gg_jwt`) via `lib/core/services/token_storage.dart` and restored on app restart. It is read from `backendTokenProvider` (Riverpod `StateProvider<String?>`) across the app.
 
 **Google Sign-In details:**
-- Uses `google_sign_in` package with `serverClientId: '845769881632-43t9sgnt5d25qddc2ur23at78m909c6t.apps.googleusercontent.com'` (web/server OAuth client from Firebase project `gossipgarden-e2879`).
-- The `idToken` is exchanged directly with Supabase (not through the backend): `POST https://tslrtebdziilekddalcr.supabase.co/auth/v1/token?grant_type=id_token` with `apikey: sb_publishable_GlaX3ksF4ct_akaW5q4bWA_QItqdrqg`.
-- `google-services.json` is from Firebase project `gossipgarden-e2879` (project number `845769881632`) — required by `google_sign_in` on Android for the native account picker. It does NOT mean Firebase Auth is being used.
+- Uses `google_sign_in` package with `serverClientId` from `AppConfig.googleClientId` (injected via `--dart-define=GOOGLE_CLIENT_ID`).
+- The `idToken` is exchanged directly with Supabase (not through the backend): `POST {SUPABASE_URL}/auth/v1/token?grant_type=id_token` with `apikey: {SUPABASE_ANON_KEY}`.
+- `google-services.json` is required by `google_sign_in` on Android for the native account picker — it is gitignored and must be obtained from Firebase console. See `android/app/google-services.json.example` for the expected structure.
 - Android debug keystore SHA-1: `AD:DC:9D:0E:83:23:8C:07:DC:1C:AB:34:27:38:27:AA:72:1F:92:09`
 
 **Firebase SDK in Flutter:** disabled by default (`ENABLE_FIREBASE=false`). The backend handles Firebase Storage and Firestore server-side via `firebase-admin` (Python). The Flutter app does not need the Firebase SDK for photos or chat.

@@ -6,6 +6,7 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import 'package:gossip_garden/core/config/app_config.dart';
 import 'package:gossip_garden/core/config/firebase_environment.dart';
 import 'package:gossip_garden/core/services/backend_auth_service.dart';
 import 'package:gossip_garden/core/services/token_storage.dart';
@@ -203,9 +204,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
 
   Future<void> _signInWithBackendGoogle() async {
     // Selector nativo de cuentas Google en el dispositivo.
-    const serverClientId =
-        '845769881632-43t9sgnt5d25qddc2ur23at78m909c6t.apps.googleusercontent.com';
-    final googleSignIn = GoogleSignIn(serverClientId: serverClientId);
+    final googleSignIn = GoogleSignIn(serverClientId: AppConfig.googleClientId);
 
     final googleUser = await googleSignIn.signIn();
     if (googleUser == null) throw BackendAuthException('Inicio de sesión con Google cancelado');

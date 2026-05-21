@@ -57,22 +57,17 @@ class BackendAuthService {
   /// Intercambia el idToken de Google Sign-In nativo por un JWT de Supabase.
   /// Llama directamente a Supabase — sin pasar por el backend de negocio.
   Future<String> signInWithGoogleIdToken(String idToken) async {
-    const supabaseUrl = 'https://tslrtebdziilekddalcr.supabase.co';
-    const supabaseAnonKey = 'sb_publishable_GlaX3ksF4ct_akaW5q4bWA_QItqdrqg';
-    const googleClientId =
-        '845769881632-43t9sgnt5d25qddc2ur23at78m909c6t.apps.googleusercontent.com';
-
-    final uri = Uri.parse('$supabaseUrl/auth/v1/token?grant_type=id_token');
+    final uri = Uri.parse('${AppConfig.supabaseUrl}/auth/v1/token?grant_type=id_token');
     final response = await _httpClient.post(
       uri,
       headers: {
         'Content-Type': 'application/json',
-        'apikey': supabaseAnonKey,
+        'apikey': AppConfig.supabaseAnonKey,
       },
       body: jsonEncode({
         'provider': 'google',
         'id_token': idToken,
-        'client_id': googleClientId,
+        'client_id': AppConfig.googleClientId,
       }),
     );
     if (response.statusCode == 200) {
