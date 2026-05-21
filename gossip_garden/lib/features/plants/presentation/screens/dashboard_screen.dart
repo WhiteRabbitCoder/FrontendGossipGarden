@@ -8,6 +8,7 @@ import '../../data/models/plant.dart';
 import '../../data/models/plant_enums.dart';
 import '../../../../core/theme/garden_colors.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import 'package:gossip_garden/features/auth/presentation/providers/auth_provider.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   final Function(String) onSelectPlant;
@@ -29,13 +30,15 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   // Toggle visual lista/cuadrícula — no afecta lógica de navegación
   bool _isListView = true;
 
-  // TODO(backend): conectar desde authStateProvider → session.profile?.displayName
-  static const String _userName = 'Gabriela';
-
   @override
   Widget build(BuildContext context) {
     final plantsAsync = ref.watch(plantsProvider);
     final navNotifier = ref.read(navigationProvider.notifier);
+    final authSession = ref.watch(authStateProvider).value;
+    final displayName = authSession?.profile?.displayName;
+    final userName = (displayName != null && displayName.trim().isNotEmpty)
+        ? displayName
+        : (authSession?.profile?.email?.split('@').first ?? 'Usuario');
 
     return Scaffold(
       backgroundColor: GardenColors.cream,
@@ -54,7 +57,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Buenos días, $_userName',
+                            'Buenos días, $userName',
                             style: GardenTextStyles.bodySmall.copyWith(
                               color: GardenColors.dust,
                             ),

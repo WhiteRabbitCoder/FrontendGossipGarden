@@ -628,7 +628,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
               _SettingsTile(
                 icon: Icons.mail_outline_rounded,
                 title: 'Correo electrónico',
-                subtitle: authSession?.profile?.email ?? 'gabriela@email.com',
+                subtitle: authSession?.profile?.email ?? '',
                 onTap: () {},
               ),
               _SettingsDivider(),
