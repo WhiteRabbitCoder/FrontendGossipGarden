@@ -1,5 +1,7 @@
 # CLAUDE.md — frontendGossipGarden (Flutter)
 
+> **Skills y contexto completo**: Lee [`AGENT_SKILLS.md`](AGENT_SKILLS.md) en la raíz de este repo antes de cualquier tarea. Contiene arquitectura Flutter, patrones Riverpod, flujo de identificación, paleta de colores, gotchas críticos y reglas cross-repo.
+
 Flutter mobile app for GossipGarden. Source lives in `src/`. The app talks exclusively to the backend at `backendGossipGarden/` — see `backendGossipGarden/API_CONTRACT.md` for the canonical contract.
 
 ## Common commands (run from `src/`)
