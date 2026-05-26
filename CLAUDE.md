@@ -133,6 +133,8 @@ All calls go to `/api/v1/*` with `Authorization: Bearer <supabase_jwt>`.
 
 **Plant photo:** `GET /api/v1/plants/` devuelve `photo_url` (URL pública de Firebase Storage) además de `photo_storage_path`. La app usa `photo_url` directamente como `NetworkImage`; fallback a `assets/images/app_logo.png` si es null. El campo `image` en el modelo `Plant` se popula con `photo_url`.
 
+**Species name:** `GET /api/v1/plants/` devuelve `common_name` y `scientific_name` via join con la tabla `species` (no requiere endpoint separado). `plant_api_datasource.dart` usa `plantRaw['common_name'] ?? plantRaw['scientific_name']` para el campo `species` del modelo `Plant`.
+
 ### Plant identification flow
 
 `PlantIdentifyScreen` → camera capture → `POST /api/v1/identify` (multipart `image/jpeg`) → state machine:
