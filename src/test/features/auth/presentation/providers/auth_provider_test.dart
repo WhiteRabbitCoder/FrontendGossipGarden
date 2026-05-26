@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'package:mocktail/mocktail.dart';
 
 import 'package:gossip_garden/core/services/backend_auth_service.dart';
@@ -15,6 +16,8 @@ class MockAuthService extends Mock implements AuthService {}
 
 class MockTokenStorage extends Mock implements TokenStorage {}
 
+class MockGoogleSignIn extends Mock implements GoogleSignIn {}
+
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 /// Crea un [ProviderContainer] con mocks inyectados.
@@ -28,6 +31,9 @@ ProviderContainer buildContainer({
   when(() => mockAuthService.authStateChanges())
       .thenAnswer((_) => const Stream.empty());
 
+  final mockGoogleSignIn = MockGoogleSignIn();
+  when(() => mockGoogleSignIn.signOut()).thenAnswer((_) async => null);
+
   return ProviderContainer(
     overrides: [
       backendAuthServiceProvider.overrideWithValue(mockBackendAuth),
@@ -38,6 +44,7 @@ ProviderContainer buildContainer({
           mockBackendAuth,
           mockTokenStorage,
           ref,
+          googleSignIn: mockGoogleSignIn,
         ),
       ),
     ],

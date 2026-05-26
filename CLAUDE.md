@@ -4,52 +4,43 @@
 
 Flutter mobile app for GossipGarden. Source lives in `src/`. The app talks exclusively to the backend at `backendGossipGarden/` — see `backendGossipGarden/API_CONTRACT.md` for the canonical contract.
 
-## Common commands (run from `src/`)
+## Setup (once, from `src/`)
 
 ```bash
+cp .env.example .env   # rellenar SUPABASE_ANON_KEY y GOOGLE_CLIENT_ID
 flutter pub get
-flutter analyze
-flutter test
 ```
 
-### Build & run
+`src/.env` está en `.gitignore`. Ver `src/.env.example` para la estructura. Los secretos se inyectan en tiempo de compilación via `--dart-define` — el `Makefile` los toma del `.env` automáticamente.
+
+## Correr y buildear (desde `src/`)
 
 ```bash
-# Production backend (Railway) — must pass auth secrets via --dart-define
-flutter run \
-  --dart-define=BACKEND_TARGET=prod \
-  --dart-define=SUPABASE_URL=https://tslrtebdziilekddalcr.supabase.co \
-  --dart-define=SUPABASE_ANON_KEY=<your-anon-key> \
-  --dart-define=GOOGLE_CLIENT_ID=<your-google-client-id>
+make dev-web       # Chrome, backend local (localhost:8000)
+make prod-web      # Chrome, backend Railway
+make dev-android   # Android emulator, backend local
+make prod-android  # Android device, backend Railway
+make samsung       # Samsung SM S721B (device ID fijo), backend Railway
 
-# Local backend (Android emulator → host loopback)
-flutter run \
-  --dart-define=BACKEND_TARGET=local \
-  --dart-define=BACKEND_LOCAL_URL=http://10.0.2.2:8000 \
-  --dart-define=SUPABASE_URL=https://tslrtebdziilekddalcr.supabase.co \
-  --dart-define=SUPABASE_ANON_KEY=<your-anon-key> \
-  --dart-define=GOOGLE_CLIENT_ID=<your-google-client-id>
+make build-web     # build release web
+make build-apk     # build APK release → build/app/outputs/flutter-apk/app-release.apk
 
-# Release APK for device
-flutter build apk --release \
-  --dart-define=BACKEND_TARGET=prod \
-  --dart-define=SUPABASE_URL=https://tslrtebdziilekddalcr.supabase.co \
-  --dart-define=SUPABASE_ANON_KEY=<your-anon-key> \
-  --dart-define=GOOGLE_CLIENT_ID=<your-google-client-id>
-adb install build/app/outputs/flutter-apk/app-release.apk
+make analyze       # flutter analyze
+make test          # flutter test --coverage
+make help          # lista completa de targets
 ```
 
-`BACKEND_TARGET` is consumed by `lib/core/config/app_config.dart`. Valid values: `local` | `prod` | `production` | `deploy` | `remote` (default `remote` → same as `prod`).
+`BACKEND_TARGET` es consumido por `lib/core/config/app_config.dart`. Valores válidos: `local` | `prod` | `production` | `deploy` | `remote` (default `remote` → igual que `prod`).
 
-### Auth secrets (required for Google Sign-In)
+### Auth secrets (van en `src/.env`)
 
-| Flag | Description |
+| Variable | Descripción |
 |---|---|
-| `SUPABASE_URL` | Supabase project URL (e.g. `https://xxx.supabase.co`) |
-| `SUPABASE_ANON_KEY` | Supabase publishable anon key |
-| `GOOGLE_CLIENT_ID` | Web/server OAuth client ID from Firebase project |
+| `SUPABASE_URL` | URL del proyecto Supabase (default ya configurado en `AppConfig`) |
+| `SUPABASE_ANON_KEY` | Anon key publicable de Supabase — **requerida** |
+| `GOOGLE_CLIENT_ID` | OAuth client ID (web/server) del proyecto Firebase — **requerido** para Google Sign-In |
 
-These are injected at build time via `--dart-define` and read by `AppConfig` in `lib/core/config/app_config.dart`. They default to empty strings — Google Sign-In will fail if not provided.
+Además, `src/android/app/google-services.json` debe existir en disco (gitignored) para que el picker nativo de Google Sign-In funcione en Android. Ver `google-services.json.example` para la estructura esperada.
 
 Production backend URL: `https://backendgossipgarden-production.up.railway.app`
 

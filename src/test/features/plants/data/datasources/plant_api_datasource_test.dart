@@ -4,6 +4,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:http/http.dart' as http;
 import 'package:http/testing.dart';
 
+import 'package:gossip_garden/core/exceptions.dart';
 import 'package:gossip_garden/features/plants/data/datasources/plant_api_datasource.dart';
 import 'package:gossip_garden/features/plants/data/models/plant_enums.dart';
 
