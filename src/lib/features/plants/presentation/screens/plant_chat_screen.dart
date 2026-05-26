@@ -28,13 +28,36 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
   final ScrollController _scrollController = ScrollController();
   bool _waitingForPlant = false;
   bool _showVoiceDemo = false;
+  bool _historyLoaded = false;
 
   Plant? _plant;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _loadHistory();
+      _scrollToBottom();
+    });
+  }
+
+  Future<void> _loadHistory() async {
+    if (_historyLoaded) return;
+    _historyLoaded = true;
+    final token = ref.read(backendTokenProvider);
+    final chatService = ref.read(backendChatServiceProvider);
+    try {
+      final history = await chatService.getHistory(
+        plantId: widget.plantId,
+        token: token,
+      );
+      if (mounted && history.isNotEmpty) {
+        ref.read(chatMessagesProvider(widget.plantId).notifier).loadHistory(history);
+        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+      }
+    } catch (_) {
+      // Fallo silencioso — empieza con chat vacío
+    }
   }
 
   @override
