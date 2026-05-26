@@ -50,16 +50,23 @@ class DashboardScreen extends ConsumerWidget {
                   child: const Icon(Icons.person, color: GardenColors.forest),
                 ),
                 const SizedBox(width: 16),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('¡Hola, $userName!',
-                      style: GardenTextStyles.title.copyWith(color: GardenColors.charcoal, fontSize: 24)),
-                    Text('Tu jardín está susurrando...', 
-                      style: GardenTextStyles.bodySmall.copyWith(color: GardenColors.dust, fontSize: 14)),
-                  ],
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        '¡Hola, $userName!',
+                        style: GardenTextStyles.title.copyWith(color: GardenColors.charcoal, fontSize: 24),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        'Tu jardín está susurrando...',
+                        style: GardenTextStyles.bodySmall.copyWith(color: GardenColors.dust, fontSize: 14),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
-                const Spacer(),
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(

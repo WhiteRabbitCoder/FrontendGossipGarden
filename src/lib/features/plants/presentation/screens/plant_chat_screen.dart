@@ -184,26 +184,29 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                   child: Text(_plant?.name.substring(0, 1) ?? 'P'),
                 ),
                 const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _plant?.name ?? 'Planta',
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-                    Text(
-                      _plant?.sensorStatus == SensorStatus.online
-                          ? 'En línea'
-                          : 'Offline',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: _plant?.sensorStatus == SensorStatus.online
-                            ? Colors.green
-                            : Colors.grey,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _plant?.name ?? 'Planta',
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
+                      Text(
+                        _plant?.sensorStatus == SensorStatus.online
+                            ? 'En línea'
+                            : 'Offline',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _plant?.sensorStatus == SensorStatus.online
+                              ? Colors.green
+                              : Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -303,8 +306,8 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                 const SizedBox(height: 8),
               ],
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: EdgeInsets.fromLTRB(
+                    16, 8, 16, 8 + MediaQuery.of(context).viewPadding.bottom),
                 color: Colors.white,
                 child: Row(
                   children: [

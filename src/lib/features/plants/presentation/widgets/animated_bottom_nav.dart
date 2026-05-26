@@ -24,9 +24,10 @@ class AnimatedBottomNav extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final bottomInset = MediaQuery.of(context).viewPadding.bottom;
     return Container(
       height: 76,
-      margin: const EdgeInsets.fromLTRB(24, 0, 24, 32),
+      margin: EdgeInsets.fromLTRB(24, 0, 24, 16 + bottomInset),
       child: ClipRRect(
         borderRadius: BorderRadius.circular(38),
         child: BackdropFilter(
