@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gossip_garden/core/exceptions.dart';
 import '../providers/plant_providers.dart';
 import '../providers/chat_providers.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -55,8 +56,11 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
         ref.read(chatMessagesProvider(widget.plantId).notifier).loadHistory(history);
         WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
       }
-    } catch (_) {
-      // Fallo silencioso — empieza con chat vacío
+    } catch (e) {
+      if (e is UnauthorizedException && mounted) {
+        ref.read(authStateProvider.notifier).signOut();
+      }
+      // Cualquier otro error: empieza con chat vacío
     }
   }
 
@@ -107,14 +111,17 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
             );
       }
     } catch (e) {
-      if (mounted) {
-        ref.read(chatMessagesProvider(widget.plantId).notifier).addMessage(
-              'No pude conectar con el servidor. Intenta de nuevo.',
-              sender: 'plant',
-              source: 'error',
-              confidence: 'low',
-            );
+      if (!mounted) return;
+      if (e is UnauthorizedException) {
+        ref.read(authStateProvider.notifier).signOut();
+        return;
       }
+      ref.read(chatMessagesProvider(widget.plantId).notifier).addMessage(
+            'No pude conectar con el servidor. Intenta de nuevo.',
+            sender: 'plant',
+            source: 'error',
+            confidence: 'low',
+          );
     } finally {
       if (mounted) {
         setState(() => _waitingForPlant = false);

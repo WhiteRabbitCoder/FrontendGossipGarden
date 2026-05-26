@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:http/http.dart' as http;
 
 import 'package:gossip_garden/core/config/app_config.dart';
+import 'package:gossip_garden/core/exceptions.dart';
 
 import '../models/comfort_zones.dart';
 import '../models/plant.dart';
@@ -11,13 +12,6 @@ import '../models/plant_action.dart';
 import '../models/plant_enums.dart';
 import '../models/sensors.dart';
 import 'plant_datasource.dart';
-
-class UnauthorizedException implements Exception {
-  UnauthorizedException(this.message);
-  final String message;
-  @override
-  String toString() => message;
-}
 
 class PlantApiDatasource implements PlantDatasource {
   PlantApiDatasource({

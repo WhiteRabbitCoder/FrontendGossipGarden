@@ -5,11 +5,12 @@ import 'features/plants/presentation/screens/main_screen.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/plants/presentation/screens/onboarding_screen.dart';
 import 'core/services/firebase_bootstrap.dart';
+import 'core/observers/session_observer.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await FirebaseBootstrap.ensureInitialized();
-  runApp(const ProviderScope(child: MyApp()));
+  runApp(ProviderScope(observers: [SessionObserver()], child: const MyApp()));
 }
 
 class MyApp extends StatelessWidget {

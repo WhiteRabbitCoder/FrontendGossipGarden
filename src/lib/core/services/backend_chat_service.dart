@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'package:gossip_garden/core/config/app_config.dart';
+import 'package:gossip_garden/core/exceptions.dart';
 import 'package:gossip_garden/features/plants/presentation/widgets/message_bubble.dart';
 
 class BackendChatService {
@@ -33,7 +34,9 @@ class BackendChatService {
       final data = jsonDecode(response.body) as Map<String, dynamic>;
       return (data['reply'] as String?) ?? '';
     }
-
+    if (response.statusCode == 401) {
+      throw UnauthorizedException('Sesión expirada. Por favor vuelve a iniciar sesión.');
+    }
     throw Exception('Error ${response.statusCode} en chat: ${response.body}');
   }
 
@@ -71,6 +74,9 @@ class BackendChatService {
       }).toList();
     }
 
+    if (response.statusCode == 401) {
+      throw UnauthorizedException('Sesión expirada. Por favor vuelve a iniciar sesión.');
+    }
     throw Exception(
         'Error ${response.statusCode} en historial: ${response.body}');
   }
