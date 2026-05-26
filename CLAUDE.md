@@ -15,10 +15,12 @@ flutter pub get
 
 ```bash
 make dev-web       # Chrome, backend local (localhost:8000)
-make prod-web      # Chrome, backend Railway
+make prod-web      # Chrome, backend Railway (production)
+make qa-web        # Chrome, backend Railway (QA)
 make dev-android   # Android emulator, backend local
-make prod-android  # Android device, backend Railway
-make samsung       # Samsung SM S721B (device ID fijo), backend Railway
+make prod-android  # Android device, backend Railway (production)
+make samsung       # Samsung SM S721B, backend Railway (production)
+make samsung-qa    # Samsung SM S721B, backend Railway (QA) ← para probar QA
 
 make build-web     # build release web
 make build-apk     # build APK release → build/app/outputs/flutter-apk/app-release.apk
@@ -106,13 +108,19 @@ Riverpod (`flutter_riverpod`). Wired in `main.dart` via `ProviderScope`. Notable
 
 `navigation_provider.dart` — single source of truth for tab state. The app uses **one root `Scaffold` with `IndexedStack` and overlay widgets**, not Navigator routes.
 
+**Session expiry (401):** `SessionObserver` (`core/observers/session_observer.dart`) es un `ProviderObserver` registrado en `ProviderScope` que detecta `UnauthorizedException` en cualquier `AsyncError` y llama a `signOut()` automáticamente. Las llamadas directas fuera de providers (e.g. chat) manejan 401 explícitamente.
+
+**Back button:** `MainScreen` envuelve el `Scaffold` en `PopScope`. Con overlay activo (chat/perfil), el Back llama a `notifier.handleBack()` en lugar de salir de la app.
+
+**Google Sign-In:** `AuthNotifier` llama `googleSignIn.signOut()` antes de `signIn()` para forzar el selector de cuentas nativo en cada inicio de sesión. `GoogleSignIn` es inyectable vía constructor para facilitar tests.
+
 ### Backend contract (active)
 
 All calls go to `/api/v1/*` with `Authorization: Bearer <supabase_jwt>`.
 
 | Datasource | Endpoints used |
 |---|---|
-| `plant_api_datasource.dart` | `GET /api/v1/plants/`, `GET /api/v1/plants/{id}/sensor-data/latest` |
+| `plant_api_datasource.dart` | `GET /api/v1/plants/`, `GET /api/v1/plants/{id}/sensor-data/latest`, `DELETE /api/v1/plants/{id}` |
 | `identification_api_datasource.dart` | `POST /api/v1/identify` (multipart, `image/jpeg`), `POST /api/v1/species/from-candidate` |
 | `plant_create_datasource.dart` | `POST /api/v1/plants/` |
 | `backend_auth_service.dart` | `POST /api/v1/auth/login`, `POST /api/v1/auth/register`; also `POST supabase.co/auth/v1/token` (Google) |
@@ -120,6 +128,8 @@ All calls go to `/api/v1/*` with `Authorization: Bearer <supabase_jwt>`.
 | `sensor_stream_datasource.dart` | `GET /api/v1/plants/{id}/sensor-data/latest` (polling) |
 
 **Important:** `GET /api/v1/species` does NOT exist in the backend — do not call it. Comfort zone defaults are hardcoded in `plant_api_datasource.dart` until `GET /api/v1/species/{id}/profile` is implemented.
+
+**Plant photo:** `GET /api/v1/plants/` devuelve `photo_url` (URL pública de Firebase Storage) además de `photo_storage_path`. La app usa `photo_url` directamente como `NetworkImage`; fallback a `assets/images/app_logo.png` si es null. El campo `image` en el modelo `Plant` se popula con `photo_url`.
 
 ### Plant identification flow
 
@@ -153,7 +163,7 @@ See `frontendGossipGarden/PENDING_BACKEND.md` for the full list. Key gaps:
 
 ## Testing
 
-The project has **141+ automated tests** across 12 test files. Run from `src/`:
+The project has **144 automated tests** across 12 test files. Run from `src/`:
 
 ```bash
 flutter test                        # all tests
