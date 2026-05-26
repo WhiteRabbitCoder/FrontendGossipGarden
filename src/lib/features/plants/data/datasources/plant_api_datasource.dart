@@ -60,7 +60,7 @@ class PlantApiDatasource implements PlantDatasource {
       id: plantId,
       name: _toString(plantRaw['nickname'], fallback: 'Planta'),
       species: _toString(
-        speciesRaw['specie_name'] ?? speciesRaw['species_name'],
+        plantRaw['common_name'] ?? plantRaw['scientific_name'],
         fallback: 'Especie desconocida',
       ),
       image: _toString(plantRaw['photo_url']),
