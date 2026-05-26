@@ -63,7 +63,7 @@ class PlantApiDatasource implements PlantDatasource {
         speciesRaw['specie_name'] ?? speciesRaw['species_name'],
         fallback: 'Especie desconocida',
       ),
-      image: '',
+      image: _toString(plantRaw['photo_url']),
       personality: _derivePersonality(speciesRaw['personality']),
       health: _calculateHealth(sensors, comfortZones, status),
       mood: _deriveMood(sensors, comfortZones, status),
@@ -299,9 +299,26 @@ class PlantApiDatasource implements PlantDatasource {
     return null;
   }
 
-  String _toString(dynamic value, {required String fallback}) {
+  String _toString(dynamic value, {String fallback = ''}) {
     final parsed = value?.toString();
     return (parsed == null || parsed.trim().isEmpty) ? fallback : parsed;
+  }
+
+  Future<void> deletePlant(String plantId) async {
+    final uri = Uri.parse('${AppConfig.backendBaseUrl}/api/v1/plants/$plantId');
+    final response = await _httpClient.delete(uri, headers: _authHeaders);
+    if (response.statusCode == 401) {
+      throw UnauthorizedException('Sesión expirada. Por favor vuelve a iniciar sesión.');
+    }
+    if (response.statusCode == 403) {
+      throw Exception('No tienes permiso para eliminar esta planta.');
+    }
+    if (response.statusCode == 404) {
+      throw Exception('Planta no encontrada.');
+    }
+    if (response.statusCode >= 300) {
+      throw Exception('Error ${response.statusCode} eliminando planta.');
+    }
   }
 }
 

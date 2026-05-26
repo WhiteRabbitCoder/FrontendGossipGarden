@@ -69,6 +69,10 @@ class PlantProfileScreen extends ConsumerWidget {
                 icon: const Icon(Icons.chat_bubble_outline),
                 onPressed: () => onOpenChat(plantId),
               ),
+              IconButton(
+                icon: const Icon(Icons.delete_outline_rounded, color: Colors.red),
+                onPressed: () => _showDeleteDialog(context, ref, plant),
+              ),
             ],
           ),
           body: SingleChildScrollView(
@@ -127,23 +131,19 @@ class PlantProfileScreen extends ConsumerWidget {
   Widget _buildPlantHeader(Plant plant) {
     return Row(
       children: [
-        Container(
-          width: 80,
-          height: 80,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            color: const Color(0xFF4A6741).withValues(alpha: 0.1),
-            image: plant.image.isNotEmpty
-                ? DecorationImage(
-                    image: AssetImage(plant.image),
+        ClipRRect(
+          borderRadius: BorderRadius.circular(24),
+          child: SizedBox(
+            width: 80,
+            height: 80,
+            child: plant.image.isNotEmpty
+                ? Image.network(
+                    plant.image,
                     fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => _logoFallback(),
                   )
-                : null,
+                : _logoFallback(),
           ),
-          child: plant.image.isEmpty
-              ? const Icon(Icons.local_florist,
-                  size: 40, color: Color(0xFF4A6741))
-              : null,
         ),
         const SizedBox(width: 16),
         Expanded(
@@ -198,6 +198,54 @@ class PlantProfileScreen extends ConsumerWidget {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _logoFallback() {
+    return Container(
+      color: const Color(0xFF4A6741).withValues(alpha: 0.08),
+      child: Center(
+        child: Image.asset(
+          'assets/images/app_logo.png',
+          width: 48,
+          height: 48,
+          errorBuilder: (_, __, ___) =>
+              const Icon(Icons.local_florist, size: 40, color: Color(0xFF4A6741)),
+        ),
+      ),
+    );
+  }
+
+  void _showDeleteDialog(BuildContext context, WidgetRef ref, Plant plant) {
+    showDialog<void>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminar planta'),
+        content: Text('¿Seguro que quieres eliminar "${plant.name}"? Esta acción no se puede deshacer.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(ctx).pop(),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.of(ctx).pop();
+              try {
+                await ref.read(plantApiDatasourceProvider).deletePlant(plant.id);
+                ref.invalidate(plantsProvider);
+                onBack();
+              } catch (e) {
+                if (context.mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(content: Text('Error al eliminar: $e')),
+                  );
+                }
+              }
+            },
+            child: const Text('Eliminar', style: TextStyle(color: Colors.red)),
+          ),
+        ],
+      ),
     );
   }
 
