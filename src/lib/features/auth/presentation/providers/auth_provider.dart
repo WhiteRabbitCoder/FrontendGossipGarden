@@ -60,10 +60,11 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
     this._authService,
     this._backendAuth,
     this._tokenStorage,
-    this._ref,
-  ) : super(
-          const AsyncValue.loading(),
-        ) {
+    this._ref, {
+    GoogleSignIn? googleSignIn,
+  }) : _googleSignIn =
+           googleSignIn ?? GoogleSignIn(serverClientId: AppConfig.googleClientId),
+       super(const AsyncValue.loading()) {
     _bootstrap();
   }
 
@@ -71,6 +72,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
   final BackendAuthService _backendAuth;
   final TokenStorage _tokenStorage;
   final Ref _ref;
+  final GoogleSignIn _googleSignIn;
   StreamSubscription<User?>? _subscription;
 
   /// Al arrancar, restaura el token persistido y enlaza el stream de Firebase Auth.
@@ -203,10 +205,10 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
   }
 
   Future<void> _signInWithBackendGoogle() async {
-    // Selector nativo de cuentas Google en el dispositivo.
-    final googleSignIn = GoogleSignIn(serverClientId: AppConfig.googleClientId);
+    // Limpiar sesión previa para que el picker siempre aparezca
+    await _googleSignIn.signOut();
 
-    final googleUser = await googleSignIn.signIn();
+    final googleUser = await _googleSignIn.signIn();
     if (googleUser == null) throw BackendAuthException('Inicio de sesión con Google cancelado');
 
     final googleAuth = await googleUser.authentication;
@@ -322,6 +324,9 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
     await _tokenStorage.clearToken();
     await _tokenStorage.clearProfile();
     _ref.read(backendTokenProvider.notifier).state = null;
+
+    // Desconectar Google siempre para que el picker aparezca en el próximo inicio
+    await _googleSignIn.signOut();
 
     if (FirebaseEnvironment.isConfigured) {
       await _authService.signOut();
