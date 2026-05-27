@@ -290,15 +290,15 @@ class AchievementCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 104,
-        padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+        width: 100,
+        padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: progress.unlocked
                 ? GardenColors.golden.withOpacity(0.5)
-                : GardenColors.creamPaper,
+                : GardenColors.dustLight,
           ),
         ),
         child: Column(
