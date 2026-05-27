@@ -4,99 +4,137 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Repository layout
 
-This repo contains two top-level projects, but **only `gossip_garden/` is in source control on this branch** (`frontend`):
+```
+frontendGossipGarden/
+├── src/                  ← Flutter app (active codebase, run all flutter commands from here)
+│   ├── lib/
+│   ├── web/
+│   ├── pubspec.yaml
+│   └── .env              ← secrets (gitignored) — see .env.example
+└── CLAUDE.md
+```
 
-- `gossip_garden/` — Flutter client app. This is the active codebase.
-- `Backend/` — FastAPI/Python backend. On this branch the directory contains only `__pycache__/` artifacts and a `.env` (both gitignored). Real backend source lives on other branches; the deployed instance the app talks to is `https://gossip-garden-backend.up.railway.app`.
-- `README_CONFIG.md` — One-time Android Studio + Flutter SDK setup notes (Spanish). Not relevant to day-to-day work.
+The Flutter app lives in `src/`. All `flutter` commands must be run from there.
 
-When the user asks to change backend code on this branch, confirm before doing so — they likely want the `main`/backend branch instead.
+---
 
-`Backend/.env` (untracked) contains a live Railway Postgres URL and HiveMQ MQTT credentials. Do not echo, commit, or paste these anywhere outside that file.
-
-## Common commands (run from `gossip_garden/`)
+## Common commands (run from `src/`)
 
 ```bash
-flutter pub get                      # install deps
-flutter analyze                      # lint (uses analysis_options.yaml -> flutter_lints)
-flutter test                         # all tests
-flutter test test/widget_test.dart   # single test file
-flutter test --plain-name "App renders login entry point"   # single test by name
-flutter run                          # default target = remote (Railway)
+flutter pub get
+flutter analyze
+flutter test
+
+# Samsung device via USB (backend Railway)
+flutter run -d <DEVICE_ID> \
+  --dart-define=BACKEND_TARGET=prod \
+  --dart-define=SUPABASE_ANON_KEY=<value> \
+  --dart-define=GOOGLE_CLIENT_ID=<value>
+
+# Chrome (web)
+flutter run -d chrome \
+  --dart-define=BACKEND_TARGET=prod \
+  --dart-define=SUPABASE_ANON_KEY=<value> \
+  --dart-define=GOOGLE_CLIENT_ID=<value>
+
+# Local backend (Android device)
+flutter run -d <DEVICE_ID> \
+  --dart-define=BACKEND_TARGET=local \
+  --dart-define=BACKEND_LOCAL_URL=http://10.0.2.2:8000 \
+  --dart-define=SUPABASE_ANON_KEY=<value> \
+  --dart-define=GOOGLE_CLIENT_ID=<value>
 ```
 
-### Backend selection at compile time
+Secrets are in `src/.env` (gitignored). The defines `SUPABASE_ANON_KEY` and `GOOGLE_CLIENT_ID` must always be passed — they have no safe default.
 
-The app reads its backend URL from `--dart-define` flags consumed in `lib/core/config/app_config.dart`:
+### Backend targets
 
-- `BACKEND_TARGET`: `local` | `prod` | `production` | `deploy` | `remote` (default `remote`)
-- `BACKEND_LOCAL_URL`: defaults to `http://10.0.2.2:8000` (Android emulator → host loopback)
-- `BACKEND_DEPLOY_URL`: defaults to the Railway URL above
+`BACKEND_TARGET` in `lib/core/config/app_config.dart`:
 
-```bash
-# Android emulator → local backend
-flutter run --dart-define=BACKEND_TARGET=local --dart-define=BACKEND_LOCAL_URL=http://10.0.2.2:8000
+| Value | URL used |
+|---|---|
+| `prod` / `production` / `deploy` / `remote` (default) | `https://backendgossipgarden-production.up.railway.app` |
+| `local` | `BACKEND_LOCAL_URL` (default `http://10.0.2.2:8000`) |
 
-# iOS simulator → local backend
-flutter run --dart-define=BACKEND_TARGET=local --dart-define=BACKEND_LOCAL_URL=http://localhost:8000
-
-# Deployed backend
-flutter run --dart-define=BACKEND_TARGET=prod
-```
-
-### Firebase
-
-Firebase is **opt-in** at compile time. Without it, auth falls back to a stub local user and chat falls back to in-memory. To enable it, every key below must be passed via `--dart-define` (see `lib/core/config/firebase_environment.dart`):
-
-```
-ENABLE_FIREBASE=true
-FIREBASE_API_KEY=...
-FIREBASE_APP_ID=...
-FIREBASE_MESSAGING_SENDER_ID=...
-FIREBASE_PROJECT_ID=...
-FIREBASE_STORAGE_BUCKET=...        # optional
-FIREBASE_AUTH_DOMAIN=...           # optional
-FIREBASE_MEASUREMENT_ID=...        # optional
-```
-
-`FirebaseEnvironment.isConfigured` gates every Firebase call site, so it is safe to run without these defines — the UI will route through the no-Firebase fallbacks.
+---
 
 ## Architecture
 
-### Layered feature structure (`lib/features/<feature>/{data,domain,presentation}`)
+### Feature structure (`lib/features/<feature>/{data,presentation}`)
 
-- `data/` — `models/` (DTOs + enums), `datasources/` (HTTP/SSE clients, mocks), `repositories/` (impls).
-- `domain/` — repository interfaces and `usecases/`.
-- `presentation/` — `screens/`, `widgets/`, `providers/` (Riverpod), `extensions/`.
+- `data/models/` — DTOs and enums
+- `data/datasources/` — HTTP clients (no repositories layer in active code)
+- `presentation/screens/` — full screens
+- `presentation/widgets/` — reusable widgets
+- `presentation/providers/` — Riverpod providers
 
-Two features today: `plants/` (the bulk of the app) and `auth/`. There is also a `lib/widgets/material.dart` orphan widget — the canonical `PlantCard` lives under `features/plants/presentation/widgets/`.
+Active features: `plants/`, `auth/`.
 
-### State management
+### Core layer (`lib/core/`)
 
-Riverpod (`flutter_riverpod`). Wired in `main.dart` via `ProviderScope`. Notable providers:
+| File | Purpose |
+|---|---|
+| `config/app_config.dart` | Compile-time config via `String.fromEnvironment` |
+| `exceptions.dart` | `UnauthorizedException` — thrown by datasources on 401, caught by `SessionObserver` |
+| `services/token_storage.dart` | JWT persistence via `flutter_secure_storage` (key `gg_jwt`) |
+| `services/backend_auth_service.dart` | Email/password login+register + Google idToken → Supabase exchange |
+| `services/backend_chat_service.dart` | Chat send + history fetch against `/api/v1/chat/` |
+| `observers/session_observer.dart` | `ProviderObserver` — detects `UnauthorizedException` in any provider → auto-signOut |
 
-- `lib/features/plants/presentation/providers/plant_providers.dart` — `plantsProvider` is a `FutureProvider` that **self-invalidates every 5 seconds** to poll the REST backend; `plantRealtimeSensorProvider` is a `StreamProvider.family<int>` that consumes the SSE stream.
-- `chat_providers.dart` — picks `FirestoreChatRepository` when Firebase is configured, otherwise `MemoryChatRepository`. Both implement `ChatRepository`.
-- `auth_provider.dart` — `AuthNotifier` exposes an `AsyncValue<AuthSession>`; `_AppGate` in `main.dart` routes login → onboarding → main based on it.
-- `navigation_provider.dart` — single source of truth for tab state and overlay routing. The app uses **one root `Scaffold` with an `IndexedStack` and overlay widgets**, not Navigator routes — adding a new screen usually means extending `NavigationState` and `MainScreen._buildOverlay`, not pushing a route.
+### Auth
 
-### Backend contract
+- **No Firebase Auth**. Auth is Supabase-only.
+- `AuthNotifier` (`features/auth/presentation/providers/auth_provider.dart`) manages `AsyncValue<AuthSession>`.
+- On startup, `_bootstrap()` restores the JWT from `TokenStorage` and sets session state.
+- Google Sign-In: `GoogleSignIn.signIn()` → `idToken` → `POST {SUPABASE_URL}/auth/v1/token?grant_type=id_token` → JWT saved to `TokenStorage`.
+- `SessionObserver` is registered in `ProviderScope(observers: [...])` in `main.dart` — any provider that throws `UnauthorizedException` triggers global signOut.
+- `backendTokenProvider` (plain `StateProvider<String>`) holds the active JWT and is watched by all datasource providers for reactivity.
 
-`PlantApiDatasource` (`lib/features/plants/data/datasources/plant_api_datasource.dart`) is the only thing that knows the API shape. It calls:
+### Plants & sensors
 
-- `GET /plants` → `{ "plants": [...] }`
-- `GET /plant_species` → `{ "plant_species_profiles": [...] }` (also accepts the singular `plant_species_profile`)
-- `GET /sensor_data/{plant_id}` → `{ "sensor_data": {...latest}, "averages": {...}, "readings_count": N }`
-- `GET /sensor_data/{plant_id}/stream` → SSE (`text/event-stream`, lines prefixed `data: `)
+- `plantsProvider` — `FutureProvider`, calls `PlantApiDatasource.getPlants()`, self-invalidates every 30s via `Timer`.
+- `plantRealtimeSensorProvider(plantId)` — `FutureProvider.family`, polls `GET /api/v1/plants/{id}/sensor-data/latest` every 15s via `Stream.periodic`.
+- All datasource providers watch `backendTokenProvider` and rebuild when the token changes.
 
-The datasource is responsible for **all derived state** the UI consumes: it computes `health` (per-metric distance to comfort range, averaged), `mood`, `lastWatered` estimate, `SensorStatus` (online/degraded/offline based on timestamp age: ≤20 min / ≤3 h / older), and `ConfidenceLevel`. Comfort zones come from the species profile fields (`min_humidity`, `max_humidity`, `min_temperature`, …). When changing the backend response shape, update this file's `_to*` helpers and the species/sensor extractors together — there is no codegen.
+### Datasources
 
-### Auth + chat persistence
+| File | Endpoints |
+|---|---|
+| `plant_api_datasource.dart` | `GET /api/v1/plants/`, `GET /api/v1/plants/{id}/sensor-data/latest`, `DELETE /api/v1/plants/{id}` |
+| `identification_api_datasource.dart` | `POST /api/v1/identify` (multipart), `POST /api/v1/species/from-candidate` |
+| `plant_create_datasource.dart` | `POST /api/v1/plants/` |
 
-`AuthService` (`lib/features/auth/data/auth_service.dart`) is constructed with **nullable** `FirebaseAuth`/`GoogleSignIn`/`FirebaseFirestore`; the no-arg constructor is what `authServiceProvider` returns when Firebase isn't configured. Sign-in writes a user doc to `users/{uid}`; chat messages live at `plants/{plantId}/messages` ordered by `timestampMs`.
+`plant_api_datasource.dart` reads `common_name` and `scientific_name` directly from the `/plants/` response (server-side join with species). There is no separate `/species` call.
 
-## Conventions worth knowing
+### Identification pipeline
 
-- User-facing strings are in Spanish; comments and identifiers are mixed Spanish/English. Match the surrounding file rather than normalizing.
-- The Dart SDK constraint is `>=3.0.0 <4.0.0`; lints come from `flutter_lints: ^6.0.0` with no project-specific overrides.
-- There's no codegen (no `build_runner`, no generated files). JSON parsing is hand-written; enums use a shared `_enumFromString` helper in `core/utils/enum_utils.dart`.
+`plant_identify_screen.dart` implements the full flow:
+
+1. **selectMethod** — camera or search (search is catalog placeholder, no backend endpoint)
+2. **idle** — live `CameraController` preview (back camera, `ResolutionPreset.high`)
+3. **uploading** — `_processImage()`: `bakeOrientation` + center-crop + resize to 1024×1024 JPEG (q=92) → `POST /api/v1/identify`
+4. **selectCandidate** — `PageView` carousel if backend returns `needs_user_selection`; each card shows photo URL + probability badge → `POST /api/v1/species/from-candidate`
+5. **confirm** — real data from `CareProfile` (common name, family, care tips, fun facts); nickname input pre-filled
+6. **creating** — `POST /api/v1/plants/` → `ref.invalidate(plantsProvider)` → `onCompleted?.call()`
+
+`IdentifyResult` sealed class (`data/models/identification.dart`) discriminates `NeedsMorePhotos | NeedsUserSelection | IdentifyCompleted`.
+
+### Chat
+
+- `chatMessagesProvider(plantId)` — `StateNotifierProvider`, starts empty, filled via `loadHistory()` or `addMessage()`.
+- No Firestore, no mock data. History loaded from `GET /api/v1/chat/{plantId}/history` on screen open.
+- Messages sent to `POST /api/v1/chat/{plantId}` with `language: 'es'` and `response_format: 'text'`.
+
+### Navigation
+
+Single root `Scaffold` with `IndexedStack` + overlay widgets (not Navigator routes). New screens extend `NavigationState` and `MainScreen._buildOverlay`, not `Navigator.push`.
+
+---
+
+## Conventions
+
+- User-facing strings in Spanish; identifiers and comments mixed Spanish/English — match the surrounding file.
+- Dart SDK `>=3.0.0 <4.0.0`, lints from `flutter_lints: ^6.0.0`, no overrides.
+- No codegen, no `build_runner`. JSON parsing is hand-written.
+- No comments unless the WHY is non-obvious.
+- Google Sign-In on **web** requires a Web OAuth 2.0 client ID (different from Android). Add `<meta name="google-signin-client_id">` in `web/index.html` with the web client ID. The current ID in `.env` is the Android client ID.
