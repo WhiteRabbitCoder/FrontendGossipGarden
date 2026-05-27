@@ -277,7 +277,7 @@ class _AchievementCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 100,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
