@@ -4,6 +4,7 @@ import 'dart:math' as math;
 import 'package:http/http.dart' as http;
 
 import 'package:gossip_garden/core/config/app_config.dart';
+import 'package:gossip_garden/core/exceptions.dart';
 
 import '../models/comfort_zones.dart';
 import '../models/plant.dart';
@@ -13,11 +14,16 @@ import '../models/sensors.dart';
 import 'plant_datasource.dart';
 
 class PlantApiDatasource implements PlantDatasource {
-  PlantApiDatasource({http.Client? httpClient, this.authToken})
-      : _httpClient = httpClient ?? http.Client();
+  PlantApiDatasource({
+    http.Client? httpClient,
+    this.authToken,
+    DateTime Function()? now,
+  })  : _httpClient = httpClient ?? http.Client(),
+        _now = now ?? DateTime.now;
 
   final http.Client _httpClient;
   final String? authToken;
+  final DateTime Function() _now;
 
   Map<String, String> get _authHeaders => {
         if (authToken != null) 'Authorization': 'Bearer $authToken',
@@ -26,25 +32,10 @@ class PlantApiDatasource implements PlantDatasource {
   @override
   Future<List<Plant>> getPlants() async {
     final plantsRaw = await _getJsonList('/api/v1/plants/');
-    final speciesResponse = await _getJson('/api/v1/species');
-
-    final speciesRaw =
-        (speciesResponse['plant_species_profiles'] as List?) ??
-            (speciesResponse['plant_species_profile'] as List?) ??
-            const [];
-
-    // Especies indexadas por UUID string
-    final speciesById = <String, Map<String, dynamic>>{};
-    for (final raw in speciesRaw) {
-      if (raw is! Map) continue;
-      final map = Map<String, dynamic>.from(raw);
-      final id = map['plant_species_id']?.toString() ?? '';
-      if (id.isNotEmpty) speciesById[id] = map;
-    }
 
     final futures = plantsRaw
         .whereType<Map>()
-        .map((raw) => _toPlant(Map<String, dynamic>.from(raw), speciesById));
+        .map((raw) => _toPlant(Map<String, dynamic>.from(raw), const {}));
 
     return Future.wait(futures);
   }
@@ -53,12 +44,11 @@ class PlantApiDatasource implements PlantDatasource {
     Map<String, dynamic> plantRaw,
     Map<String, Map<String, dynamic>> speciesById,
   ) async {
-    // Backend devuelve UUIDs como strings
     final plantId = (plantRaw['plant_id'] ?? '').toString();
     final speciesId = (plantRaw['species_id'] ?? '').toString();
     final speciesRaw = speciesById[speciesId] ?? const {};
 
-    final sensorSnapshot = await _getSensorSnapshot(plantId);
+    final sensorSnapshot = await getSensorSnapshot(plantId);
     final comfortZones = _buildComfortZones(speciesRaw);
     final sensors = _buildSensors(sensorSnapshot);
     final status = _deriveSensorStatus(sensorSnapshot.latestSensorData);
@@ -67,10 +57,10 @@ class PlantApiDatasource implements PlantDatasource {
       id: plantId,
       name: _toString(plantRaw['nickname'], fallback: 'Planta'),
       species: _toString(
-        speciesRaw['specie_name'] ?? speciesRaw['species_name'],
+        plantRaw['common_name'] ?? plantRaw['scientific_name'],
         fallback: 'Especie desconocida',
       ),
-      image: '',
+      image: _toString(plantRaw['photo_url']),
       personality: _derivePersonality(speciesRaw['personality']),
       health: _calculateHealth(sensors, comfortZones, status),
       mood: _deriveMood(sensors, comfortZones, status),
@@ -91,26 +81,13 @@ class PlantApiDatasource implements PlantDatasource {
 
   // ─── HTTP helpers ────────────────────────────────────────────────────────────
 
-  Future<Map<String, dynamic>> _getJson(String path) async {
-    final uri = Uri.parse('${AppConfig.backendBaseUrl}$path');
-    final response = await _httpClient.get(uri, headers: _authHeaders);
-
-    if (response.statusCode < 200 || response.statusCode >= 300) {
-      throw Exception('Error ${response.statusCode} consumiendo $path');
-    }
-
-    final decoded = jsonDecode(response.body);
-    if (decoded is! Map) {
-      throw Exception('Respuesta invalida en $path');
-    }
-
-    return Map<String, dynamic>.from(decoded);
-  }
-
   Future<List<dynamic>> _getJsonList(String path) async {
     final uri = Uri.parse('${AppConfig.backendBaseUrl}$path');
     final response = await _httpClient.get(uri, headers: _authHeaders);
 
+    if (response.statusCode == 401) {
+      throw UnauthorizedException('Sesión expirada. Por favor vuelve a iniciar sesión.');
+    }
     if (response.statusCode < 200 || response.statusCode >= 300) {
       throw Exception('Error ${response.statusCode} consumiendo $path');
     }
@@ -127,24 +104,22 @@ class PlantApiDatasource implements PlantDatasource {
 
   // ─── Sensor snapshot ─────────────────────────────────────────────────────────
 
-  Future<_SensorSnapshot> _getSensorSnapshot(String plantId) async {
-    if (plantId.isEmpty) return const _SensorSnapshot();
+  Future<SensorSnapshot> getSensorSnapshot(String plantId) async {
+    if (plantId.isEmpty) return const SensorSnapshot();
 
     try {
-      // GET /api/v1/sensors/{plant_id}/latest — no requiere auth
       final uri = Uri.parse(
-          '${AppConfig.backendBaseUrl}/api/v1/sensors/$plantId/latest');
-      final response = await _httpClient.get(uri);
+          '${AppConfig.backendBaseUrl}/api/v1/plants/$plantId/sensor-data/latest');
+      final response = await _httpClient.get(uri, headers: _authHeaders);
 
-      if (response.statusCode == 404) return const _SensorSnapshot();
+      if (response.statusCode == 404) return const SensorSnapshot();
       if (response.statusCode < 200 || response.statusCode >= 300) {
-        return const _SensorSnapshot();
+        return const SensorSnapshot();
       }
 
       final raw = jsonDecode(response.body);
-      if (raw is! Map) return const _SensorSnapshot();
+      if (raw is! Map) return const SensorSnapshot();
 
-      // Mapear nombres de campos del backend → nombres internos del Flutter
       final latestSensorData = <String, dynamic>{
         'temperature': raw['temperature_c'],
         'humidity': raw['humidity_pct'],
@@ -153,16 +128,16 @@ class PlantApiDatasource implements PlantDatasource {
         'timestamp': raw['timestamp']?.toString(),
       };
 
-      return _SensorSnapshot(
+      return SensorSnapshot(
         latestSensorData: latestSensorData,
         readingsCount: 1,
       );
     } catch (_) {
-      return const _SensorSnapshot();
+      return const SensorSnapshot();
     }
   }
 
-  // ─── Model builders (sin cambios) ────────────────────────────────────────────
+  // ─── Model builders ──────────────────────────────────────────────────────────
 
   ComfortZones _buildComfortZones(Map<String, dynamic> speciesRaw) {
     return ComfortZones(
@@ -185,7 +160,7 @@ class PlantApiDatasource implements PlantDatasource {
     );
   }
 
-  Sensors _buildSensors(_SensorSnapshot snapshot) {
+  Sensors _buildSensors(SensorSnapshot snapshot) {
     final averages = snapshot.averages;
     final latest = snapshot.latestSensorData;
 
@@ -210,7 +185,7 @@ class PlantApiDatasource implements PlantDatasource {
     final parsed = DateTime.tryParse(tsRaw)?.toUtc();
     if (parsed == null) return SensorStatus.degraded;
 
-    final age = DateTime.now().toUtc().difference(parsed);
+    final age = _now().toUtc().difference(parsed);
     if (age.inMinutes <= 20) return SensorStatus.online;
     if (age.inHours <= 3) return SensorStatus.degraded;
     return SensorStatus.offline;
@@ -319,18 +294,35 @@ class PlantApiDatasource implements PlantDatasource {
     return null;
   }
 
-  String _toString(dynamic value, {required String fallback}) {
+  String _toString(dynamic value, {String fallback = ''}) {
     final parsed = value?.toString();
     return (parsed == null || parsed.trim().isEmpty) ? fallback : parsed;
   }
+
+  Future<void> deletePlant(String plantId) async {
+    final uri = Uri.parse('${AppConfig.backendBaseUrl}/api/v1/plants/$plantId');
+    final response = await _httpClient.delete(uri, headers: _authHeaders);
+    if (response.statusCode == 401) {
+      throw UnauthorizedException('Sesión expirada. Por favor vuelve a iniciar sesión.');
+    }
+    if (response.statusCode == 403) {
+      throw Exception('No tienes permiso para eliminar esta planta.');
+    }
+    if (response.statusCode == 404) {
+      throw Exception('Planta no encontrada.');
+    }
+    if (response.statusCode >= 300) {
+      throw Exception('Error ${response.statusCode} eliminando planta.');
+    }
+  }
 }
 
-class _SensorSnapshot {
+class SensorSnapshot {
   final Map<String, dynamic>? latestSensorData;
   final Map<String, dynamic>? averages;
   final int readingsCount;
 
-  const _SensorSnapshot({
+  const SensorSnapshot({
     this.latestSensorData,
     this.averages,
     this.readingsCount = 0,

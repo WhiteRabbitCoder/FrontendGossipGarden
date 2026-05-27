@@ -7,6 +7,8 @@ import '../../data/models/plant_enums.dart';
 import '../../data/models/comfort_zones.dart';
 import '../../../../core/theme/garden_colors.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../../../../core/exceptions.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 class PlantProfileScreen extends ConsumerWidget {
   final String plantId;
@@ -84,7 +86,7 @@ class PlantProfileScreen extends ConsumerWidget {
             centerTitle: true,
             actions: [
               Container(
-                margin: const EdgeInsets.only(right: 16),
+                margin: const EdgeInsets.only(right: 8),
                 decoration: BoxDecoration(
                   color: GardenColors.sageLight,
                   shape: BoxShape.circle,
@@ -93,6 +95,16 @@ class PlantProfileScreen extends ConsumerWidget {
                   icon: const Icon(Icons.chat_bubble_outline_rounded,
                       color: GardenColors.forest, size: 20),
                   onPressed: () => onOpenChat(plantId),
+                ),
+              ),
+              Container(
+                margin: const EdgeInsets.only(right: 16),
+                decoration: const BoxDecoration(shape: BoxShape.circle),
+                child: IconButton(
+                  icon: const Icon(Icons.delete_outline_rounded,
+                      color: Colors.redAccent, size: 20),
+                  tooltip: 'Eliminar planta',
+                  onPressed: () => _showDeleteDialog(context, ref),
                 ),
               ),
             ],
@@ -150,6 +162,46 @@ class PlantProfileScreen extends ConsumerWidget {
         body: Center(child: Text('Error: $e', style: GardenTextStyles.bodySmall)),
       ),
     );
+  }
+
+  Future<void> _showDeleteDialog(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('Eliminar planta'),
+        content: const Text(
+            '¿Estás seguro de que quieres eliminar esta planta? Esta acción no se puede deshacer.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text('Cancelar'),
+          ),
+          TextButton(
+            style: TextButton.styleFrom(foregroundColor: Colors.redAccent),
+            onPressed: () => Navigator.pop(ctx, true),
+            child: const Text('Eliminar'),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed != true) return;
+    if (!context.mounted) return;
+
+    try {
+      final datasource = ref.read(plantApiDatasourceProvider);
+      await datasource.deletePlant(plantId);
+      ref.invalidate(plantsProvider);
+      onBack();
+    } on UnauthorizedException {
+      ref.read(authStateProvider.notifier).signOut();
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error al eliminar: $e')),
+        );
+      }
+    }
   }
 }
 

@@ -7,6 +7,7 @@ import '../widgets/message_bubble.dart';
 import '../widgets/telemetry_panel.dart';
 import '../../data/models/plant.dart';
 import '../../data/models/plant_enums.dart';
+import '../../../../core/exceptions.dart';
 
 class PlantChatScreen extends ConsumerStatefulWidget {
   final String plantId;
@@ -26,13 +27,40 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _waitingForPlant = false;
+  bool _historyLoaded = false;
 
   Plant? _plant;
 
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _loadHistory();
+      _scrollToBottom();
+    });
+  }
+
+  Future<void> _loadHistory() async {
+    if (_historyLoaded) return;
+    _historyLoaded = true;
+    try {
+      final token = ref.read(backendTokenProvider);
+      final chatService = ref.read(backendChatServiceProvider);
+      final history = await chatService.getHistory(
+        plantId: widget.plantId,
+        token: token,
+      );
+      if (mounted && history.isNotEmpty) {
+        ref.read(chatMessagesProvider(widget.plantId).notifier).loadHistory(history);
+        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+      }
+    } on UnauthorizedException {
+      if (mounted) {
+        ref.read(authStateProvider.notifier).signOut();
+      }
+    } catch (_) {
+      // Historial no disponible — se empieza con chat vacío.
+    }
   }
 
   @override
@@ -81,6 +109,11 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
               confidence: 'high',
             );
       }
+    } on UnauthorizedException {
+      if (mounted) {
+        ref.read(authStateProvider.notifier).signOut();
+      }
+      return;
     } catch (e) {
       if (mounted) {
         ref.read(chatMessagesProvider(widget.plantId).notifier).addMessage(
