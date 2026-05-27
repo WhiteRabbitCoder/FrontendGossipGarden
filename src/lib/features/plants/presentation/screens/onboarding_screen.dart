@@ -278,22 +278,25 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             child: child,
           ),
           child: Container(
-            width: 200,
-            height: 200,
+            width: 160,
+            height: 160,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(32),
-              gradient: const LinearGradient(
-                colors: [Color(0xFF4A6741), Color(0xFF8BC34A)],
-              ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.green.withValues(alpha: 0.3),
-                  blurRadius: 25,
+                  color: const Color(0xFF4A6741).withValues(alpha: 0.15),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
                 )
               ],
             ),
-            child: const Icon(Icons.local_florist,
-                size: 100, color: Colors.white),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(32),
+              child: Image.asset(
+                'images/logo_no_text.png',
+                fit: BoxFit.cover,
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 40),

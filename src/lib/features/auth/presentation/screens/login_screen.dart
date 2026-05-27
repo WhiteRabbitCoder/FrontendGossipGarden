@@ -48,39 +48,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
+            child: ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 400),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
                   // Logo Orgánico Crayola
-                  Center(
-                    child: Container(
-                      padding: const EdgeInsets.all(24),
-                      decoration: BoxDecoration(
-                        color: GardenColors.sageLight,
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: GardenColors.sage,
-                          width: 4,
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.park_rounded,
-                        size: 64,
-                        color: GardenColors.forest,
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  
-                  // Título
-                  Text(
-                    'Gossip Garden',
-                    textAlign: TextAlign.center,
-                    style: GardenTextStyles.display.copyWith(
-                      color: GardenColors.forest,
-                      fontSize: 48,
-                    ),
+                  Image.asset(
+                    'images/new_logo.png',
+                    height: 200,
+                    fit: BoxFit.contain,
                   ),
                   const SizedBox(height: 8),
                   Text(
@@ -225,6 +203,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ],
                   ),
                 ],
+              ),
             ),
           ),
         ),
