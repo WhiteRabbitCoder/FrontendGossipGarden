@@ -295,6 +295,41 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
     }
   }
 
+  Future<void> signInWithTestUser() async {
+    print('🔑 [Auth] Iniciando sesión bypass de test...');
+    state = const AsyncValue.loading();
+    // Simulamos un delay para que se sienta real
+    await Future.delayed(const Duration(milliseconds: 500));
+    
+    final profile = UserProfile(
+      uid: 'test-user-id',
+      displayName: 'Explorador del Jardín',
+      email: 'test@gossipgarden.com',
+      photoUrl: 'https://cdn-icons-png.flaticon.com/512/190/190601.png',
+      onboardingCompleted: true, // Saltamos el onboarding para tests
+      favoritePlantIds: const [],
+      useGridView: true,
+      notificationPreference: 'important',
+    );
+    
+    // Usamos un token de test
+    const testToken = 'gg_test_token_bypass';
+    print('📦 [Auth] Guardando token de test y perfil mock...');
+    await _tokenStorage.saveToken(testToken);
+    await _tokenStorage.saveProfile(_profileToMap(profile));
+    
+    _ref.read(backendTokenProvider.notifier).state = testToken;
+    
+    print('✅ [Auth] Sesión de test activa para: ${profile.displayName}');
+    state = AsyncValue.data(
+      AuthSession(
+        profile: profile,
+        firebaseEnabled: FirebaseEnvironment.isConfigured,
+        onboardingCompleted: true,
+      ),
+    );
+  }
+
   Future<void> _doLogin(String email, String password) async {
     final token = await _backendAuth.login(email, password);
     await _tokenStorage.saveToken(token);

@@ -184,6 +184,20 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     ),
                   ),
 
+                  const SizedBox(height: 16),
+
+                  // Test Login Button
+                  TextButton(
+                    onPressed: isLoading ? null : () => ref.read(authStateProvider.notifier).signInWithTestUser(),
+                    child: Text(
+                      'Entrar como Test (Bypass)',
+                      style: GardenTextStyles.bodySmall.copyWith(
+                        color: GardenColors.dust,
+                        decoration: TextDecoration.underline,
+                      ),
+                    ),
+                  ),
+
                   const SizedBox(height: 48),
 
                   // Register Link
