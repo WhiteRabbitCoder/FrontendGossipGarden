@@ -198,6 +198,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
   }
 
   Future<void> _signInWithBackendGoogle() async {
+    // Limpiar sesión previa para que el picker siempre aparezca
     await _googleSignIn.signOut();
 
     final googleUser = await _googleSignIn.signIn();
@@ -340,6 +341,9 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
     await _tokenStorage.clearToken();
     await _tokenStorage.clearProfile();
     _ref.read(backendTokenProvider.notifier).state = null;
+    await _googleSignIn.signOut();
+
+    // Desconectar Google siempre para que el picker aparezca en el próximo inicio
     await _googleSignIn.signOut();
 
     if (FirebaseEnvironment.isConfigured) {

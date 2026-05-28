@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gossip_garden/core/exceptions.dart';
 import '../providers/plant_providers.dart';
 import '../providers/chat_providers.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
@@ -34,8 +35,8 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
   @override
   void initState() {
     super.initState();
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _loadHistory();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _loadHistory();
       _scrollToBottom();
     });
   }
@@ -43,9 +44,9 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
   Future<void> _loadHistory() async {
     if (_historyLoaded) return;
     _historyLoaded = true;
+    final token = ref.read(backendTokenProvider);
+    final chatService = ref.read(backendChatServiceProvider);
     try {
-      final token = ref.read(backendTokenProvider);
-      final chatService = ref.read(backendChatServiceProvider);
       final history = await chatService.getHistory(
         plantId: widget.plantId,
         token: token,
@@ -54,12 +55,11 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
         ref.read(chatMessagesProvider(widget.plantId).notifier).loadHistory(history);
         WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
       }
-    } on UnauthorizedException {
-      if (mounted) {
+    } catch (e) {
+      if (e is UnauthorizedException && mounted) {
         ref.read(authStateProvider.notifier).signOut();
       }
-    } catch (_) {
-      // Historial no disponible — se empieza con chat vacío.
+      // Cualquier otro error: empieza con chat vacío
     }
   }
 
@@ -115,14 +115,17 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
       }
       return;
     } catch (e) {
-      if (mounted) {
-        ref.read(chatMessagesProvider(widget.plantId).notifier).addMessage(
-              'No pude conectar con el servidor. Intenta de nuevo.',
-              sender: 'plant',
-              source: 'error',
-              confidence: 'low',
-            );
+      if (!mounted) return;
+      if (e is UnauthorizedException) {
+        ref.read(authStateProvider.notifier).signOut();
+        return;
       }
+      ref.read(chatMessagesProvider(widget.plantId).notifier).addMessage(
+            'No pude conectar con el servidor. Intenta de nuevo.',
+            sender: 'plant',
+            source: 'error',
+            confidence: 'low',
+          );
     } finally {
       if (mounted) {
         setState(() => _waitingForPlant = false);
@@ -203,26 +206,29 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                         ),
                 ),
                 const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      _plant?.name ?? 'Planta',
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-                    Text(
-                      _plant?.sensorStatus == SensorStatus.online
-                          ? 'En línea'
-                          : 'Offline',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: _plant?.sensorStatus == SensorStatus.online
-                            ? Colors.green
-                            : Colors.grey,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        _plant?.name ?? 'Planta',
+                        style: const TextStyle(
+                            fontSize: 16, fontWeight: FontWeight.w600),
+                        overflow: TextOverflow.ellipsis,
                       ),
-                    ),
-                  ],
+                      Text(
+                        _plant?.sensorStatus == SensorStatus.online
+                            ? 'En línea'
+                            : 'Offline',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _plant?.sensorStatus == SensorStatus.online
+                              ? Colors.green
+                              : Colors.grey,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -303,8 +309,8 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                 const SizedBox(height: 8),
               ],
               Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: EdgeInsets.fromLTRB(
+                    16, 8, 16, 8 + MediaQuery.of(context).viewPadding.bottom),
                 color: Colors.white,
                 child: Row(
                   children: [

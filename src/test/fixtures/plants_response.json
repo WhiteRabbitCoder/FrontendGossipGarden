@@ -1,0 +1,25 @@
+[
+  {
+    "plant_id": "abc123-plant-uuid",
+    "user_id": "user456-uuid",
+    "species_id": "species789-uuid",
+    "nickname": "Mi Monstera",
+    "health_status": "healthy",
+    "health_score": 85.0,
+    "photo_storage_path": "plant_photos/user456/monstera.jpeg",
+    "photo_url": "https://firebasestorage.googleapis.com/v0/b/test.appspot.com/o/plant_photos%2Fuser456%2Fmonstera.jpeg?alt=media",
+    "created_at": "2024-05-11T12:00:00Z",
+    "last_health_check": null
+  },
+  {
+    "plant_id": "def456-plant-uuid",
+    "user_id": "user456-uuid",
+    "species_id": "species999-uuid",
+    "nickname": "Cactus Pequeño",
+    "health_status": "warning",
+    "health_score": 60.0,
+    "photo_storage_path": null,
+    "created_at": "2024-06-01T09:00:00Z",
+    "last_health_check": "2024-06-01T10:00:00Z"
+  }
+]
