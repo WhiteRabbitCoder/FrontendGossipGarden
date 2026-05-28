@@ -80,7 +80,6 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
     final saved = await _tokenStorage.readToken();
     if (saved != null) {
       _ref.read(backendTokenProvider.notifier).state = saved;
-      // Si hay token guardado y no hay Firebase, usuario está autenticado
       if (!FirebaseEnvironment.isConfigured) {
         final profileData = await _tokenStorage.readProfile();
         final profile = profileData != null
@@ -96,7 +95,8 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
                     const [],
                 useGridView: profileData['useGridView'] as bool? ?? true,
                 notificationPreference:
-                    profileData['notificationPreference'] as String? ?? 'important',
+                    profileData['notificationPreference'] as String? ??
+                        'important',
               )
             : null;
 
@@ -110,7 +110,6 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
         return;
       }
     } else {
-      // No hay token, mostrar login si Firebase está deshabilitado
       if (!FirebaseEnvironment.isConfigured) {
         state = AsyncValue.data(
           AuthSession(
@@ -154,10 +153,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
       UserProfile? profile;
       try {
         profile = await _authService.loadProfile(user.uid);
-      } catch (_) {
-        // Firestore puede denegar acceso si las reglas aún no están configuradas.
-        // Usamos perfil mínimo de Firebase Auth para no bloquear el login.
-      }
+      } catch (_) {}
       state = AsyncValue.data(
         AuthSession(
           profile: profile ??
@@ -183,7 +179,6 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
     state = const AsyncValue.loading();
 
     if (!FirebaseEnvironment.isConfigured) {
-      // Sin Firebase: flujo directo con backend Google OAuth.
       try {
         await _signInWithBackendGoogle();
       } catch (error, stackTrace) {
@@ -194,9 +189,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
     }
 
     try {
-      // Obtener JWT de Supabase vía deep link.
       await _signInWithBackendGoogle();
-      // Firebase sign-in para mantener Firestore.
       await _authService.signInWithGoogle();
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
@@ -215,12 +208,10 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
     final idToken = googleAuth.idToken;
     if (idToken == null) throw BackendAuthException('No se recibió idToken de Google');
 
-    // Intercambiar idToken por JWT de Supabase directamente (sin pasar por el backend).
     final supabaseJwt = await _backendAuth.signInWithGoogleIdToken(idToken);
     await _tokenStorage.saveToken(supabaseJwt);
     _ref.read(backendTokenProvider.notifier).state = supabaseJwt;
 
-    // Si Firebase NO está activo, construir sesión local mínima.
     if (!FirebaseEnvironment.isConfigured) {
       final profile = UserProfile(
         uid: googleUser.id,
@@ -241,21 +232,18 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
         ),
       );
     }
-    // Si Firebase SÍ está activo, el stream de _bindFirebaseAuth actualizará el estado.
   }
 
   Future<void> registerWithEmailAndPassword(
       String email, String password, String username) async {
     state = const AsyncValue.loading();
     try {
-      // Registrar en backend (Supabase).
       await _backendAuth.register(
         email: email,
         password: password,
         username: username,
       );
 
-      // Si Firebase está activo, también registrar ahí (para Firestore).
       if (FirebaseEnvironment.isConfigured) {
         try {
           await _authService.registerWithEmailAndPassword(
@@ -263,12 +251,9 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
             password: password,
             name: username,
           );
-        } catch (_) {
-          // Firebase puede fallar si Supabase ya lo creó; no es bloqueante.
-        }
+        } catch (_) {}
       }
 
-      // Auto-login para obtener JWT (el endpoint de registro no devuelve token).
       await _doLogin(email, password);
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
@@ -280,13 +265,11 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
     state = const AsyncValue.loading();
     try {
       if (FirebaseEnvironment.isConfigured) {
-        // Firebase maneja el estado vía _bindFirebaseAuth.
         await _authService.signInWithEmailAndPassword(
           email: email,
           password: password,
         );
       } else {
-        // Sin Firebase: construir sesión local mínima.
         final profile = UserProfile(
           uid: email,
           displayName: email.split('@').first,
@@ -306,12 +289,46 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
         );
       }
 
-      // Obtener JWT del backend para todas las llamadas API.
       await _doLogin(email, password);
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
       rethrow;
     }
+  }
+
+  Future<void> signInWithTestUser() async {
+    print('🔑 [Auth] Iniciando sesión bypass de test...');
+    state = const AsyncValue.loading();
+    // Simulamos un delay para que se sienta real
+    await Future.delayed(const Duration(milliseconds: 500));
+    
+    final profile = UserProfile(
+      uid: 'test-user-id',
+      displayName: 'Explorador del Jardín',
+      email: 'test@gossipgarden.com',
+      photoUrl: 'https://cdn-icons-png.flaticon.com/512/190/190601.png',
+      onboardingCompleted: true, // Saltamos el onboarding para tests
+      favoritePlantIds: const [],
+      useGridView: true,
+      notificationPreference: 'important',
+    );
+    
+    // Usamos un token de test
+    const testToken = 'gg_test_token_bypass';
+    print('📦 [Auth] Guardando token de test y perfil mock...');
+    await _tokenStorage.saveToken(testToken);
+    await _tokenStorage.saveProfile(_profileToMap(profile));
+    
+    _ref.read(backendTokenProvider.notifier).state = testToken;
+    
+    print('✅ [Auth] Sesión de test activa para: ${profile.displayName}');
+    state = AsyncValue.data(
+      AuthSession(
+        profile: profile,
+        firebaseEnabled: FirebaseEnvironment.isConfigured,
+        onboardingCompleted: true,
+      ),
+    );
   }
 
   Future<void> _doLogin(String email, String password) async {
@@ -324,6 +341,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
     await _tokenStorage.clearToken();
     await _tokenStorage.clearProfile();
     _ref.read(backendTokenProvider.notifier).state = null;
+    await _googleSignIn.signOut();
 
     // Desconectar Google siempre para que el picker aparezca en el próximo inicio
     await _googleSignIn.signOut();

@@ -278,22 +278,25 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             child: child,
           ),
           child: Container(
-            width: 200,
-            height: 200,
+            width: 160,
+            height: 160,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(32),
-              gradient: const LinearGradient(
-                colors: [Color(0xFF4A6741), Color(0xFF8BC34A)],
-              ),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.green.withValues(alpha: 0.3),
-                  blurRadius: 25,
+                  color: const Color(0xFF4A6741).withOpacity(0.15),
+                  blurRadius: 20,
+                  offset: const Offset(0, 10),
                 )
               ],
             ),
-            child: const Icon(Icons.local_florist,
-                size: 100, color: Colors.white),
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(32),
+              child: Image.asset(
+                'images/logo_no_text.png',
+                fit: BoxFit.cover,
+              ),
+            ),
           ),
         ),
         const SizedBox(height: 40),
@@ -394,7 +397,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4A6741).withValues(alpha: 0.1),
+                  color: const Color(0xFF4A6741).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const Icon(Icons.sensors, size: 28, color: Color(0xFF4A6741)),
@@ -473,7 +476,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0xFF4A6741).withValues(alpha: 0.3)),
+                border: Border.all(color: const Color(0xFF4A6741).withOpacity(0.3)),
               ),
               child: Column(
                 children: [
@@ -491,7 +494,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(color: Colors.grey.shade200),
-                boxShadow: [BoxShadow(color: Colors.black.withValues(alpha: 0.04), blurRadius: 12)],
+                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12)],
               ),
               child: Column(
                 children: networks.asMap().entries.map((e) {
@@ -579,7 +582,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF4A6741).withValues(alpha: 0.06) : Colors.transparent,
+          color: isSelected ? const Color(0xFF4A6741).withOpacity(0.06) : Colors.transparent,
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(isSelected ? 18 : 0),
             bottom: Radius.circular(isSelected ? 18 : 0),
@@ -744,7 +747,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             height: 140,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.blue.withValues(alpha: 0.1),
+              color: Colors.blue.withOpacity(0.1),
             ),
             child: const Icon(Icons.wifi_find_rounded,
                 size: 64, color: Colors.blue),
@@ -787,7 +790,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               height: 140,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.orange.withValues(alpha: 0.1),
+                color: Colors.orange.withOpacity(0.1),
               ),
               child: const Icon(Icons.cloud_upload_rounded,
                   size: 64, color: Colors.orange),
@@ -825,7 +828,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             height: 140,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.green.withValues(alpha: 0.1),
+              color: Colors.green.withOpacity(0.1),
             ),
             child: const Icon(Icons.check_circle_outline_rounded,
                 size: 64, color: Colors.green),
@@ -864,7 +867,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             height: 140,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.red.withValues(alpha: 0.1),
+              color: Colors.red.withOpacity(0.1),
             ),
             child: const Icon(Icons.error_outline_rounded,
                 size: 64, color: Colors.red),
@@ -895,11 +898,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
 
   Widget _buildIdentifyStep() {
     return PlantIdentifyScreen(
-      onBack: () {
-        ref.read(onboardingStepProvider.notifier).state =
-            OnboardingStep.connect;
-      },
-      onPlantCreated: (_) {
+      onCompleted: () {
         ref.read(onboardingStepProvider.notifier).state =
             OnboardingStep.firstInsight;
       },
@@ -974,10 +973,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     );
   }
 
-  Widget _buildBenefitRow(FaIconData icon, String title, String subtitle) {
+  Widget _buildBenefitRow(IconData icon, String title, String subtitle) {
     return Row(
       children: [
-        FaIcon(icon, size: 24, color: const Color(0xFF4A6741)),
+        Icon(icon, size: 24, color: const Color(0xFF4A6741)),
         const SizedBox(width: 12),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -1023,7 +1022,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
         borderRadius: BorderRadius.circular(24),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 20,
           )
         ],

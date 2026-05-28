@@ -97,6 +97,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
+              // Avatar Decorativo
               Center(
                 child: Stack(
                   children: [
@@ -116,6 +117,8 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                 ),
               ),
               const SizedBox(height: 32),
+
+              // Contenedor de Formulario Premium
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -126,6 +129,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // Campo Nombre de Usuario
                     Text(
                       'NOMBRE DE USUARIO',
                       style: GardenTextStyles.label.copyWith(
@@ -142,7 +146,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                         hintStyle: GardenTextStyles.body.copyWith(color: GardenColors.dust),
                         prefixIcon: const Icon(Icons.person_outline_rounded, color: GardenColors.moss),
                         filled: true,
-                        fillColor: GardenColors.cream.withValues(alpha: 0.5),
+                        fillColor: GardenColors.cream.withOpacity(0.5),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
                           borderSide: BorderSide(color: GardenColors.dustLight),
@@ -160,6 +164,8 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                       style: GardenTextStyles.body,
                     ),
                     const SizedBox(height: 24),
+
+                    // Campo Correo (Lectura únicamente)
                     Text(
                       'CORREO ELECTRÓNICO',
                       style: GardenTextStyles.label.copyWith(
@@ -172,7 +178,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                       decoration: BoxDecoration(
-                        color: GardenColors.cream.withValues(alpha: 0.3),
+                        color: GardenColors.cream.withOpacity(0.3),
                         borderRadius: BorderRadius.circular(16),
                         border: Border.all(color: GardenColors.dustLight),
                       ),
@@ -194,6 +200,8 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                 ),
               ),
               const SizedBox(height: 40),
+
+              // Botón Guardar Cambios
               ElevatedButton(
                 onPressed: _isLoading ? null : _saveProfile,
                 style: ElevatedButton.styleFrom(

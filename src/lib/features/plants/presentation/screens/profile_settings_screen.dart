@@ -8,11 +8,11 @@ import '../../../../core/theme/garden_colors.dart';
 import '../../../../core/theme/garden_text_styles.dart';
 import 'personal_info_screen.dart';
 
-// ── Local providers ──────────────────────────────────────────────────────────
+// ── Local providers (sin cambios) ────────────────────────────────────────────
 final favoritePlantsProvider =
     StateProvider<List<String>>((ref) => ['1', '2']);
 
-// ── Pantalla de perfil ───────────────────────────────────────────────────────
+// ── Pantalla de perfil ────────────────────────────────────────────────────────────
 
 class ProfileSettingsScreen extends ConsumerWidget {
   const ProfileSettingsScreen({super.key});
@@ -22,6 +22,9 @@ class ProfileSettingsScreen extends ConsumerWidget {
     final plantsAsync = ref.watch(plantsProvider);
     final favorites = ref.watch(favoritePlantsProvider);
     final authSession = ref.watch(authStateProvider).value;
+
+
+// logica para traer el nombre del usuario 
 
     final displayName = authSession?.profile?.displayName;
     final userName = (displayName != null && displayName.trim().isNotEmpty)
@@ -37,6 +40,7 @@ class ProfileSettingsScreen extends ConsumerWidget {
 
           return CustomScrollView(
             slivers: [
+              // ── Header con usuario ────────────────────────────────────────
               SliverToBoxAdapter(
                 child: SafeArea(
                   child: Padding(
@@ -62,12 +66,16 @@ class ProfileSettingsScreen extends ConsumerWidget {
                   ),
                 ),
               ),
+
+              // ── Mis Logros ────────────────────────────────────────────────
               const SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(20, 28, 20, 0),
                   child: _AchievementsSection(),
                 ),
               ),
+
+              // ── Mis Plantas Favoritas ─────────────────────────────────────
               SliverToBoxAdapter(
                 child: Padding(
                   padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
@@ -79,6 +87,7 @@ class ProfileSettingsScreen extends ConsumerWidget {
                   ),
                 ),
               ),
+
               const SliverToBoxAdapter(child: SizedBox(height: 120)),
             ],
           );
@@ -92,7 +101,7 @@ class ProfileSettingsScreen extends ConsumerWidget {
   }
 }
 
-// ── Profile Header ───────────────────────────────────────────────────────────
+// ── Profile Header ────────────────────────────────────────────────────────────
 
 class _ProfileHeader extends StatelessWidget {
   final String userName;
@@ -112,6 +121,7 @@ class _ProfileHeader extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Avatar
         Container(
           width: 68,
           height: 68,
@@ -121,6 +131,7 @@ class _ProfileHeader extends StatelessWidget {
             border: Border.all(color: GardenColors.sage, width: 2),
           ),
           child: const Center(
+            // TODO(backend): reemplazar con Image.network(authSession.profile.photoUrl)
             child: Text('🧑‍🌾', style: TextStyle(fontSize: 32)),
           ),
         ),
@@ -156,6 +167,7 @@ class _ProfileHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
+        // Botones editar + ajustes
         Column(
           children: [
             _IconCircleButton(
@@ -197,7 +209,8 @@ class _IconCircleButton extends StatelessWidget {
   }
 }
 
-// ── Achievements Section ─────────────────────────────────────────────────────
+// ── Achievements Section ──────────────────────────────────────────────────────
+// TODO(backend): traer logros desde endpoint de achievements cuando esté disponible
 
 class _AchievementsSection extends StatelessWidget {
   const _AchievementsSection();
@@ -264,7 +277,7 @@ class _AchievementCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       width: 100,
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
@@ -319,7 +332,7 @@ class _AchievementCard extends StatelessWidget {
   }
 }
 
-// ── Favorite Plants Section ──────────────────────────────────────────────────
+// ── Favorite Plants Section ───────────────────────────────────────────────────
 
 class _FavoritePlantsSection extends StatelessWidget {
   final List<Plant> favPlants;
@@ -550,7 +563,7 @@ class _AddFavoriteButton extends StatelessWidget {
   }
 }
 
-// ── Settings Screen ──────────────────────────────────────────────────────────
+// ── Settings Screen ───────────────────────────────────────────────────────────
 
 class _SettingsScreen extends ConsumerStatefulWidget {
   const _SettingsScreen();
@@ -595,6 +608,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
       body: ListView(
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
         children: [
+          // ── CUENTA ──────────────────────────────────────────────────────
           _SettingsSectionHeader(label: 'CUENTA'),
           _SettingsGroup(
             children: [
@@ -629,6 +643,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
 
           const SizedBox(height: 24),
 
+          // ── NOTIFICACIONES ───────────────────────────────────────────────
           _SettingsSectionHeader(label: 'NOTIFICACIONES'),
           _SettingsGroup(
             children: [
@@ -660,6 +675,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
 
           const SizedBox(height: 24),
 
+          // ── PRIVACIDAD Y SEGURIDAD ───────────────────────────────────────
           _SettingsSectionHeader(label: 'PRIVACIDAD Y SEGURIDAD'),
           _SettingsGroup(
             children: [
@@ -688,6 +704,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
 
           const SizedBox(height: 24),
 
+          // ── SOPORTE ──────────────────────────────────────────────────────
           _SettingsSectionHeader(label: 'SOPORTE'),
           _SettingsGroup(
             children: [
@@ -716,6 +733,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
 
           const SizedBox(height: 24),
 
+          // ── Cerrar sesión ────────────────────────────────────────────────
           GestureDetector(
             onTap: () {
               Navigator.of(context).pop();
@@ -746,7 +764,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
   }
 }
 
-// ── Settings helpers ─────────────────────────────────────────────────────────
+// ── Settings helpers ──────────────────────────────────────────────────────────
 
 class _SettingsSectionHeader extends StatelessWidget {
   final String label;

@@ -52,18 +52,6 @@
 			</array>
 		</dict>
 	</dict>
-	<!-- URL scheme para callback OAuth de Supabase (Google sign-in) -->
-	<key>CFBundleURLTypes</key>
-	<array>
-		<dict>
-			<key>CFBundleTypeRole</key>
-			<string>Editor</string>
-			<key>CFBundleURLSchemes</key>
-			<array>
-				<string>gossipgarden</string>
-			</array>
-		</dict>
-	</array>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<key>UILaunchStoryboardName</key>

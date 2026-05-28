@@ -34,15 +34,15 @@ class AnimatedBottomNav extends StatelessWidget {
           filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
           child: Container(
             decoration: BoxDecoration(
-              color: GardenColors.navBackground.withValues(alpha: 0.85),
+              color: GardenColors.navBackground.withOpacity(0.85),
               borderRadius: BorderRadius.circular(38),
               border: Border.all(
-                color: GardenColors.sage.withValues(alpha: 0.5),
+                color: GardenColors.sage.withOpacity(0.5),
                 width: 2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: GardenColors.forest.withValues(alpha: 0.1),
+                  color: GardenColors.forest.withOpacity(0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
@@ -67,14 +67,28 @@ class AnimatedBottomNav extends StatelessWidget {
                           duration: const Duration(milliseconds: 300),
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: isActive ? GardenColors.forest : Colors.transparent,
+                            color: (isActive && tab.$1 != TabId.dashboard) ? GardenColors.forest : Colors.transparent,
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(
-                            tab.$2,
-                            size: 24,
-                            color: isActive ? Colors.white : GardenColors.dust,
-                          ),
+                          child: tab.$1 == TabId.dashboard
+                              ? AnimatedScale(
+                                  scale: isActive ? 1.3 : 1.0,
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeOutBack,
+                                  child: Opacity(
+                                    opacity: isActive ? 1.0 : 0.6,
+                                    child: Image.asset(
+                                      'images/house_icon.png',
+                                      width: 32,
+                                      height: 32,
+                                    ),
+                                  ),
+                                )
+                              : Icon(
+                                  tab.$2,
+                                  size: 24,
+                                  color: isActive ? Colors.white : GardenColors.dust,
+                                ),
                         ),
                         if (isActive) const SizedBox(height: 2),
                         if (isActive)

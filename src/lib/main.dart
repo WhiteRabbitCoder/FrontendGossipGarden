@@ -4,6 +4,7 @@ import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/plants/presentation/screens/main_screen.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/plants/presentation/screens/onboarding_screen.dart';
+import 'core/observers/session_observer.dart';
 import 'core/services/firebase_bootstrap.dart';
 import 'core/observers/session_observer.dart';
 
@@ -25,17 +26,6 @@ class MyApp extends StatelessWidget {
         scaffoldBackgroundColor: const Color(0xFFFDFCF8),
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF4A6741)),
       ),
-      builder: (context, child) {
-        return Container(
-          color: const Color(0xFF1A2E1A),
-          child: Center(
-            child: ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 430),
-              child: child!,
-            ),
-          ),
-        );
-      },
       home: const _AppGate(),
     );
   }

@@ -1,75 +1,79 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../providers/plant_providers.dart';
+import '../../data/models/plant_enums.dart';
+import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_text_styles.dart';
 
-class SummaryBanner extends StatelessWidget {
+/// Banner verde en el Dashboard que muestra cuántas plantas necesitan atención.
+/// Conectado al [plantsProvider] para contar dinámicamente.
+/// Cuando el backend esté listo, el conteo se actualizará automáticamente.
+class SummaryBanner extends ConsumerWidget {
   final VoidCallback onAction;
 
   const SummaryBanner({super.key, required this.onAction});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final plantsAsync = ref.watch(plantsProvider);
+
+    final needsAttentionCount = plantsAsync.maybeWhen(
+      data: (plants) => plants
+          .where((p) =>
+              p.mood == PlantMood.thirsty ||
+              p.mood == PlantMood.stressed ||
+              p.mood == PlantMood.cold ||
+              p.mood == PlantMood.hot)
+          .length,
+      orElse: () => 0,
+    );
+
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+      padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(32),
-        gradient: const LinearGradient(
-          colors: [Color(0xFF4A6741), Color(0xFF6B8E23)],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: const Color(0xFF4A6741).withValues(alpha: 0.3),
-            blurRadius: 24,
-            offset: const Offset(0, 8),
-          ),
-        ],
+        color: GardenColors.forest,
+        borderRadius: BorderRadius.circular(20),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    const Icon(Icons.notifications_active_rounded, color: Color(0xFFFFD12B), size: 20),
-                    const SizedBox(width: 8),
-                    Text(
-                      'ATENCIÓN REQUERIDA',
-                      style: TextStyle(color: Colors.white.withValues(alpha: 0.8), fontSize: 11, fontWeight: FontWeight.w800, letterSpacing: 1.0),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                const Text(
-                  '1 tiene sed, 2 buscan el sol',
-                  style: TextStyle(color: Colors.white, fontSize: 22, fontWeight: FontWeight.w800, height: 1.2),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Te tomará menos de 3 minutos',
-                  style: TextStyle(color: Colors.white.withValues(alpha: 0.75), fontSize: 14, fontWeight: FontWeight.w500),
-                ),
-                const SizedBox(height: 24),
-                ElevatedButton(
-                  onPressed: onAction,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFFFD12B),
-                    foregroundColor: Colors.black87,
-                    padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-                    elevation: 0,
-                  ),
-                  child: const Text('Ayudarlas (3)', style: TextStyle(fontWeight: FontWeight.w800, fontSize: 14)),
-                ),
-              ],
+          Text(
+            '$needsAttentionCount plantas necesitan mimos',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+              height: 1.2,
             ),
           ),
-          // Ilustración sutil a la derecha
-          Opacity(
-            opacity: 0.15,
-            child: const Icon(Icons.eco_rounded, size: 100, color: Colors.white),
+          const SizedBox(height: 8),
+          Text(
+            'Pequeños cuidados diarios, grandes plantas felices.',
+            style: TextStyle(
+              color: Colors.white.withOpacity(0.85),
+              fontSize: 14,
+              fontWeight: FontWeight.w400,
+              height: 1.4,
+            ),
+          ),
+          const SizedBox(height: 20),
+          OutlinedButton(
+            onPressed: onAction,
+            style: OutlinedButton.styleFrom(
+              backgroundColor: Colors.white,
+              foregroundColor: GardenColors.charcoal,
+              side: BorderSide.none,
+              padding:
+                  const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(24),
+              ),
+              textStyle: GardenTextStyles.bodySmall.copyWith(
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            child: const Text('Ir a mi jardín →'),
           ),
         ],
       ),

@@ -1,8 +1,4 @@
-> ⚠️ **DOCUMENTO DESACTUALIZADO** — Este contrato describe la API del backend Railway antiguo.
-> El contrato vigente es `backendGossipGarden/API_CONTRACT.md` (base `/api/v1`, JWT Bearer).
-> Rama activa de integración: `feat/backend-integration`. Ver `PENDING_BACKEND.md` para gaps.
-
-# Contrato de API consumido por el frontend (LEGACY)
+# Contrato de API consumido por el frontend
 
 Este documento describe **exactamente** qué espera el frontend Flutter (`gossip_garden/`) del backend. Sirve como contrato para refactorizar el backend sin romper la app.
 

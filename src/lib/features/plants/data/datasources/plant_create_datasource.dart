@@ -55,7 +55,7 @@ class PlantCreateDatasource {
   Plant _toPlant(Map<String, dynamic> raw) {
     final plantId = (raw['plant_id'] ?? '').toString();
     final nickname = (raw['nickname'] ?? 'Mi planta').toString();
-    final photo = raw['photo_storage_path'] as String? ?? '';
+    final photo = raw['photo_url'] as String? ?? '';
 
     return Plant(
       id: plantId,

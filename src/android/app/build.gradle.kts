@@ -38,16 +38,6 @@ android {
             signingConfig = signingConfigs.getByName("debug")
         }
     }
-
-    applicationVariants.all {
-        val variant = this
-        variant.outputs.all {
-            val output = this as com.android.build.gradle.internal.api.ApkVariantOutputImpl
-            if (variant.buildType.name == "release") {
-                output.outputFileName = "GossipGarden.apk"
-            }
-        }
-    }
 }
 
 flutter {

@@ -16,6 +16,11 @@ class AppConfig {
     defaultValue: 'https://backendgossipgarden-production.up.railway.app',
   );
 
+  static const bool enableFirebase = bool.fromEnvironment(
+    'ENABLE_FIREBASE',
+    defaultValue: false,
+  );
+
   static const String supabaseUrl = String.fromEnvironment(
     'SUPABASE_URL',
     defaultValue: 'https://tslrtebdziilekddalcr.supabase.co',
@@ -29,11 +34,6 @@ class AppConfig {
   static const String googleClientId = String.fromEnvironment(
     'GOOGLE_CLIENT_ID',
     defaultValue: '',
-  );
-
-  static const bool enableFirebase = bool.fromEnvironment(
-    'ENABLE_FIREBASE',
-    defaultValue: false,
   );
 
   static String get backendBaseUrl {

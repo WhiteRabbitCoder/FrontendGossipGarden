@@ -5,10 +5,10 @@ import '../providers/plant_providers.dart';
 import '../providers/chat_providers.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../widgets/message_bubble.dart';
-import '../widgets/voice_note_bubble.dart';
 import '../widgets/telemetry_panel.dart';
 import '../../data/models/plant.dart';
 import '../../data/models/plant_enums.dart';
+import '../../../../core/exceptions.dart';
 
 class PlantChatScreen extends ConsumerStatefulWidget {
   final String plantId;
@@ -28,7 +28,6 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _waitingForPlant = false;
-  bool _showVoiceDemo = false;
   bool _historyLoaded = false;
 
   Plant? _plant;
@@ -110,6 +109,11 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
               confidence: 'high',
             );
       }
+    } on UnauthorizedException {
+      if (mounted) {
+        ref.read(authStateProvider.notifier).signOut();
+      }
+      return;
     } catch (e) {
       if (!mounted) return;
       if (e is UnauthorizedException) {
@@ -180,8 +184,26 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
             title: Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: const Color(0xFF4A6741).withValues(alpha: 0.1),
-                  child: Text(_plant?.name.substring(0, 1) ?? 'P'),
+                  backgroundColor: const Color(0xFFEBF2E8), // GardenColors.sageLight
+                  child: _plant?.image.isNotEmpty == true
+                      ? ClipOval(
+                          child: Image.network(
+                            _plant!.image,
+                            fit: BoxFit.cover,
+                            width: 40,
+                            height: 40,
+                            errorBuilder: (_, __, ___) => Icon(
+                              _getPlantIcon(_plant?.species ?? ''),
+                              color: const Color(0xFF3D5E36), // GardenColors.forest
+                              size: 20,
+                            ),
+                          ),
+                        )
+                      : Icon(
+                          _getPlantIcon(_plant?.species ?? ''),
+                          color: const Color(0xFF3D5E36), // GardenColors.forest
+                          size: 20,
+                        ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -217,47 +239,28 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                 child: ListView.builder(
                   controller: _scrollController,
                   padding: const EdgeInsets.only(bottom: 16),
-                  itemCount: messages.length + (_waitingForPlant ? 1 : 0) + (_showVoiceDemo ? 2 : 0),
+                  itemCount: messages.length + (_waitingForPlant ? 1 : 0),
                   itemBuilder: (context, index) {
-                    // Mensajes normales primero
-                    if (index < messages.length) {
-                      return MessageBubble(message: messages[index]);
-                    }
-
-                    // Notas de voz al final del hilo
-                    if (_showVoiceDemo && index == messages.length) {
-                      return VoiceNoteBubble(
-                        isUser: true,
-                        durationSeconds: 21,
-                        timestamp: '17:19',
+                    if (index == messages.length && _waitingForPlant) {
+                      return const Padding(
+                        padding:
+                            EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        child: Row(
+                          children: [
+                            SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(strokeWidth: 2),
+                            ),
+                            SizedBox(width: 8),
+                            Text('La planta está pensando...',
+                                style: TextStyle(
+                                    color: Colors.grey, fontSize: 13)),
+                          ],
+                        ),
                       );
                     }
-                    if (_showVoiceDemo && index == messages.length + 1) {
-                      return VoiceNoteBubble(
-                        isUser: false,
-                        durationSeconds: 14,
-                        timestamp: '17:20',
-                      );
-                    }
-
-                    // Indicador "planta pensando..."
-                    return const Padding(
-                      padding:
-                          EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                      child: Row(
-                        children: [
-                          SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(strokeWidth: 2),
-                          ),
-                          SizedBox(width: 8),
-                          Text('La planta está pensando...',
-                              style: TextStyle(
-                                  color: Colors.grey, fontSize: 13)),
-                        ],
-                      ),
-                    );
+                    return MessageBubble(message: messages[index]);
                   },
                 ),
               ),
@@ -311,31 +314,6 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                 color: Colors.white,
                 child: Row(
                   children: [
-                    // Mic button
-                    GestureDetector(
-                      onTap: () {
-                        setState(() => _showVoiceDemo = !_showVoiceDemo);
-                        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
-                      },
-                      child: Container(
-                        width: 44,
-                        height: 44,
-                        decoration: BoxDecoration(
-                          color: _showVoiceDemo
-                              ? const Color(0xFF4A6741)
-                              : Colors.grey.shade100,
-                          borderRadius: BorderRadius.circular(22),
-                        ),
-                        child: Icon(
-                          Icons.mic_rounded,
-                          color: _showVoiceDemo
-                              ? Colors.white
-                              : const Color(0xFF4A6741),
-                          size: 22,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
                     Expanded(
                       child: TextField(
                         controller: _textController,
@@ -358,15 +336,15 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                     GestureDetector(
                       onTap: _waitingForPlant ? null : _sendMessage,
                       child: Container(
-                        width: 44,
-                        height: 44,
+                        width: 48,
+                        height: 48,
                         decoration: BoxDecoration(
                           color: _waitingForPlant
                               ? Colors.grey.shade300
                               : const Color(0xFF4A6741),
-                          borderRadius: BorderRadius.circular(22),
+                          borderRadius: BorderRadius.circular(24),
                         ),
-                        child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+                        child: const Icon(Icons.send, color: Colors.white),
                       ),
                     ),
                   ],
@@ -380,5 +358,16 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
           const Scaffold(body: Center(child: CircularProgressIndicator())),
       error: (e, _) => Scaffold(body: Center(child: Text('Error: $e'))),
     );
+  }
+
+  IconData _getPlantIcon(String species) {
+    final lower = species.toLowerCase();
+    if (lower.contains('echeveria') || lower.contains('suculenta')) {
+      return Icons.local_florist_outlined;
+    }
+    if (lower.contains('ficus')) {
+      return Icons.park_outlined;
+    }
+    return Icons.eco_outlined;
   }
 }

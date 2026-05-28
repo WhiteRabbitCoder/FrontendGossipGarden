@@ -21,7 +21,7 @@ class HeroStatsCard extends StatelessWidget {
           radius: 1.6,
           colors: [
             Theme.of(context).colorScheme.primary,
-            Theme.of(context).colorScheme.primary.withValues(alpha: 0.7),
+            Theme.of(context).colorScheme.primary.withOpacity(0.7),
           ],
         ),
       ),

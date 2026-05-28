@@ -1,10 +1,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
     <uses-permission android:name="android.permission.INTERNET"/>
-    <uses-permission android:name="android.permission.CAMERA"/>
-    <uses-feature android:name="android.hardware.camera" android:required="false"/>
 
     <application
-        android:label="Gossip Garden"
+        android:label="gossip_garden"
         android:name="${applicationName}"
         android:usesCleartextTraffic="true"
         android:icon="@mipmap/ic_launcher">
@@ -29,26 +27,7 @@
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
-            <!-- Deep link para callback OAuth de Supabase (Google sign-in) -->
-            <intent-filter android:autoVerify="false">
-                <action android:name="android.intent.action.VIEW"/>
-                <category android:name="android.intent.category.DEFAULT"/>
-                <category android:name="android.intent.category.BROWSABLE"/>
-                <data android:scheme="gossipgarden"/>
-            </intent-filter>
         </activity>
-        <!-- Requerido por flutter_web_auth_2 para capturar el callback OAuth -->
-        <activity
-            android:name="com.linusu.flutter_web_auth_2.CallbackActivity"
-            android:exported="true">
-            <intent-filter android:label="flutter_web_auth_2">
-                <action android:name="android.intent.action.VIEW" />
-                <category android:name="android.intent.category.DEFAULT" />
-                <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="gossipgarden" />
-            </intent-filter>
-        </activity>
-
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data
@@ -64,12 +43,6 @@
         <intent>
             <action android:name="android.intent.action.PROCESS_TEXT"/>
             <data android:mimeType="text/plain"/>
-        </intent>
-        <!-- Requerido por flutter_web_auth_2 en Android 11+ para abrir Chrome Custom Tabs -->
-        <intent>
-            <action android:name="android.intent.action.VIEW"/>
-            <category android:name="android.intent.category.BROWSABLE"/>
-            <data android:scheme="https"/>
         </intent>
     </queries>
 </manifest>

@@ -45,12 +45,6 @@ app.*.map.json
 /android/app/release
 
 
-# Firebase config (contiene API keys)
-/android/app/google-services.json
-
-# Variables de entorno locales
-.env
-
 # Ignorar configuración del agente
 .continue/
 config.yaml

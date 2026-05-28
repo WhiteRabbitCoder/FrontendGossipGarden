@@ -33,8 +33,6 @@ class PlantApiDatasource implements PlantDatasource {
   Future<List<Plant>> getPlants() async {
     final plantsRaw = await _getJsonList('/api/v1/plants/');
 
-    // No hay endpoint GET /species en el backend nuevo; se usan defaults de comfort zones.
-    // Ver PENDING_BACKEND.md — pendiente: GET /api/v1/species/{id}/profile
     final futures = plantsRaw
         .whereType<Map>()
         .map((raw) => _toPlant(Map<String, dynamic>.from(raw), const {}));
@@ -46,7 +44,6 @@ class PlantApiDatasource implements PlantDatasource {
     Map<String, dynamic> plantRaw,
     Map<String, Map<String, dynamic>> speciesById,
   ) async {
-    // Backend devuelve UUIDs como strings
     final plantId = (plantRaw['plant_id'] ?? '').toString();
     final speciesId = (plantRaw['species_id'] ?? '').toString();
     final speciesRaw = speciesById[speciesId] ?? const {};
@@ -111,7 +108,6 @@ class PlantApiDatasource implements PlantDatasource {
     if (plantId.isEmpty) return const SensorSnapshot();
 
     try {
-      // GET /api/v1/plants/{plant_id}/sensor-data/latest — requiere auth
       final uri = Uri.parse(
           '${AppConfig.backendBaseUrl}/api/v1/plants/$plantId/sensor-data/latest');
       final response = await _httpClient.get(uri, headers: _authHeaders);
@@ -124,7 +120,6 @@ class PlantApiDatasource implements PlantDatasource {
       final raw = jsonDecode(response.body);
       if (raw is! Map) return const SensorSnapshot();
 
-      // Mapear nombres de campos del backend → nombres internos del Flutter
       final latestSensorData = <String, dynamic>{
         'temperature': raw['temperature_c'],
         'humidity': raw['humidity_pct'],
@@ -142,7 +137,7 @@ class PlantApiDatasource implements PlantDatasource {
     }
   }
 
-  // ─── Model builders (sin cambios) ────────────────────────────────────────────
+  // ─── Model builders ──────────────────────────────────────────────────────────
 
   ComfortZones _buildComfortZones(Map<String, dynamic> speciesRaw) {
     return ComfortZones(
