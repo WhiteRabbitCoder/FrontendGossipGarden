@@ -2,9 +2,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:gossip_garden/core/theme/garden_colors.dart';
 import 'package:gossip_garden/features/plants/presentation/providers/navigation_provider.dart';
 import 'package:gossip_garden/features/auth/presentation/providers/auth_provider.dart';
-import 'package:gossip_garden/features/plants/presentation/providers/plant_providers.dart';
 import 'package:gossip_garden/features/plants/presentation/screens/plant_identify_screen.dart';
 
 enum OnboardingStep { wow, welcome, connect, identify, firstInsight, config }
@@ -20,18 +20,28 @@ final notificationPreferenceProvider =
 // ── WiFi Setup providers ──────────────────────────────────────────────────────
 final wifiSsidProvider = StateProvider<String>((ref) => '');
 final wifiPasswordProvider = StateProvider<String>((ref) => '');
-final wifiSetupPhaseProvider = StateProvider<_WifiPhase>((ref) => _WifiPhase.instruction);
+final wifiSetupPhaseProvider =
+    StateProvider<_WifiPhase>((ref) => _WifiPhase.instruction);
 final wifiNetworksProvider = StateProvider<List<_WifiNetwork>>((ref) => []);
 final wifiScanningProvider = StateProvider<bool>((ref) => false);
 final sensorNetworksProvider = StateProvider<List<String>>((ref) => []);
 
-enum _WifiPhase { instruction, verifying, scanning, form, connecting, connected, error }
+enum _WifiPhase {
+  instruction,
+  verifying,
+  scanning,
+  form,
+  connecting,
+  connected,
+  error
+}
 
 class _WifiNetwork {
   final String ssid;
   final int signal; // 1-4 bars
   final bool secured;
-  const _WifiNetwork({required this.ssid, required this.signal, required this.secured});
+  const _WifiNetwork(
+      {required this.ssid, required this.signal, required this.secured});
 }
 
 class OnboardingScreen extends ConsumerStatefulWidget {
@@ -52,7 +62,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   final TextEditingController _passwordController = TextEditingController();
   bool _passwordVisible = false;
   bool _showPasswordField = false;
-  bool _wifiSimStarted = false;
+  // linea borrada
 
   @override
   void initState() {
@@ -91,7 +101,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     ref.read(navigationProvider.notifier).changeTab(TabId.dashboard);
   }
 
-  void _startWifiConnection() async {
+  void _startWifiConnection() {
     final ssid = _ssidController.text.trim();
     final password = _passwordController.text;
     if (ssid.isEmpty) return;
@@ -99,28 +109,43 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     ref.read(wifiSsidProvider.notifier).state = ssid;
     ref.read(wifiPasswordProvider.notifier).state = password;
     ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.connecting;
+  }
 
-    final success = await ref.read(wifiSetupDatasourceProvider).configureDevice(
-      ssid: ssid,
-      password: password,
-    );
+  void _showWifiConnected() {
+    ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.connected;
+  }
 
-    if (mounted) {
-      if (success) {
-        ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.connected;
-      } else {
-        ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.error;
-      }
-    }
+  void _showWifiScanning() {
+    ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.scanning;
+  }
+
+  void _showWifiForm() {
+    ref.read(wifiNetworksProvider.notifier).state = const [
+      _WifiNetwork(ssid: 'GossipGarden_Home', signal: 4, secured: true),
+      _WifiNetwork(ssid: 'CasaDeAngelo_5G', signal: 3, secured: true),
+      _WifiNetwork(ssid: 'Vecinos_WiFi', signal: 2, secured: true),
+    ];
+    ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.form;
   }
 
   void _startPairing() {
     ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.instruction;
+    ref.read(wifiNetworksProvider.notifier).state = [];
+    ref.read(wifiScanningProvider.notifier).state = false;
+    ref.read(wifiSsidProvider.notifier).state = '';
+    ref.read(wifiPasswordProvider.notifier).state = '';
+    _ssidController.clear();
+    _passwordController.clear();
+    setState(() {
+      _passwordVisible = false;
+      _showPasswordField = false;
+    });
   }
 
   void _verifyAndStartScanning() async {
     if (!mounted) return;
     ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.verifying;
+    if (mounted) return;
     await Future.delayed(const Duration(milliseconds: 1200));
 
     if (!mounted) return;
@@ -131,8 +156,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     // Inyectar redes falsas y saltar directo a connecting con SSID pre-elegido
     ref.read(wifiNetworksProvider.notifier).state = const [
       _WifiNetwork(ssid: 'GossipGarden_Home', signal: 4, secured: true),
-      _WifiNetwork(ssid: 'CasaDeAngelo_5G',   signal: 3, secured: true),
-      _WifiNetwork(ssid: 'Vecinos_WiFi',       signal: 2, secured: true),
+      _WifiNetwork(ssid: 'CasaDeAngelo_5G', signal: 3, secured: true),
+      _WifiNetwork(ssid: 'Vecinos_WiFi', signal: 2, secured: true),
     ];
     ref.read(wifiSsidProvider.notifier).state = 'GossipGarden_Home';
     _ssidController.text = 'GossipGarden_Home';
@@ -167,7 +192,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     final isLastStep = step == OnboardingStep.config;
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFDFCF8),
+      backgroundColor: GardenColors.creamPaper,
       body: SafeArea(
         child: Stack(
           children: [
@@ -208,8 +233,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                   onPressed: _skipToApp,
                   style: TextButton.styleFrom(
                     foregroundColor: Colors.black45,
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                   ),
                   child: const Row(
                     mainAxisSize: MainAxisSize.min,
@@ -240,7 +265,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           width: i == index ? 24 : 8,
           height: 8,
           decoration: BoxDecoration(
-            color: i <= index ? const Color(0xFF4A6741) : Colors.grey.shade300,
+            color: i <= index ? GardenColors.leafDark : GardenColors.dustLight,
             borderRadius: BorderRadius.circular(20),
           ),
         ),
@@ -248,21 +273,36 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     );
   }
 
-  Widget _buildStepContent(OnboardingStep step, NavigationNotifier navNotifier) {
+  Widget _buildStepContent(
+      OnboardingStep step, NavigationNotifier navNotifier) {
     switch (step) {
       case OnboardingStep.wow:
-        return _buildWowStep();
+        return _buildScrollableStep(_buildWowStep());
       case OnboardingStep.welcome:
-        return _buildWelcomeStep();
+        return _buildScrollableStep(_buildWelcomeStep());
       case OnboardingStep.connect:
-        return _buildWifiSetupStep();
+        return _buildScrollableStep(_buildWifiSetupStep());
       case OnboardingStep.identify:
         return _buildIdentifyStep();
       case OnboardingStep.firstInsight:
-        return _buildFirstInsightStep();
+        return _buildScrollableStep(_buildFirstInsightStep());
       case OnboardingStep.config:
-        return _buildConfigStep(navNotifier);
+        return _buildScrollableStep(_buildConfigStep(navNotifier));
     }
+  }
+
+  Widget _buildScrollableStep(Widget child) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        return SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
+          child: ConstrainedBox(
+            constraints: BoxConstraints(minHeight: constraints.maxHeight),
+            child: IntrinsicHeight(child: child),
+          ),
+        );
+      },
+    );
   }
 
   // ── Paso 1: Wow ─────────────────────────────────────────────────────────
@@ -284,7 +324,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               borderRadius: BorderRadius.circular(32),
               boxShadow: [
                 BoxShadow(
-                  color: const Color(0xFF4A6741).withOpacity(0.15),
+                  color: GardenColors.leafDark.withOpacity(0.15),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 )
@@ -313,7 +353,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                 scale: _iconAnimation.value,
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Icon(e, size: 32, color: Color(0xFF4A6741)),
+                  child: Icon(e, size: 32, color: GardenColors.leafDark),
                 ),
               ),
             );
@@ -326,7 +366,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           style: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF4A6741)),
+              color: GardenColors.ink),
         ),
         const SizedBox(height: 48),
         _primaryButton('Quiero escucharlas', () {
@@ -397,10 +437,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF4A6741).withOpacity(0.1),
+                  color: GardenColors.leafDark.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(Icons.sensors, size: 28, color: Color(0xFF4A6741)),
+                child: const Icon(Icons.sensors,
+                    size: 28, color: GardenColors.leafDark),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -408,9 +449,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     const Text('Conecta tus sensores',
-                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800)),
+                        style: TextStyle(
+                            fontSize: 22,
+                            fontWeight: FontWeight.w800,
+                            color: GardenColors.ink)),
                     Text('Elige tu red WiFi para configurar el dispositivo IoT',
-                        style: TextStyle(fontSize: 12, color: Colors.grey.shade600)),
+                        style: TextStyle(
+                            fontSize: 12, color: GardenColors.inkSoft)),
                   ],
                 ),
               ),
@@ -426,7 +471,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                   style: TextStyle(
                       fontSize: 13,
                       fontWeight: FontWeight.w700,
-                      color: Colors.grey.shade700,
+                      color: GardenColors.inkSoft,
                       letterSpacing: 0.5)),
               TextButton.icon(
                 onPressed: scanning ? null : _scanNetworks,
@@ -436,12 +481,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                         height: 14,
                         child: CircularProgressIndicator(
                             strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4A6741))))
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                                GardenColors.leafDark)),
+                      )
                     : const Icon(Icons.refresh_rounded, size: 16),
                 label: Text(scanning ? 'Buscando...' : 'Buscar'),
                 style: TextButton.styleFrom(
-                    foregroundColor: const Color(0xFF4A6741),
-                    textStyle: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600)),
+                    foregroundColor: GardenColors.leafDark,
+                    textStyle: const TextStyle(
+                        fontSize: 13, fontWeight: FontWeight.w600)),
               ),
             ],
           ),
@@ -457,14 +505,23 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: Colors.grey.shade200),
+                  border: Border.all(color: GardenColors.dustLight, width: 1.2),
+                  boxShadow: [
+                    BoxShadow(
+                      color: GardenColors.ink.withOpacity(0.05),
+                      blurRadius: 14,
+                      offset: const Offset(0, 6),
+                    ),
+                  ],
                 ),
                 child: Column(
                   children: [
-                    Icon(Icons.wifi_find, size: 40, color: Colors.grey.shade400),
+                    Icon(Icons.wifi_find,
+                        size: 40, color: GardenColors.inkSoft),
                     const SizedBox(height: 10),
                     Text('Toca para buscar redes',
-                        style: TextStyle(color: Colors.grey.shade500, fontSize: 13)),
+                        style: TextStyle(
+                            color: GardenColors.inkSoft, fontSize: 13)),
                   ],
                 ),
               ),
@@ -476,15 +533,25 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: const Color(0xFF4A6741).withOpacity(0.3)),
+                border: Border.all(
+                    color: GardenColors.leafDark.withOpacity(0.3), width: 1.2),
+                boxShadow: [
+                  BoxShadow(
+                    color: GardenColors.ink.withOpacity(0.05),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
+                  ),
+                ],
               ),
               child: Column(
                 children: [
                   const CircularProgressIndicator(
-                      valueColor: AlwaysStoppedAnimation<Color>(Color(0xFF4A6741))),
+                      valueColor:
+                          AlwaysStoppedAnimation<Color>(GardenColors.leafDark)),
                   const SizedBox(height: 14),
                   Text('Buscando redes cercanas...',
-                      style: TextStyle(color: Colors.grey.shade600, fontSize: 13)),
+                      style:
+                          TextStyle(color: GardenColors.inkSoft, fontSize: 13)),
                 ],
               ),
             )
@@ -493,8 +560,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               decoration: BoxDecoration(
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(18),
-                border: Border.all(color: Colors.grey.shade200),
-                boxShadow: [BoxShadow(color: Colors.black.withOpacity(0.04), blurRadius: 12)],
+                border: Border.all(color: GardenColors.dustLight, width: 1.2),
+                boxShadow: [
+                  BoxShadow(
+                    color: GardenColors.ink.withOpacity(0.05),
+                    blurRadius: 14,
+                    offset: const Offset(0, 6),
+                  )
+                ],
               ),
               child: Column(
                 children: networks.asMap().entries.map((e) {
@@ -532,21 +605,23 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                   _passwordVisible
                       ? Icons.visibility_off_outlined
                       : Icons.visibility_outlined,
-                  color: Colors.grey.shade500,
+                  color: GardenColors.inkSoft,
                   size: 20,
                 ),
-                onPressed: () => setState(() => _passwordVisible = !_passwordVisible),
+                onPressed: () =>
+                    setState(() => _passwordVisible = !_passwordVisible),
               ),
             ),
             const SizedBox(height: 8),
             Row(
               children: [
-                Icon(Icons.security_rounded, size: 13, color: Colors.grey.shade500),
+                Icon(Icons.security_rounded,
+                    size: 13, color: GardenColors.inkSoft),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Text(
                     'Tu contraseña se envía únicamente al sensor. Nunca pasa por nuestros servidores.',
-                    style: TextStyle(fontSize: 11, color: Colors.grey.shade500),
+                    style: TextStyle(fontSize: 11, color: GardenColors.inkSoft),
                   ),
                 ),
               ],
@@ -575,14 +650,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       Icons.signal_wifi_4_bar,
     ][net.signal.clamp(1, 4) - 1];
 
-    final signalColor = net.signal >= 3 ? const Color(0xFF4A6741) : Colors.orange;
+    final signalColor =
+        net.signal >= 3 ? GardenColors.leafDark : GardenColors.potOrange;
 
     return GestureDetector(
       onTap: () => _selectNetwork(net),
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF4A6741).withOpacity(0.06) : Colors.transparent,
+          color: isSelected
+              ? GardenColors.leafDark.withOpacity(0.06)
+              : Colors.transparent,
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(isSelected ? 18 : 0),
             bottom: Radius.circular(isSelected ? 18 : 0),
@@ -611,25 +689,26 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                           style: TextStyle(
                               fontSize: 11,
                               color: net.secured
-                                  ? Colors.grey.shade500
-                                  : Colors.orange.shade700),
+                                  ? GardenColors.inkSoft
+                                  : GardenColors.potOrange),
                         ),
                       ],
                     ),
                   ),
                   if (net.secured)
-                    Icon(Icons.lock_rounded, size: 16, color: Colors.grey.shade400),
+                    Icon(Icons.lock_rounded,
+                        size: 16, color: GardenColors.inkSoft),
                   if (isSelected)
                     Padding(
                       padding: const EdgeInsets.only(left: 8),
                       child: Icon(Icons.check_circle_rounded,
-                          size: 20, color: const Color(0xFF4A6741)),
+                          size: 20, color: GardenColors.leafDark),
                     ),
                 ],
               ),
             ),
             if (!isLast)
-              Divider(height: 1, indent: 52, color: Colors.grey.shade100),
+              Divider(height: 1, indent: 52, color: GardenColors.dustLight),
           ],
         ),
       ),
@@ -653,39 +732,33 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        prefixIcon: Icon(icon, color: const Color(0xFF4A6741), size: 20),
+        prefixIcon: Icon(icon, color: GardenColors.leafDark, size: 20),
         suffixIcon: suffixIcon,
-        labelStyle: const TextStyle(color: Color(0xFF4A6741)),
+        labelStyle: const TextStyle(color: GardenColors.leafDark),
         filled: true,
         fillColor: Colors.white,
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.grey.shade200),
+          borderSide: BorderSide(color: GardenColors.dustLight),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: BorderSide(color: Colors.grey.shade200),
+          borderSide: BorderSide(color: GardenColors.dustLight),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(16),
-          borderSide: const BorderSide(color: Color(0xFF4A6741), width: 2),
+          borderSide: const BorderSide(color: GardenColors.leafDark, width: 2),
         ),
       ),
     );
   }
 
   Widget _buildWifiInstruction() {
-    if (!_wifiSimStarted) {
-      _wifiSimStarted = true;
-      WidgetsBinding.instance.addPostFrameCallback((_) async {
-        await Future.delayed(const Duration(milliseconds: 1500));
-        if (mounted) _verifyAndStartScanning();
-      });
-    }
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(Icons.wifi_lock_rounded, size: 64, color: Color(0xFF4A6741)),
+        const Icon(Icons.wifi_lock_rounded,
+            size: 64, color: GardenColors.leafDark),
         const SizedBox(height: 24),
         const Text(
           'Configuración del Sensor',
@@ -706,7 +779,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF4A6741),
+                  color: GardenColors.leafDark,
                   letterSpacing: 1.2,
                 ),
               ),
@@ -714,7 +787,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           ),
         ),
         const SizedBox(height: 40),
-        const CircularProgressIndicator(color: Color(0xFF4A6741)),
+        _primaryButton('Buscar sensor', _verifyAndStartScanning),
       ],
     );
   }
@@ -724,7 +797,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const CircularProgressIndicator(color: Color(0xFF4A6741)),
+          const CircularProgressIndicator(color: GardenColors.leafDark),
           const SizedBox(height: 32),
           const Text(
             'Sincronizando con el sensor...',
@@ -732,6 +805,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           ),
           const SizedBox(height: 8),
           const Text('Recibiendo endpoints de configuración'),
+          const SizedBox(height: 48),
+          _primaryButton('Continuar', _showWifiScanning),
         ],
       ),
     );
@@ -747,27 +822,27 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             height: 140,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.blue.withOpacity(0.1),
+              color: GardenColors.leafDark.withOpacity(0.08),
             ),
             child: const Icon(Icons.wifi_find_rounded,
-                size: 64, color: Colors.blue),
+                size: 64, color: GardenColors.leafDark),
           ),
           const SizedBox(height: 32),
           const Text(
             'Conectado al sensor',
             style: TextStyle(
-                fontSize: 20, fontWeight: FontWeight.w700, color: Colors.blue),
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: GardenColors.leafDark),
           ),
           const SizedBox(height: 12),
           Text(
             'El chip está buscando redes WiFi reales\nen tu entorno...',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey.shade600, height: 1.5),
+            style: TextStyle(color: GardenColors.inkSoft, height: 1.5),
           ),
           const SizedBox(height: 48),
-          const CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.blue),
-          ),
+          _primaryButton('Ver redes disponibles', _showWifiForm),
         ],
       ),
     );
@@ -790,10 +865,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               height: 140,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: Colors.orange.withOpacity(0.1),
+                color: GardenColors.potOrange.withOpacity(0.12),
               ),
               child: const Icon(Icons.cloud_upload_rounded,
-                  size: 64, color: Colors.orange),
+                  size: 64, color: GardenColors.potOrange),
             ),
           ),
           const SizedBox(height: 32),
@@ -806,12 +881,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           Text(
             'Enviando credenciales de "$ssid" al chip.\nEl chip intentará conectarse a internet.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey.shade600, height: 1.5),
+            style: TextStyle(color: GardenColors.inkSoft, height: 1.5),
           ),
           const SizedBox(height: 40),
-          const CircularProgressIndicator(
-            valueColor: AlwaysStoppedAnimation<Color>(Colors.orange),
-          ),
+          _primaryButton('Ver sensor en linea', _showWifiConnected),
         ],
       ),
     );
@@ -828,10 +901,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             height: 140,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.green.withOpacity(0.1),
+              color: GardenColors.leafGreen.withOpacity(0.12),
             ),
             child: const Icon(Icons.check_circle_outline_rounded,
-                size: 64, color: Colors.green),
+                size: 64, color: GardenColors.leafGreen),
           ),
           const SizedBox(height: 32),
           const Text(
@@ -839,13 +912,13 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w700,
-                color: Colors.green),
+                color: GardenColors.leafGreen),
           ),
           const SizedBox(height: 12),
           Text(
             'El chip se conectó a "$ssid"\ny ya está enviando datos de los sensores.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey.shade600, height: 1.5),
+            style: TextStyle(color: GardenColors.inkSoft, height: 1.5),
           ),
           const SizedBox(height: 48),
           _primaryButton('¡Mi planta está lista!', () {
@@ -867,26 +940,29 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             height: 140,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.red.withOpacity(0.1),
+              color: GardenColors.heartRed.withOpacity(0.12),
             ),
             child: const Icon(Icons.error_outline_rounded,
-                size: 64, color: Colors.red),
+                size: 64, color: GardenColors.heartRed),
           ),
           const SizedBox(height: 32),
           const Text(
             'Error de configuración',
             style: TextStyle(
-                fontSize: 22, fontWeight: FontWeight.w700, color: Colors.red),
+                fontSize: 22,
+                fontWeight: FontWeight.w700,
+                color: GardenColors.heartRed),
           ),
           const SizedBox(height: 12),
           Text(
             'El chip no pudo conectarse a la red WiFi.\nVerifica la contraseña e intenta de nuevo.',
             textAlign: TextAlign.center,
-            style: TextStyle(color: Colors.grey.shade600, height: 1.5),
+            style: TextStyle(color: GardenColors.inkSoft, height: 1.5),
           ),
           const SizedBox(height: 48),
           _primaryButton('Reintentar', () {
-            ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.instruction;
+            ref.read(wifiSetupPhaseProvider.notifier).state =
+                _WifiPhase.instruction;
             _startPairing();
           }),
         ],
@@ -963,7 +1039,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               selected == value
                   ? Icons.radio_button_checked
                   : Icons.radio_button_off,
-              color: const Color(0xFF4A6741),
+              color: GardenColors.leafDark,
             ),
             const SizedBox(width: 12),
             Text(label),
@@ -973,16 +1049,18 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     );
   }
 
-  Widget _buildBenefitRow(IconData icon, String title, String subtitle) {
+  Widget _buildBenefitRow(FaIconData icon, String title, String subtitle) {
     return Row(
       children: [
-        Icon(icon, size: 24, color: const Color(0xFF4A6741)),
+        FaIcon(icon, size: 24, color: GardenColors.leafDark),
         const SizedBox(width: 12),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(title, style: const TextStyle(fontWeight: FontWeight.w600)),
-            Text(subtitle, style: const TextStyle(color: Colors.black54)),
+            Text(title,
+                style: const TextStyle(
+                    fontWeight: FontWeight.w600, color: GardenColors.ink)),
+            Text(subtitle, style: const TextStyle(color: GardenColors.inkSoft)),
           ],
         )
       ],
@@ -996,19 +1074,19 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       child: ElevatedButton(
         onPressed: onTap,
         style: ElevatedButton.styleFrom(
-          backgroundColor: enabled
-              ? const Color(0xFF4A6741)
-              : Colors.grey.shade300,
+          backgroundColor:
+              enabled ? GardenColors.leafDark : GardenColors.dustLight,
           padding: const EdgeInsets.symmetric(vertical: 16),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          elevation: 0,
+          elevation: enabled ? 2 : 0,
+          shadowColor: GardenColors.ink.withOpacity(0.18),
         ),
         child: Text(text,
             style: TextStyle(
                 fontWeight: FontWeight.w600,
                 fontSize: 16,
-                color: enabled ? Colors.white : Colors.grey.shade500)),
+                color: enabled ? Colors.white : GardenColors.inkSoft)),
       ),
     );
   }
@@ -1020,10 +1098,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: GardenColors.dustLight, width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 20,
+            color: GardenColors.ink.withOpacity(0.06),
+            blurRadius: 22,
+            offset: const Offset(0, 10),
           )
         ],
       ),

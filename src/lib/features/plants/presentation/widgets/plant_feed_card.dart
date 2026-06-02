@@ -22,14 +22,22 @@ class PlantFeedCard extends StatelessWidget {
       padding: const EdgeInsets.only(bottom: 12),
       child: Material(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(18),
+        elevation: 0,
         child: InkWell(
-          borderRadius: BorderRadius.circular(16),
+          borderRadius: BorderRadius.circular(18),
           onTap: onTap,
           child: Container(
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: GardenColors.dustLight),
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: GardenColors.dustLight, width: 1.2),
+              boxShadow: [
+                BoxShadow(
+                  color: GardenColors.ink.withOpacity(0.06),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
             child: Row(
@@ -42,7 +50,8 @@ class PlantFeedCard extends StatelessWidget {
                     height: 52,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: GardenColors.sageLight,
+                      color: GardenColors.creamLight,
+                      border: Border.all(color: GardenColors.dustLight),
                     ),
                     child: plant.image.isNotEmpty
                         ? ClipOval(
@@ -51,14 +60,14 @@ class PlantFeedCard extends StatelessWidget {
                               fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) => Icon(
                                 _getPlantIcon(plant.species),
-                                color: GardenColors.forest,
+                                color: GardenColors.leafDark,
                                 size: 26,
                               ),
                             ),
                           )
                         : Icon(
                             _getPlantIcon(plant.species),
-                            color: GardenColors.forest,
+                            color: GardenColors.leafDark,
                             size: 26,
                           ),
                   ),
@@ -76,7 +85,7 @@ class PlantFeedCard extends StatelessWidget {
                             child: Text(
                               plant.name,
                               style: GardenTextStyles.title.copyWith(
-                                color: GardenColors.charcoal,
+                                color: GardenColors.ink,
                                 fontSize: 16,
                                 fontWeight: FontWeight.w700,
                               ),
@@ -95,7 +104,7 @@ class PlantFeedCard extends StatelessWidget {
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GardenTextStyles.bodySmall.copyWith(
-                          color: GardenColors.dust,
+                          color: GardenColors.inkSoft,
                           fontSize: 13,
                         ),
                       ),
@@ -106,7 +115,7 @@ class PlantFeedCard extends StatelessWidget {
                 // ── Chevron ────────────────────────────────────────────────
                 const Icon(
                   Icons.chevron_right_rounded,
-                  color: GardenColors.dust,
+                  color: GardenColors.inkSoft,
                   size: 22,
                 ),
               ],
@@ -144,6 +153,7 @@ class _MoodBadge extends StatelessWidget {
       decoration: BoxDecoration(
         color: bgColor,
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: bgColor.withOpacity(0.55)),
       ),
       child: Text(
         label,

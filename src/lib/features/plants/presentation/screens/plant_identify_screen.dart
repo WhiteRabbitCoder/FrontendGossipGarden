@@ -41,24 +41,24 @@ class _PlantIdentifyScreenState extends State<PlantIdentifyScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: GardenColors.cream,
+      backgroundColor: GardenColors.creamPaper,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: GardenColors.charcoal, size: 20),
+              color: GardenColors.ink, size: 20),
           onPressed: _back,
         ),
         title: Text(
           'Nueva planta',
-          style: GardenTextStyles.title.copyWith(
-              color: GardenColors.charcoal, fontWeight: FontWeight.w700),
+          style: GardenTextStyles.title
+              .copyWith(color: GardenColors.ink, fontWeight: FontWeight.w700),
         ),
         centerTitle: true,
         bottom: PreferredSize(
           preferredSize: const Size.fromHeight(1),
-          child: Container(color: GardenColors.dustLight, height: 1),
+          child: Container(color: GardenColors.creamPaper, height: 1),
         ),
       ),
       body: _buildContent(),
@@ -96,12 +96,11 @@ class _PlantIdentifyScreenState extends State<PlantIdentifyScreen> {
 class _SelectMethodView extends StatelessWidget {
   final VoidCallback onCamera;
   final VoidCallback onSearch;
-  const _SelectMethodView(
-      {required this.onCamera, required this.onSearch});
+  const _SelectMethodView({required this.onCamera, required this.onSearch});
 
   @override
   Widget build(BuildContext context) {
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.fromLTRB(20, 28, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -109,7 +108,7 @@ class _SelectMethodView extends StatelessWidget {
           Text(
             '¿Cómo quieres\nidentificarla?',
             style: GardenTextStyles.display.copyWith(
-              color: GardenColors.charcoal,
+              color: GardenColors.ink,
               fontSize: 26,
               fontWeight: FontWeight.w800,
               height: 1.2,
@@ -118,8 +117,8 @@ class _SelectMethodView extends StatelessWidget {
           const SizedBox(height: 6),
           Text(
             'Elige el método más cómodo para ti.',
-            style:
-                GardenTextStyles.bodySmall.copyWith(color: GardenColors.dust),
+            style: GardenTextStyles.bodySmall
+                .copyWith(color: GardenColors.inkSoft),
           ),
           const SizedBox(height: 28),
           _MethodCard(
@@ -168,7 +167,14 @@ class _MethodCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: GardenColors.dustLight),
+            border: Border.all(color: GardenColors.dustLight, width: 1.2),
+            boxShadow: [
+              BoxShadow(
+                color: GardenColors.ink.withOpacity(0.06),
+                blurRadius: 18,
+                offset: const Offset(0, 8),
+              ),
+            ],
           ),
           padding: const EdgeInsets.all(18),
           child: Row(
@@ -177,8 +183,8 @@ class _MethodCard extends StatelessWidget {
                 width: 52,
                 height: 52,
                 decoration: const BoxDecoration(
-                    color: GardenColors.sageLight, shape: BoxShape.circle),
-                child: Icon(icon, color: GardenColors.forest, size: 24),
+                    color: GardenColors.creamLight, shape: BoxShape.circle),
+                child: Icon(icon, color: GardenColors.leafDark, size: 24),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -188,7 +194,7 @@ class _MethodCard extends StatelessWidget {
                     Text(
                       title,
                       style: GardenTextStyles.title.copyWith(
-                          color: GardenColors.charcoal,
+                          color: GardenColors.ink,
                           fontSize: 16,
                           fontWeight: FontWeight.w700),
                     ),
@@ -196,7 +202,7 @@ class _MethodCard extends StatelessWidget {
                     Text(
                       subtitle,
                       style: GardenTextStyles.bodySmall
-                          .copyWith(color: GardenColors.dust, fontSize: 13),
+                          .copyWith(color: GardenColors.inkSoft, fontSize: 13),
                     ),
                     if (badge != null) ...[
                       const SizedBox(height: 6),
@@ -207,7 +213,7 @@ class _MethodCard extends StatelessWidget {
                           Text(
                             badge!,
                             style: GardenTextStyles.label.copyWith(
-                                color: GardenColors.forest,
+                                color: GardenColors.leafDark,
                                 fontWeight: FontWeight.w700),
                           ),
                         ],
@@ -247,57 +253,57 @@ class _CameraViewState extends State<_CameraView> {
   Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 32),
-      child: Column(
-        children: [
-          // Placeholder de cámara
-          Expanded(
-            child: Container(
+      child: SingleChildScrollView(
+        child: Column(
+          children: [
+            // Placeholder de cámara
+            Container(
               width: double.infinity,
+              height: 360,
               decoration: BoxDecoration(
-                color: const Color(0xFFEEECE8),
+                color: GardenColors.creamLight,
                 borderRadius: BorderRadius.circular(20),
               ),
               child: _scanning
                   ? const Center(
                       child: CircularProgressIndicator(
-                          color: GardenColors.forest))
+                          color: GardenColors.leafDark))
                   : Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.add_photo_alternate_outlined,
-                            size: 48,
-                            color: GardenColors.dust),
+                            size: 48, color: GardenColors.inkSoft),
                         const SizedBox(height: 10),
                         Text(
                           'Esperando imagen...',
                           style: GardenTextStyles.bodySmall
-                              .copyWith(color: GardenColors.dust),
+                              .copyWith(color: GardenColors.inkSoft),
                         ),
                       ],
                     ),
             ),
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: _scanning ? null : _identify,
-              icon: const Icon(Icons.camera_alt_outlined, size: 18),
-              label: const Text('Abrir cámara',
-                  style: TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w700)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: GardenColors.forest,
-                foregroundColor: Colors.white,
-                disabledBackgroundColor: GardenColors.moss,
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
-                elevation: 0,
+            const SizedBox(height: 20),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                onPressed: _scanning ? null : _identify,
+                icon: const Icon(Icons.camera_alt_outlined, size: 18),
+                label: const Text('Abrir cámara',
+                    style:
+                        TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: GardenColors.leafDark,
+                  foregroundColor: Colors.white,
+                  disabledBackgroundColor: GardenColors.leafGreen,
+                  padding: const EdgeInsets.symmetric(vertical: 16),
+                  shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(14)),
+                  elevation: 0,
+                ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -320,12 +326,37 @@ class _SearchView extends StatelessWidget {
 
   // Demo hardcoded — TODO(backend): conectar endpoint de catálogo de plantas
   static const _catalog = [
-    (emoji: '🌿', name: 'Monstera', species: 'Monstera Deliciosa', level: 'Fácil'),
+    (
+      emoji: '🌿',
+      name: 'Monstera',
+      species: 'Monstera Deliciosa',
+      level: 'Fácil'
+    ),
     (emoji: '🍃', name: 'Potos', species: 'Epipremnum Aureum', level: 'Fácil'),
-    (emoji: '🌳', name: 'Ficus Lyrata', species: 'Ficus Lyrata', level: 'Exigente'),
-    (emoji: '🌵', name: 'Suculenta Echeveria', species: 'Echeveria Elegans', level: 'Fácil'),
-    (emoji: '🪴', name: 'Sansevieria', species: 'Dracaena Trifasciata', level: 'Fácil'),
-    (emoji: '🌱', name: 'Calathea', species: 'Calathea Orbifolia', level: 'Exigente'),
+    (
+      emoji: '🌳',
+      name: 'Ficus Lyrata',
+      species: 'Ficus Lyrata',
+      level: 'Exigente'
+    ),
+    (
+      emoji: '🌵',
+      name: 'Suculenta Echeveria',
+      species: 'Echeveria Elegans',
+      level: 'Fácil'
+    ),
+    (
+      emoji: '🪴',
+      name: 'Sansevieria',
+      species: 'Dracaena Trifasciata',
+      level: 'Fácil'
+    ),
+    (
+      emoji: '🌱',
+      name: 'Calathea',
+      species: 'Calathea Orbifolia',
+      level: 'Exigente'
+    ),
   ];
 
   @override
@@ -344,30 +375,29 @@ class _SearchView extends StatelessWidget {
           child: TextField(
             controller: controller,
             onChanged: onQueryChanged,
-            style: GardenTextStyles.bodySmall
-                .copyWith(color: GardenColors.charcoal),
+            style: GardenTextStyles.bodySmall.copyWith(color: GardenColors.ink),
             decoration: InputDecoration(
               prefixIcon: const Icon(Icons.search_rounded,
-                  color: GardenColors.dust, size: 20),
+                  color: GardenColors.inkSoft, size: 20),
               hintText: 'Busca: monstera, potos, ficus...',
               hintStyle: GardenTextStyles.bodySmall
-                  .copyWith(color: GardenColors.dust),
+                  .copyWith(color: GardenColors.inkSoft),
               filled: true,
               fillColor: Colors.white,
-              contentPadding: const EdgeInsets.symmetric(
-                  horizontal: 16, vertical: 14),
+              contentPadding:
+                  const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: GardenColors.dustLight),
+                borderSide: const BorderSide(color: GardenColors.creamPaper),
               ),
               enabledBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: GardenColors.dustLight),
+                borderSide: const BorderSide(color: GardenColors.creamPaper),
               ),
               focusedBorder: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),
                 borderSide:
-                    const BorderSide(color: GardenColors.forest, width: 1.5),
+                    const BorderSide(color: GardenColors.leafDark, width: 1.5),
               ),
             ),
           ),
@@ -389,7 +419,7 @@ class _SearchView extends StatelessWidget {
                   child: Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: GardenColors.dustLight),
+                      border: Border.all(color: GardenColors.creamPaper),
                     ),
                     padding: const EdgeInsets.symmetric(
                         horizontal: 16, vertical: 12),
@@ -399,7 +429,7 @@ class _SearchView extends StatelessWidget {
                           width: 44,
                           height: 44,
                           decoration: const BoxDecoration(
-                              color: GardenColors.sageLight,
+                              color: GardenColors.creamLight,
                               shape: BoxShape.circle),
                           child: Center(
                             child: Text(plant.emoji,
@@ -413,19 +443,19 @@ class _SearchView extends StatelessWidget {
                             children: [
                               Text(plant.name,
                                   style: GardenTextStyles.title.copyWith(
-                                      color: GardenColors.charcoal,
+                                      color: GardenColors.ink,
                                       fontSize: 15,
                                       fontWeight: FontWeight.w700)),
                               Text(plant.species,
                                   style: GardenTextStyles.label.copyWith(
-                                      color: GardenColors.dust,
+                                      color: GardenColors.inkSoft,
                                       fontSize: 12)),
                             ],
                           ),
                         ),
                         Text(plant.level,
                             style: GardenTextStyles.label.copyWith(
-                                color: GardenColors.dust, fontSize: 12)),
+                                color: GardenColors.inkSoft, fontSize: 12)),
                       ],
                     ),
                   ),
@@ -448,7 +478,11 @@ class _ResultView extends StatelessWidget {
 
   // Demo hardcoded — TODO(backend): proviene del endpoint de identificación IA
   static const _careItems = [
-    (Icons.water_drop_outlined, 'AGUA', 'Cada 7 días, deja secar la capa superior'),
+    (
+      Icons.water_drop_outlined,
+      'AGUA',
+      'Cada 7 días, deja secar la capa superior'
+    ),
     (Icons.wb_sunny_outlined, 'LUZ', 'Luz indirecta brillante'),
     (Icons.grass_outlined, 'SUSTRATO', 'Mezcla aireada con perlita'),
   ];
@@ -463,9 +497,16 @@ class _ResultView extends StatelessWidget {
           // Tarjeta de identificación
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: GardenColors.creamLight,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: GardenColors.dustLight),
+              border: Border.all(color: GardenColors.dustLight, width: 1.2),
+              boxShadow: [
+                BoxShadow(
+                  color: GardenColors.ink.withOpacity(0.06),
+                  blurRadius: 18,
+                  offset: const Offset(0, 8),
+                ),
+              ],
             ),
             padding: const EdgeInsets.all(16),
             child: Row(
@@ -474,7 +515,7 @@ class _ResultView extends StatelessWidget {
                   width: 64,
                   height: 64,
                   decoration: BoxDecoration(
-                    color: GardenColors.sageLight,
+                    color: GardenColors.creamLight,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Center(
@@ -490,19 +531,18 @@ class _ResultView extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 3),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE6F4EA),
+                          color: GardenColors.leafDark.withOpacity(0.08),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             const Icon(Icons.check_circle_rounded,
-                                size: 12,
-                                color: Color(0xFF2E7D32)),
+                                size: 12, color: GardenColors.leafDark),
                             const SizedBox(width: 4),
                             Text('IDENTIFICADA',
                                 style: GardenTextStyles.label.copyWith(
-                                    color: const Color(0xFF2E7D32),
+                                    color: GardenColors.leafDark,
                                     fontSize: 10,
                                     fontWeight: FontWeight.w700,
                                     letterSpacing: 0.6)),
@@ -512,38 +552,35 @@ class _ResultView extends StatelessWidget {
                       const SizedBox(height: 6),
                       Text('Monstera',
                           style: GardenTextStyles.title.copyWith(
-                              color: GardenColors.charcoal,
+                              color: GardenColors.ink,
                               fontWeight: FontWeight.w800,
                               fontSize: 18)),
                       Text('Monstera Deliciosa',
                           style: GardenTextStyles.label.copyWith(
-                              color: GardenColors.dust, fontSize: 12)),
+                              color: GardenColors.inkSoft, fontSize: 12)),
                       const SizedBox(height: 6),
                       RichText(
                         text: TextSpan(
-                          style: GardenTextStyles.bodySmall.copyWith(
-                              color: GardenColors.charcoal, fontSize: 13),
+                          style: GardenTextStyles.bodySmall
+                              .copyWith(color: GardenColors.ink, fontSize: 13),
                           children: const [
                             TextSpan(
                                 text: 'Origen: ',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.w700)),
+                                style: TextStyle(fontWeight: FontWeight.w700)),
                             TextSpan(
-                                text:
-                                    'Bosques tropicales del sur de México'),
+                                text: 'Bosques tropicales del sur de México'),
                           ],
                         ),
                       ),
                       const SizedBox(height: 2),
                       RichText(
                         text: TextSpan(
-                          style: GardenTextStyles.bodySmall.copyWith(
-                              color: GardenColors.charcoal, fontSize: 13),
+                          style: GardenTextStyles.bodySmall
+                              .copyWith(color: GardenColors.ink, fontSize: 13),
                           children: const [
                             TextSpan(
                                 text: 'Dificultad: ',
-                                style: TextStyle(
-                                    fontWeight: FontWeight.w700)),
+                                style: TextStyle(fontWeight: FontWeight.w700)),
                             TextSpan(text: 'Fácil'),
                           ],
                         ),
@@ -559,7 +596,7 @@ class _ResultView extends StatelessWidget {
 
           Text('Cuidados generales',
               style: GardenTextStyles.title.copyWith(
-                  color: GardenColors.charcoal,
+                  color: GardenColors.ink,
                   fontWeight: FontWeight.w800,
                   fontSize: 18)),
           const SizedBox(height: 12),
@@ -569,7 +606,7 @@ class _ResultView extends StatelessWidget {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: GardenColors.dustLight),
+              border: Border.all(color: GardenColors.creamPaper),
             ),
             child: Column(
               children: _careItems.asMap().entries.map((entry) {
@@ -586,10 +623,10 @@ class _ResultView extends StatelessWidget {
                             width: 38,
                             height: 38,
                             decoration: const BoxDecoration(
-                                color: GardenColors.sageLight,
+                                color: GardenColors.creamLight,
                                 shape: BoxShape.circle),
                             child: Icon(item.$1,
-                                size: 18, color: GardenColors.forest),
+                                size: 18, color: GardenColors.leafDark),
                           ),
                           const SizedBox(width: 12),
                           Column(
@@ -597,12 +634,12 @@ class _ResultView extends StatelessWidget {
                             children: [
                               Text(item.$2,
                                   style: GardenTextStyles.label.copyWith(
-                                      color: GardenColors.dust,
+                                      color: GardenColors.inkSoft,
                                       fontSize: 10,
                                       letterSpacing: 0.8)),
                               Text(item.$3,
                                   style: GardenTextStyles.bodySmall.copyWith(
-                                      color: GardenColors.charcoal,
+                                      color: GardenColors.ink,
                                       fontWeight: FontWeight.w500,
                                       fontSize: 13)),
                             ],
@@ -614,7 +651,7 @@ class _ResultView extends StatelessWidget {
                       const Divider(
                           height: 1,
                           thickness: 1,
-                          color: GardenColors.dustLight,
+                          color: GardenColors.creamPaper,
                           indent: 16,
                           endIndent: 16),
                   ],
@@ -629,9 +666,9 @@ class _ResultView extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(14),
             decoration: BoxDecoration(
-              color: GardenColors.cream,
+              color: GardenColors.creamPaper,
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: GardenColors.dustLight),
+              border: Border.all(color: GardenColors.creamPaper),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -644,15 +681,15 @@ class _ResultView extends StatelessWidget {
                     children: [
                       Text('TIP DE ORO',
                           style: GardenTextStyles.label.copyWith(
-                              color: GardenColors.forest,
+                              color: GardenColors.leafDark,
                               fontSize: 10,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 0.8)),
                       const SizedBox(height: 2),
                       Text(
                           'Limpia sus hojas con un paño húmedo cada 2 semanas.',
-                          style: GardenTextStyles.bodySmall.copyWith(
-                              color: GardenColors.charcoal, fontSize: 13)),
+                          style: GardenTextStyles.bodySmall
+                              .copyWith(color: GardenColors.ink, fontSize: 13)),
                     ],
                   ),
                 ),
@@ -669,10 +706,9 @@ class _ResultView extends StatelessWidget {
               onPressed: onAdd,
               icon: const Icon(Icons.park_outlined, size: 18),
               label: const Text('Agregar a mi jardín',
-                  style: TextStyle(
-                      fontSize: 15, fontWeight: FontWeight.w700)),
+                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
               style: ElevatedButton.styleFrom(
-                backgroundColor: GardenColors.forest,
+                backgroundColor: GardenColors.leafDark,
                 foregroundColor: Colors.white,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(

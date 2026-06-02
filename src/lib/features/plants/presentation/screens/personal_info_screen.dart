@@ -66,12 +66,12 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     final email = authSession?.profile?.email ?? 'correo@ejemplo.com';
 
     return Scaffold(
-      backgroundColor: GardenColors.cream,
+      backgroundColor: GardenColors.creamPaper,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: GardenColors.charcoal),
+          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: GardenColors.ink),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -80,13 +80,13 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
             Text(
               'Información personal',
               style: GardenTextStyles.title.copyWith(
-                color: GardenColors.charcoal,
+                color: GardenColors.ink,
                 fontWeight: FontWeight.w800,
               ),
             ),
             Text(
               'Edita tu perfil de jardinero',
-              style: GardenTextStyles.label.copyWith(color: GardenColors.dust),
+              style: GardenTextStyles.label.copyWith(color: GardenColors.inkSoft),
             ),
           ],
         ),
@@ -105,9 +105,9 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                       width: 100,
                       height: 100,
                       decoration: BoxDecoration(
-                        color: GardenColors.sageLight,
+                        color: GardenColors.creamLight,
                         shape: BoxShape.circle,
-                        border: Border.all(color: GardenColors.sage, width: 3),
+                        border: Border.all(color: GardenColors.leafGreen, width: 3),
                       ),
                       child: const Center(
                         child: Text('🧑‍🌾', style: TextStyle(fontSize: 48)),
@@ -124,7 +124,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                 decoration: BoxDecoration(
                   color: Colors.white,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: GardenColors.dustLight),
+                  border: Border.all(color: GardenColors.creamPaper),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -133,7 +133,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                     Text(
                       'NOMBRE DE USUARIO',
                       style: GardenTextStyles.label.copyWith(
-                        color: GardenColors.dust,
+                        color: GardenColors.inkSoft,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.0,
                       ),
@@ -143,21 +143,21 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                       controller: _usernameController,
                       decoration: InputDecoration(
                         hintText: 'Tu apodo de jardinero',
-                        hintStyle: GardenTextStyles.body.copyWith(color: GardenColors.dust),
-                        prefixIcon: const Icon(Icons.person_outline_rounded, color: GardenColors.moss),
+                        hintStyle: GardenTextStyles.body.copyWith(color: GardenColors.inkSoft),
+                        prefixIcon: const Icon(Icons.person_outline_rounded, color: GardenColors.leafGreen),
                         filled: true,
-                        fillColor: GardenColors.cream.withOpacity(0.5),
+                        fillColor: GardenColors.creamPaper.withOpacity(0.5),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: GardenColors.dustLight),
+                          borderSide: BorderSide(color: GardenColors.creamPaper),
                         ),
                         enabledBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: BorderSide(color: GardenColors.dustLight),
+                          borderSide: BorderSide(color: GardenColors.creamPaper),
                         ),
                         focusedBorder: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(16),
-                          borderSide: const BorderSide(color: GardenColors.sage, width: 2),
+                          borderSide: const BorderSide(color: GardenColors.leafGreen, width: 2),
                         ),
                         contentPadding: const EdgeInsets.symmetric(vertical: 16),
                       ),
@@ -169,7 +169,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                     Text(
                       'CORREO ELECTRÓNICO',
                       style: GardenTextStyles.label.copyWith(
-                        color: GardenColors.dust,
+                        color: GardenColors.inkSoft,
                         fontWeight: FontWeight.w700,
                         letterSpacing: 1.0,
                       ),
@@ -178,21 +178,21 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                       decoration: BoxDecoration(
-                        color: GardenColors.cream.withOpacity(0.3),
+                        color: GardenColors.creamPaper.withOpacity(0.3),
                         borderRadius: BorderRadius.circular(16),
-                        border: Border.all(color: GardenColors.dustLight),
+                        border: Border.all(color: GardenColors.creamPaper),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.mail_outline_rounded, color: GardenColors.dust),
+                          const Icon(Icons.mail_outline_rounded, color: GardenColors.inkSoft),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
                               email,
-                              style: GardenTextStyles.body.copyWith(color: GardenColors.dust),
+                              style: GardenTextStyles.body.copyWith(color: GardenColors.inkSoft),
                             ),
                           ),
-                          const Icon(Icons.lock_outline_rounded, color: GardenColors.dust, size: 16),
+                          const Icon(Icons.lock_outline_rounded, color: GardenColors.inkSoft, size: 16),
                         ],
                       ),
                     ),
@@ -205,7 +205,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
               ElevatedButton(
                 onPressed: _isLoading ? null : _saveProfile,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: GardenColors.forest,
+                  backgroundColor: GardenColors.leafDark,
                   foregroundColor: Colors.white,
                   padding: const EdgeInsets.symmetric(vertical: 18),
                   elevation: 0,

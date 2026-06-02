@@ -25,4 +25,14 @@ class GardenColors {
   static const Color golden = Color(0xFFE9A800);
   static const Color waterBlue = Color(0xFF2563EB);
   static const Color navBackground = Color(0xFFFFFFFF);
+
+  // ── Gossip Garden Brand Palette ──────────────────────────────────────────
+  static const Color creamPaper  = Color(0xFFFAF1DA); // fondo principal cálido
+  static const Color ink         = Color(0xFF3D2817); // texto oscuro / cabeceras
+  static const Color potOrange   = Color(0xFFE8A95C); // acento cálido
+  static const Color leafGreen   = Color(0xFF8AC553); // acción / éxito
+  static const Color heartRed    = Color(0xFFE85D52); // error / alerta
+  static const Color creamLight  = Color(0xFFFFF8E7); // fondo alternativo suave
+  static const Color inkSoft     = Color(0xFF6B4A2E); // texto secundario cálido
+  static const Color leafDark    = Color(0xFF5FA037); // verde oscuro / hover
 }

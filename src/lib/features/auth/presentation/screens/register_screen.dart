@@ -36,7 +36,8 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
 
     if (username.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Por favor, ingresa un nombre de usuario')),
+        const SnackBar(
+            content: Text('Por favor, ingresa un nombre de usuario')),
       );
       return;
     }
@@ -48,7 +49,9 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
       return;
     }
 
-    ref.read(authStateProvider.notifier).registerWithEmailAndPassword(email, password, username);
+    ref
+        .read(authStateProvider.notifier)
+        .registerWithEmailAndPassword(email, password, username);
   }
 
   @override
@@ -65,12 +68,12 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
     });
 
     return Scaffold(
-      backgroundColor: GardenColors.cream,
+      backgroundColor: GardenColors.creamPaper,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: GardenColors.forest),
+          icon: const Icon(Icons.arrow_back, color: GardenColors.leafDark),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -87,7 +90,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     'Crear cuenta',
                     textAlign: TextAlign.center,
                     style: GardenTextStyles.display.copyWith(
-                      color: GardenColors.forest,
+                      color: GardenColors.leafDark,
                       fontSize: 36,
                     ),
                   ),
@@ -95,17 +98,19 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   Text(
                     'Únete a Gossip Garden',
                     textAlign: TextAlign.center,
-                    style: GardenTextStyles.body.copyWith(color: GardenColors.earth),
+                    style: GardenTextStyles.body
+                        .copyWith(color: GardenColors.inkSoft),
                   ),
                   const SizedBox(height: 40),
-
                   TextField(
                     controller: _usernameController,
                     keyboardType: TextInputType.text,
                     decoration: InputDecoration(
                       hintText: 'Nombre de usuario',
-                      hintStyle: GardenTextStyles.body.copyWith(color: GardenColors.dust),
-                      prefixIcon: const Icon(Icons.person_outline, color: GardenColors.moss),
+                      hintStyle: GardenTextStyles.body
+                          .copyWith(color: GardenColors.inkSoft),
+                      prefixIcon: const Icon(Icons.person_outline,
+                          color: GardenColors.leafGreen),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -117,14 +122,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     style: GardenTextStyles.body,
                   ),
                   const SizedBox(height: 16),
-
                   TextField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
                       hintText: 'Correo electrónico',
-                      hintStyle: GardenTextStyles.body.copyWith(color: GardenColors.dust),
-                      prefixIcon: const Icon(Icons.email_outlined, color: GardenColors.moss),
+                      hintStyle: GardenTextStyles.body
+                          .copyWith(color: GardenColors.inkSoft),
+                      prefixIcon: const Icon(Icons.email_outlined,
+                          color: GardenColors.leafGreen),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -136,20 +142,24 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     style: GardenTextStyles.body,
                   ),
                   const SizedBox(height: 16),
-
                   TextField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
                       hintText: 'Contraseña',
-                      hintStyle: GardenTextStyles.body.copyWith(color: GardenColors.dust),
-                      prefixIcon: const Icon(Icons.lock_outline, color: GardenColors.moss),
+                      hintStyle: GardenTextStyles.body
+                          .copyWith(color: GardenColors.inkSoft),
+                      prefixIcon: const Icon(Icons.lock_outline,
+                          color: GardenColors.leafGreen),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                          color: GardenColors.dust,
+                          _obscurePassword
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          color: GardenColors.inkSoft,
                         ),
-                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                        onPressed: () => setState(
+                            () => _obscurePassword = !_obscurePassword),
                       ),
                       filled: true,
                       fillColor: Colors.white,
@@ -162,14 +172,15 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     style: GardenTextStyles.body,
                   ),
                   const SizedBox(height: 16),
-
                   TextField(
                     controller: _confirmController,
                     obscureText: true,
                     decoration: InputDecoration(
                       hintText: 'Confirmar contraseña',
-                      hintStyle: GardenTextStyles.body.copyWith(color: GardenColors.dust),
-                      prefixIcon: const Icon(Icons.lock_outline, color: GardenColors.moss),
+                      hintStyle: GardenTextStyles.body
+                          .copyWith(color: GardenColors.inkSoft),
+                      prefixIcon: const Icon(Icons.lock_outline,
+                          color: GardenColors.leafGreen),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -181,11 +192,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                     style: GardenTextStyles.body,
                   ),
                   const SizedBox(height: 32),
-
                   ElevatedButton(
                     onPressed: isLoading ? null : _register,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: GardenColors.forest,
+                      backgroundColor: GardenColors.leafDark,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 20),
                       elevation: 0,
@@ -197,11 +207,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                         ? const SizedBox(
                             width: 24,
                             height: 24,
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2),
+                            child: CircularProgressIndicator(
+                                color: Colors.white, strokeWidth: 2),
                           )
                         : Text(
                             'Crear cuenta',
-                            style: GardenTextStyles.title.copyWith(color: Colors.white, fontSize: 20),
+                            style: GardenTextStyles.title
+                                .copyWith(color: Colors.white, fontSize: 20),
                           ),
                   ),
                 ],

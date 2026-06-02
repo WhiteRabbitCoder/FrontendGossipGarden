@@ -33,15 +33,15 @@ class AnimatedBottomNav extends StatelessWidget {
           filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
           child: Container(
             decoration: BoxDecoration(
-              color: GardenColors.navBackground.withOpacity(0.85),
+              color: GardenColors.creamPaper.withOpacity(0.85),
               borderRadius: BorderRadius.circular(38),
               border: Border.all(
-                color: GardenColors.sage.withOpacity(0.5),
+                color: GardenColors.leafGreen.withOpacity(0.5),
                 width: 2,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: GardenColors.forest.withOpacity(0.1),
+                  color: GardenColors.leafDark.withOpacity(0.1),
                   blurRadius: 20,
                   offset: const Offset(0, 8),
                 ),
@@ -66,7 +66,7 @@ class AnimatedBottomNav extends StatelessWidget {
                           duration: const Duration(milliseconds: 300),
                           padding: const EdgeInsets.all(10),
                           decoration: BoxDecoration(
-                            color: (isActive && tab.$1 != TabId.dashboard) ? GardenColors.forest : Colors.transparent,
+                            color: (isActive && tab.$1 != TabId.dashboard) ? GardenColors.leafDark : Colors.transparent,
                             shape: BoxShape.circle,
                           ),
                           child: tab.$1 == TabId.dashboard
@@ -86,7 +86,7 @@ class AnimatedBottomNav extends StatelessWidget {
                               : Icon(
                                   tab.$2,
                                   size: 24,
-                                  color: isActive ? Colors.white : GardenColors.dust,
+                                  color: isActive ? Colors.white : GardenColors.inkSoft,
                                 ),
                         ),
                         if (isActive) const SizedBox(height: 2),
@@ -95,7 +95,7 @@ class AnimatedBottomNav extends StatelessWidget {
                             tab.$3,
                             style: GardenTextStyles.label.copyWith(
                               fontSize: 12,
-                              color: GardenColors.forest,
+                              color: GardenColors.leafDark,
                               fontWeight: FontWeight.w800,
                             ),
                           )

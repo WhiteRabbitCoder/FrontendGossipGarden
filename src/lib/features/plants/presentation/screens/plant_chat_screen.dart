@@ -7,6 +7,7 @@ import '../widgets/message_bubble.dart';
 import '../widgets/telemetry_panel.dart';
 import '../../data/models/plant.dart';
 import '../../data/models/plant_enums.dart';
+import '../../../../../core/theme/garden_colors.dart';
 
 class PlantChatScreen extends ConsumerStatefulWidget {
   final String plantId;
@@ -148,7 +149,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
             title: Row(
               children: [
                 CircleAvatar(
-                  backgroundColor: const Color(0xFFEBF2E8), // GardenColors.sageLight
+                  backgroundColor: GardenColors.creamLight, // GardenColors.creamLight
                   child: _plant?.image.isNotEmpty == true
                       ? ClipOval(
                           child: Image.network(
@@ -158,14 +159,14 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                             height: 40,
                             errorBuilder: (_, __, ___) => Icon(
                               _getPlantIcon(_plant?.species ?? ''),
-                              color: const Color(0xFF3D5E36), // GardenColors.forest
+                              color: GardenColors.leafDark, // GardenColors.leafDark
                               size: 20,
                             ),
                           ),
                         )
                       : Icon(
                           _getPlantIcon(_plant?.species ?? ''),
-                          color: const Color(0xFF3D5E36), // GardenColors.forest
+                          color: GardenColors.leafDark, // GardenColors.leafDark
                           size: 20,
                         ),
                 ),

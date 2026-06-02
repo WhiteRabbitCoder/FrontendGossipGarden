@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:gossip_garden/core/theme/garden_colors.dart';
 import '../../data/models/plant.dart';
 
 class PlantCard extends StatelessWidget {
@@ -16,12 +17,12 @@ class PlantCard extends StatelessWidget {
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: Colors.grey.shade200),
+        borderRadius: BorderRadius.circular(18),
+        side: BorderSide(color: GardenColors.dustLight, width: 1.2),
       ),
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(18),
         child: Padding(
           padding: const EdgeInsets.all(16.0),
           child: Row(
@@ -42,7 +43,7 @@ class PlantCard extends StatelessWidget {
       width: 48,
       height: 48,
       decoration: const BoxDecoration(
-        color: Color(0xFFEBF2E8), // GardenColors.sageLight
+        color: GardenColors.creamLight, // GardenColors.creamLight
         shape: BoxShape.circle,
       ),
       child: plant.image.isNotEmpty
@@ -52,14 +53,14 @@ class PlantCard extends StatelessWidget {
                 fit: BoxFit.cover,
                 errorBuilder: (_, __, ___) => Icon(
                   _getPlantIcon(plant.species),
-                  color: const Color(0xFF3D5E36), // GardenColors.forest
+                  color: GardenColors.leafDark, // GardenColors.leafDark
                   size: 24,
                 ),
               ),
             )
           : Icon(
               _getPlantIcon(plant.species),
-              color: const Color(0xFF3D5E36), // GardenColors.forest
+              color: GardenColors.leafDark, // GardenColors.leafDark
               size: 24,
             ),
     );
@@ -110,6 +111,13 @@ class PlantCard extends StatelessWidget {
                 ? Colors.orange.withOpacity(0.1)
                 : Colors.red.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
+        border: Border.all(
+          color: plant.health > 70
+              ? Colors.green.withOpacity(0.25)
+              : plant.health > 40
+                  ? Colors.orange.withOpacity(0.25)
+                  : Colors.red.withOpacity(0.25),
+        ),
       ),
       child: Text(
         '${plant.health.toInt()}%',

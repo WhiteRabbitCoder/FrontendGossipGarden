@@ -32,7 +32,7 @@ class ProfileSettingsScreen extends ConsumerWidget {
         : (authSession?.profile?.email?.split('@').first ?? 'Usuario');
 
     return Scaffold(
-      backgroundColor: GardenColors.cream,
+      backgroundColor: GardenColors.creamPaper,
       body: plantsAsync.when(
         data: (plants) {
           final favPlants =
@@ -93,7 +93,7 @@ class ProfileSettingsScreen extends ConsumerWidget {
           );
         },
         loading: () =>
-            const Center(child: CircularProgressIndicator(color: GardenColors.moss)),
+            const Center(child: CircularProgressIndicator(color: GardenColors.leafGreen)),
         error: (e, _) =>
             Center(child: Text('Error: $e', style: GardenTextStyles.bodySmall)),
       ),
@@ -126,9 +126,9 @@ class _ProfileHeader extends StatelessWidget {
           width: 68,
           height: 68,
           decoration: BoxDecoration(
-            color: GardenColors.sageLight,
+            color: GardenColors.creamLight,
             shape: BoxShape.circle,
-            border: Border.all(color: GardenColors.sage, width: 2),
+            border: Border.all(color: GardenColors.leafGreen, width: 2),
           ),
           child: const Center(
             // TODO(backend): reemplazar con Image.network(authSession.profile.photoUrl)
@@ -143,7 +143,7 @@ class _ProfileHeader extends StatelessWidget {
               Text(
                 userName,
                 style: GardenTextStyles.display.copyWith(
-                  color: GardenColors.charcoal,
+                  color: GardenColors.ink,
                   fontSize: 24,
                   fontWeight: FontWeight.w800,
                 ),
@@ -151,14 +151,14 @@ class _ProfileHeader extends StatelessWidget {
               Text(
                 'Jardinera Intermedia · $plantCount plantas',
                 style: GardenTextStyles.bodySmall.copyWith(
-                  color: GardenColors.dust,
+                  color: GardenColors.inkSoft,
                 ),
               ),
               const SizedBox(height: 4),
               Text(
                 '"Aprendiendo a hablar con plantas, una hoja a la vez."',
                 style: GardenTextStyles.bodySmall.copyWith(
-                  color: GardenColors.dust,
+                  color: GardenColors.inkSoft,
                   fontStyle: FontStyle.italic,
                   fontSize: 12,
                 ),
@@ -201,9 +201,9 @@ class _IconCircleButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           shape: BoxShape.circle,
-          border: Border.all(color: GardenColors.dustLight),
+          border: Border.all(color: GardenColors.creamPaper),
         ),
-        child: Icon(icon, size: 18, color: GardenColors.charcoal),
+        child: Icon(icon, size: 18, color: GardenColors.ink),
       ),
     );
   }
@@ -229,7 +229,7 @@ class _AchievementsSection extends StatelessWidget {
         Text(
           'Mis Logros',
           style: GardenTextStyles.title.copyWith(
-            color: GardenColors.charcoal,
+            color: GardenColors.ink,
             fontWeight: FontWeight.w800,
             fontSize: 18,
           ),
@@ -281,7 +281,7 @@ class _AchievementCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: GardenColors.dustLight),
+        border: Border.all(color: GardenColors.creamPaper),
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -290,7 +290,7 @@ class _AchievementCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.end,
             children: [
               const Icon(Icons.info_outline_rounded,
-                  size: 14, color: GardenColors.dust),
+                  size: 14, color: GardenColors.inkSoft),
             ],
           ),
           Text(icon, style: const TextStyle(fontSize: 28)),
@@ -298,7 +298,7 @@ class _AchievementCard extends StatelessWidget {
           Text(
             label,
             style: GardenTextStyles.label.copyWith(
-              color: GardenColors.charcoal,
+              color: GardenColors.ink,
               fontWeight: FontWeight.w600,
               fontSize: 10,
             ),
@@ -313,15 +313,15 @@ class _AchievementCard extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: progress! / total!,
                 minHeight: 4,
-                backgroundColor: GardenColors.sageLight,
-                color: GardenColors.moss,
+                backgroundColor: GardenColors.creamLight,
+                color: GardenColors.leafGreen,
               ),
             ),
             const SizedBox(height: 2),
             Text(
               '$progress/$total',
               style: GardenTextStyles.label.copyWith(
-                color: GardenColors.dust,
+                color: GardenColors.inkSoft,
                 fontSize: 9,
               ),
             ),
@@ -355,7 +355,7 @@ class _FavoritePlantsSection extends StatelessWidget {
         Text(
           'Mis Plantas Favoritas',
           style: GardenTextStyles.title.copyWith(
-            color: GardenColors.charcoal,
+            color: GardenColors.ink,
             fontWeight: FontWeight.w800,
             fontSize: 18,
           ),
@@ -394,7 +394,7 @@ class _FavoritePlantRow extends StatelessWidget {
   Color _healthColor(double h) {
     if (h > 70) return GardenColors.okGreen;
     if (h > 40) return GardenColors.golden;
-    return GardenColors.errorRose;
+    return GardenColors.heartRed;
   }
 
   @override
@@ -404,7 +404,7 @@ class _FavoritePlantRow extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: GardenColors.dustLight),
+        border: Border.all(color: GardenColors.creamPaper),
       ),
       child: Row(
         children: [
@@ -412,11 +412,11 @@ class _FavoritePlantRow extends StatelessWidget {
             width: 52,
             height: 52,
             decoration: const BoxDecoration(
-              color: GardenColors.sageLight,
+              color: GardenColors.creamLight,
               shape: BoxShape.circle,
             ),
             child: const Icon(Icons.park_rounded,
-                color: GardenColors.forest, size: 26),
+                color: GardenColors.leafDark, size: 26),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -426,7 +426,7 @@ class _FavoritePlantRow extends StatelessWidget {
                 Text(
                   plant.name,
                   style: GardenTextStyles.title.copyWith(
-                    color: GardenColors.charcoal,
+                    color: GardenColors.ink,
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
                   ),
@@ -434,7 +434,7 @@ class _FavoritePlantRow extends StatelessWidget {
                 Text(
                   _personalityLabel(plant.personality),
                   style: GardenTextStyles.label.copyWith(
-                    color: GardenColors.dust,
+                    color: GardenColors.inkSoft,
                     fontSize: 12,
                   ),
                 ),
@@ -455,7 +455,7 @@ class _FavoritePlantRow extends StatelessWidget {
               Text(
                 'SALUD',
                 style: GardenTextStyles.label.copyWith(
-                  color: GardenColors.dust,
+                  color: GardenColors.inkSoft,
                   fontSize: 10,
                   letterSpacing: 0.8,
                 ),
@@ -464,7 +464,7 @@ class _FavoritePlantRow extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           const Icon(Icons.chevron_right_rounded,
-              color: GardenColors.dust, size: 22),
+              color: GardenColors.inkSoft, size: 22),
         ],
       ),
     );
@@ -494,17 +494,17 @@ class _AddFavoriteButton extends StatelessWidget {
         decoration: BoxDecoration(
           color: Colors.white,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: GardenColors.sageLight, width: 2),
+          border: Border.all(color: GardenColors.creamLight, width: 2),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.add_rounded, color: GardenColors.forest, size: 20),
+            const Icon(Icons.add_rounded, color: GardenColors.leafDark, size: 20),
             const SizedBox(width: 8),
             Text(
               'Agregar planta favorita',
               style: GardenTextStyles.bodySmall.copyWith(
-                color: GardenColors.forest,
+                color: GardenColors.leafDark,
                 fontWeight: FontWeight.w600,
               ),
             ),
@@ -536,17 +536,17 @@ class _AddFavoriteButton extends StatelessWidget {
                     width: 40,
                     height: 40,
                     decoration: const BoxDecoration(
-                      color: GardenColors.sageLight,
+                      color: GardenColors.creamLight,
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.park_rounded,
-                        size: 20, color: GardenColors.forest),
+                        size: 20, color: GardenColors.leafDark),
                   ),
                   title: Text(plant.name),
                   subtitle: Text(plant.species),
                   trailing: IconButton(
                     icon: const Icon(Icons.add_rounded,
-                        color: GardenColors.forest),
+                        color: GardenColors.leafDark),
                     onPressed: () {
                       ref.read(favoritePlantsProvider.notifier).state = [
                         ...ref.read(favoritePlantsProvider),
@@ -582,13 +582,13 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
     final authSession = ref.watch(authStateProvider).value;
 
     return Scaffold(
-      backgroundColor: GardenColors.cream,
+      backgroundColor: GardenColors.creamPaper,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: GardenColors.charcoal),
+              color: GardenColors.ink),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -596,12 +596,12 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
           children: [
             Text('Ajustes',
                 style: GardenTextStyles.title.copyWith(
-                  color: GardenColors.charcoal,
+                  color: GardenColors.ink,
                   fontWeight: FontWeight.w800,
                 )),
             Text('Personaliza tu experiencia',
                 style:
-                    GardenTextStyles.label.copyWith(color: GardenColors.dust)),
+                    GardenTextStyles.label.copyWith(color: GardenColors.inkSoft)),
           ],
         ),
       ),
@@ -777,7 +777,7 @@ class _SettingsSectionHeader extends StatelessWidget {
       child: Text(
         label,
         style: GardenTextStyles.label.copyWith(
-          color: GardenColors.dust,
+          color: GardenColors.inkSoft,
           fontWeight: FontWeight.w700,
           letterSpacing: 1.0,
           fontSize: 11,
@@ -797,7 +797,7 @@ class _SettingsGroup extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: GardenColors.dustLight),
+        border: Border.all(color: GardenColors.creamPaper),
       ),
       child: Column(children: children),
     );
@@ -810,7 +810,7 @@ class _SettingsDivider extends StatelessWidget {
     return Divider(
       height: 1,
       thickness: 1,
-      color: GardenColors.dustLight,
+      color: GardenColors.creamPaper,
       indent: 56,
     );
   }
@@ -842,10 +842,10 @@ class _SettingsTile extends StatelessWidget {
               width: 36,
               height: 36,
               decoration: BoxDecoration(
-                color: GardenColors.sageLight,
+                color: GardenColors.creamLight,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, size: 18, color: GardenColors.charcoal),
+              child: Icon(icon, size: 18, color: GardenColors.ink),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -855,14 +855,14 @@ class _SettingsTile extends StatelessWidget {
                   Text(
                     title,
                     style: GardenTextStyles.bodySmall.copyWith(
-                      color: GardenColors.charcoal,
+                      color: GardenColors.ink,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
                   Text(
                     subtitle,
                     style: GardenTextStyles.label.copyWith(
-                      color: GardenColors.dust,
+                      color: GardenColors.inkSoft,
                       fontSize: 12,
                     ),
                   ),
@@ -870,7 +870,7 @@ class _SettingsTile extends StatelessWidget {
               ),
             ),
             const Icon(Icons.chevron_right_rounded,
-                color: GardenColors.dust, size: 20),
+                color: GardenColors.inkSoft, size: 20),
           ],
         ),
       ),
@@ -903,10 +903,10 @@ class _SettingsToggleTile extends StatelessWidget {
             width: 36,
             height: 36,
             decoration: BoxDecoration(
-              color: GardenColors.sageLight,
+              color: GardenColors.creamLight,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, size: 18, color: GardenColors.charcoal),
+            child: Icon(icon, size: 18, color: GardenColors.ink),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -916,14 +916,14 @@ class _SettingsToggleTile extends StatelessWidget {
                 Text(
                   title,
                   style: GardenTextStyles.bodySmall.copyWith(
-                    color: GardenColors.charcoal,
+                    color: GardenColors.ink,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
                 Text(
                   subtitle,
                   style: GardenTextStyles.label.copyWith(
-                    color: GardenColors.dust,
+                    color: GardenColors.inkSoft,
                     fontSize: 12,
                   ),
                 ),
@@ -933,7 +933,7 @@ class _SettingsToggleTile extends StatelessWidget {
           Switch.adaptive(
             value: value,
             onChanged: onChanged,
-            activeTrackColor: GardenColors.forest,
+            activeTrackColor: GardenColors.leafDark,
           ),
         ],
       ),

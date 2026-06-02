@@ -25,7 +25,7 @@ class ChatListScreen extends ConsumerWidget {
     );
 
     return Scaffold(
-      backgroundColor: GardenColors.cream,
+      backgroundColor: GardenColors.creamPaper,
       body: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(
@@ -42,7 +42,7 @@ class ChatListScreen extends ConsumerWidget {
                           Text(
                             'Mensajes',
                             style: GardenTextStyles.display.copyWith(
-                              color: GardenColors.charcoal,
+                              color: GardenColors.ink,
                               fontSize: 30,
                               fontWeight: FontWeight.w800,
                             ),
@@ -50,7 +50,7 @@ class ChatListScreen extends ConsumerWidget {
                           Text(
                             'Tus plantas quieren hablar contigo',
                             style: GardenTextStyles.bodySmall
-                                .copyWith(color: GardenColors.dust),
+                                .copyWith(color: GardenColors.inkSoft),
                           ),
                         ],
                       ),
@@ -65,11 +65,11 @@ class ChatListScreen extends ConsumerWidget {
                             color: Colors.white,
                             shape: BoxShape.circle,
                             border:
-                                Border.all(color: GardenColors.dustLight),
+                                Border.all(color: GardenColors.creamPaper),
                           ),
                           child: const Icon(
                               Icons.notifications_none_rounded,
-                              color: GardenColors.charcoal,
+                              color: GardenColors.ink,
                               size: 22),
                         ),
                         if (totalUnread > 0)
@@ -80,7 +80,7 @@ class ChatListScreen extends ConsumerWidget {
                               width: 17,
                               height: 17,
                               decoration: const BoxDecoration(
-                                  color: GardenColors.errorRose,
+                                  color: GardenColors.heartRed,
                                   shape: BoxShape.circle),
                               child: Center(
                                 child: Text(
@@ -122,7 +122,7 @@ class ChatListScreen extends ConsumerWidget {
                   child: Padding(
                       padding: EdgeInsets.all(40),
                       child: CircularProgressIndicator(
-                          color: GardenColors.moss))),
+                          color: GardenColors.leafGreen))),
             ),
             error: (e, _) => SliverToBoxAdapter(
               child: Center(
@@ -161,7 +161,7 @@ class _ChatCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: GardenColors.dustLight),
+            border: Border.all(color: GardenColors.creamPaper),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
@@ -173,10 +173,10 @@ class _ChatCard extends StatelessWidget {
                     width: 52,
                     height: 52,
                     decoration: const BoxDecoration(
-                        color: GardenColors.sageLight,
+                        color: GardenColors.creamLight,
                         shape: BoxShape.circle),
                     child: const Icon(Icons.park_rounded,
-                        color: GardenColors.forest, size: 26),
+                        color: GardenColors.leafDark, size: 26),
                   ),
                   if (unreadCount > 0)
                     Positioned(
@@ -186,7 +186,7 @@ class _ChatCard extends StatelessWidget {
                         width: 20,
                         height: 20,
                         decoration: const BoxDecoration(
-                            color: GardenColors.forest,
+                            color: GardenColors.leafDark,
                             shape: BoxShape.circle),
                         child: Center(
                           child: Text(
@@ -212,7 +212,7 @@ class _ChatCard extends StatelessWidget {
                           child: Text(
                             plant.name,
                             style: GardenTextStyles.title.copyWith(
-                                color: GardenColors.charcoal,
+                                color: GardenColors.ink,
                                 fontSize: 15,
                                 fontWeight: FontWeight.w700),
                             overflow: TextOverflow.ellipsis,
@@ -228,14 +228,14 @@ class _ChatCard extends StatelessWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                       style: GardenTextStyles.bodySmall.copyWith(
-                          color: GardenColors.dust, fontSize: 13),
+                          color: GardenColors.inkSoft, fontSize: 13),
                     ),
                   ],
                 ),
               ),
               const SizedBox(width: 8),
               const Icon(Icons.chevron_right_rounded,
-                  color: GardenColors.dust, size: 22),
+                  color: GardenColors.inkSoft, size: 22),
             ],
           ),
         ),

@@ -32,18 +32,21 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     if (email.isEmpty || password.isEmpty) return;
-    
-    ref.read(authStateProvider.notifier).signInWithEmailAndPassword(email, password);
+
+    ref
+        .read(authStateProvider.notifier)
+        .signInWithEmailAndPassword(email, password);
   }
 
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
     final isLoading = authState.isLoading;
-    final themeError = widget.errorMessage ?? (authState.hasError ? authState.error.toString() : null);
+    final themeError = widget.errorMessage ??
+        (authState.hasError ? authState.error.toString() : null);
 
     return Scaffold(
-      backgroundColor: GardenColors.cream,
+      backgroundColor: GardenColors.creamPaper,
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -65,7 +68,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     'Entra para ver qué murmuran tus plantas',
                     textAlign: TextAlign.center,
                     style: GardenTextStyles.body.copyWith(
-                      color: GardenColors.earth,
+                      color: GardenColors.inkSoft,
                       fontSize: 16,
                     ),
                   ),
@@ -76,13 +79,15 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       padding: const EdgeInsets.all(16),
                       margin: const EdgeInsets.only(bottom: 24),
                       decoration: BoxDecoration(
-                        color: GardenColors.errorRose.withOpacity(0.1),
+                        color: GardenColors.heartRed.withOpacity(0.1),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: GardenColors.errorRose.withOpacity(0.3)),
+                        border: Border.all(
+                            color: GardenColors.heartRed.withOpacity(0.3)),
                       ),
                       child: Text(
                         themeError,
-                        style: GardenTextStyles.bodySmall.copyWith(color: GardenColors.errorRose),
+                        style: GardenTextStyles.bodySmall
+                            .copyWith(color: GardenColors.heartRed),
                         textAlign: TextAlign.center,
                       ),
                     ),
@@ -93,8 +98,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     keyboardType: TextInputType.emailAddress,
                     decoration: InputDecoration(
                       hintText: 'Correo electrónico',
-                      hintStyle: GardenTextStyles.body.copyWith(color: GardenColors.dust),
-                      prefixIcon: const Icon(Icons.email_outlined, color: GardenColors.moss),
+                      hintStyle: GardenTextStyles.body
+                          .copyWith(color: GardenColors.inkSoft),
+                      prefixIcon: const Icon(Icons.email_outlined,
+                          color: GardenColors.leafGreen),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -113,14 +120,19 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                     obscureText: _obscurePassword,
                     decoration: InputDecoration(
                       hintText: 'Contraseña',
-                      hintStyle: GardenTextStyles.body.copyWith(color: GardenColors.dust),
-                      prefixIcon: const Icon(Icons.lock_outline, color: GardenColors.moss),
+                      hintStyle: GardenTextStyles.body
+                          .copyWith(color: GardenColors.inkSoft),
+                      prefixIcon: const Icon(Icons.lock_outline,
+                          color: GardenColors.leafGreen),
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                          color: GardenColors.dust,
+                          _obscurePassword
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          color: GardenColors.inkSoft,
                         ),
-                        onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
+                        onPressed: () => setState(
+                            () => _obscurePassword = !_obscurePassword),
                       ),
                       filled: true,
                       fillColor: Colors.white,
@@ -138,7 +150,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   ElevatedButton(
                     onPressed: isLoading ? null : _loginWithEmail,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: GardenColors.forest,
+                      backgroundColor: GardenColors.leafDark,
                       foregroundColor: Colors.white,
                       padding: const EdgeInsets.symmetric(vertical: 20),
                       elevation: 0,
@@ -147,39 +159,77 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       ),
                     ),
                     child: isLoading
-                        ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2))
-                        : Text('Iniciar Sesión', style: GardenTextStyles.title.copyWith(color: Colors.white, fontSize: 20)),
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.white,
+                              strokeWidth: 2,
+                            ),
+                          )
+                        : Text(
+                            'Iniciar Sesión',
+                            style: GardenTextStyles.title.copyWith(
+                              color: Colors.white,
+                              fontSize: 20,
+                            ),
+                          ),
                   ),
-                  
+
                   const SizedBox(height: 24),
-                  
+
                   // Divider
                   Row(
                     children: [
-                      Expanded(child: Divider(color: GardenColors.dustLight, thickness: 1)),
+                      Expanded(
+                        child: Divider(
+                          color: GardenColors.inkSoft.withOpacity(0.2),
+                          thickness: 1,
+                        ),
+                      ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 16),
-                        child: Text('O entra con', style: GardenTextStyles.bodySmall.copyWith(color: GardenColors.dust)),
+                        child: Text(
+                          'O entra con',
+                          style: GardenTextStyles.bodySmall.copyWith(
+                            color: GardenColors.inkSoft,
+                          ),
+                        ),
                       ),
-                      Expanded(child: Divider(color: GardenColors.dustLight, thickness: 1)),
+                      Expanded(
+                        child: Divider(
+                          color: GardenColors.inkSoft.withOpacity(0.2),
+                          thickness: 1,
+                        ),
+                      ),
                     ],
                   ),
-                  
+
                   const SizedBox(height: 24),
 
                   // Google Login Button
                   ElevatedButton.icon(
-                    onPressed: isLoading ? null : () => ref.read(authStateProvider.notifier).signInWithGoogle(),
+                    onPressed: isLoading
+                        ? null
+                        : () => ref
+                            .read(authStateProvider.notifier)
+                            .signInWithGoogle(),
                     icon: const FaIcon(FontAwesomeIcons.google, size: 20),
-                    label: Text('Google', style: GardenTextStyles.title.copyWith(fontSize: 18)),
+                    label: Text(
+                      'Google',
+                      style: GardenTextStyles.title.copyWith(fontSize: 18),
+                    ),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.white,
-                      foregroundColor: GardenColors.charcoal,
+                      foregroundColor: GardenColors.ink,
                       padding: const EdgeInsets.symmetric(vertical: 18),
                       elevation: 0,
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(24),
-                        side: BorderSide(color: GardenColors.dustLight, width: 1),
+                        side: BorderSide(
+                          color: GardenColors.inkSoft.withOpacity(0.2),
+                          width: 1,
+                        ),
                       ),
                     ),
                   ),
@@ -190,14 +240,24 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text('¿No tienes cuenta? ', style: GardenTextStyles.body.copyWith(color: GardenColors.dust)),
+                      Text(
+                        '¿No tienes cuenta? ',
+                        style: GardenTextStyles.body
+                            .copyWith(color: GardenColors.inkSoft),
+                      ),
                       GestureDetector(
                         onTap: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => const RegisterScreen()));
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => const RegisterScreen(),
+                            ),
+                          );
                         },
                         child: Text(
                           'Regístrate',
-                          style: GardenTextStyles.title.copyWith(color: GardenColors.forest),
+                          style: GardenTextStyles.title
+                              .copyWith(color: GardenColors.leafDark),
                         ),
                       ),
                     ],

@@ -17,7 +17,7 @@ class GardenViewScreen extends ConsumerWidget {
     final navNotifier = ref.read(navigationProvider.notifier);
 
     return Scaffold(
-      backgroundColor: GardenColors.cream,
+      backgroundColor: GardenColors.creamPaper,
       body: plantsAsync.when(
         data: (plants) => CustomScrollView(
           slivers: [
@@ -36,7 +36,7 @@ class GardenViewScreen extends ConsumerWidget {
                             Text(
                               'Mi Jardín',
                               style: GardenTextStyles.display.copyWith(
-                                color: GardenColors.charcoal,
+                                color: GardenColors.ink,
                                 fontSize: 30,
                                 fontWeight: FontWeight.w800,
                               ),
@@ -44,7 +44,7 @@ class GardenViewScreen extends ConsumerWidget {
                             Text(
                               '${plants.length} plantas en tu colección',
                               style: GardenTextStyles.bodySmall.copyWith(
-                                color: GardenColors.dust,
+                                color: GardenColors.inkSoft,
                               ),
                             ),
                           ],
@@ -54,7 +54,7 @@ class GardenViewScreen extends ConsumerWidget {
                         padding: EdgeInsets.only(top: 8.0, right: 8.0),
                         child: Icon(
                           Icons.notifications_none_rounded,
-                          color: GardenColors.charcoal,
+                          color: GardenColors.ink,
                           size: 26,
                         ),
                       ),
@@ -72,10 +72,10 @@ class GardenViewScreen extends ConsumerWidget {
                   children: [
                     _QuickActionRow(
                       icon: Icons.add_rounded,
-                      iconBgColor: GardenColors.forest,
+                      iconBgColor: GardenColors.leafDark,
                       iconColor: Colors.white,
                       bgColor: const Color(0xFFF1F8F5),
-                      borderColor: GardenColors.sage,
+                      borderColor: GardenColors.leafGreen,
                       title: 'Agregar nueva planta',
                       subtitle: 'Reconócela con la cámara o búscala por nombre',
                       onTap: () {
@@ -89,8 +89,8 @@ class GardenViewScreen extends ConsumerWidget {
                     const SizedBox(height: 12),
                     _QuickActionRow(
                       icon: Icons.person_add_alt_1_rounded,
-                      iconBgColor: GardenColors.sageLight,
-                      iconColor: GardenColors.forest,
+                      iconBgColor: GardenColors.creamLight,
+                      iconColor: GardenColors.leafDark,
                       title: 'Invita a un amigo jardinero',
                       subtitle: 'Comparte tu jardín o únete con un link',
                       onTap: () {
@@ -129,7 +129,7 @@ class GardenViewScreen extends ConsumerWidget {
           ],
         ),
         loading: () => const Center(
-          child: CircularProgressIndicator(color: GardenColors.moss),
+          child: CircularProgressIndicator(color: GardenColors.leafGreen),
         ),
         error: (e, _) => Center(
           child: Text('Error: $e', style: GardenTextStyles.bodySmall),
@@ -159,7 +159,7 @@ class _QuickActionRow extends StatelessWidget {
     required this.subtitle,
     required this.onTap,
     this.bgColor = Colors.white,
-    this.borderColor = GardenColors.dustLight,
+    this.borderColor = GardenColors.creamPaper,
   });
 
   @override
@@ -195,7 +195,7 @@ class _QuickActionRow extends StatelessWidget {
                     Text(
                       title,
                       style: GardenTextStyles.title.copyWith(
-                        color: GardenColors.charcoal,
+                        color: GardenColors.ink,
                         fontSize: 15,
                         fontWeight: FontWeight.w700,
                       ),
@@ -204,7 +204,7 @@ class _QuickActionRow extends StatelessWidget {
                     Text(
                       subtitle,
                       style: GardenTextStyles.bodySmall.copyWith(
-                        color: GardenColors.dust,
+                        color: GardenColors.inkSoft,
                         fontSize: 12,
                       ),
                     ),
@@ -213,7 +213,7 @@ class _QuickActionRow extends StatelessWidget {
               ),
               const Icon(
                 Icons.chevron_right_rounded,
-                color: GardenColors.dust,
+                color: GardenColors.inkSoft,
                 size: 22,
               ),
             ],
@@ -245,7 +245,7 @@ class _GardenPlantCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: GardenColors.dustLight),
+            border: Border.all(color: GardenColors.creamPaper),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
@@ -259,7 +259,7 @@ class _GardenPlantCard extends StatelessWidget {
                     height: 52,
                     decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: GardenColors.sageLight,
+                      color: GardenColors.creamLight,
                     ),
                     child: plant.image.isNotEmpty
                         ? ClipOval(
@@ -268,14 +268,14 @@ class _GardenPlantCard extends StatelessWidget {
                               fit: BoxFit.cover,
                               errorBuilder: (_, __, ___) => Icon(
                                 _getPlantIcon(plant.species),
-                                color: GardenColors.forest,
+                                color: GardenColors.leafDark,
                                 size: 26,
                               ),
                             ),
                           )
                         : Icon(
                             _getPlantIcon(plant.species),
-                            color: GardenColors.forest,
+                            color: GardenColors.leafDark,
                             size: 26,
                           ),
                   ),
@@ -288,13 +288,13 @@ class _GardenPlantCard extends StatelessWidget {
                       decoration: BoxDecoration(
                         color: Colors.white,
                         shape: BoxShape.circle,
-                        border: Border.all(color: GardenColors.dustLight, width: 1.5),
+                        border: Border.all(color: GardenColors.creamPaper, width: 1.5),
                       ),
                       child: Center(
                         child: Icon(
                           isOnline ? Icons.wifi_rounded : Icons.wifi_off_rounded,
                           size: 10,
-                          color: isOnline ? GardenColors.forest : GardenColors.dust,
+                          color: isOnline ? GardenColors.leafDark : GardenColors.inkSoft,
                         ),
                       ),
                     ),
@@ -315,7 +315,7 @@ class _GardenPlantCard extends StatelessWidget {
                           child: Text(
                             plant.name,
                             style: GardenTextStyles.title.copyWith(
-                              color: GardenColors.charcoal,
+                              color: GardenColors.ink,
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
                             ),
@@ -334,7 +334,7 @@ class _GardenPlantCard extends StatelessWidget {
                           child: Text(
                             plant.species,
                             style: GardenTextStyles.bodySmall.copyWith(
-                              color: GardenColors.dust,
+                              color: GardenColors.inkSoft,
                               fontSize: 12,
                             ),
                             overflow: TextOverflow.ellipsis,
@@ -363,7 +363,7 @@ class _GardenPlantCard extends StatelessWidget {
                         Text(
                           '${plant.health.toInt()}%',
                           style: GardenTextStyles.label.copyWith(
-                            color: GardenColors.dust,
+                            color: GardenColors.inkSoft,
                             fontSize: 11,
                             fontWeight: FontWeight.w600,
                           ),
@@ -376,7 +376,7 @@ class _GardenPlantCard extends StatelessWidget {
               const SizedBox(width: 8),
               const Icon(
                 Icons.chevron_right_rounded,
-                color: GardenColors.dust,
+                color: GardenColors.inkSoft,
                 size: 22,
               ),
             ],
@@ -387,13 +387,13 @@ class _GardenPlantCard extends StatelessWidget {
   }
 
   Color _healthColor(double health) {
-    if (health >= 90) return GardenColors.forest;
-    if (health >= 70) return GardenColors.sage;
-    return GardenColors.errorRose;
+    if (health >= 90) return GardenColors.leafDark;
+    if (health >= 70) return GardenColors.leafGreen;
+    return GardenColors.heartRed;
   }
 
   Color _healthBgColor(double health) {
-    if (health >= 70) return GardenColors.sageLight;
+    if (health >= 70) return GardenColors.creamLight;
     return const Color(0xFFF6E8E8);
   }
 
@@ -471,7 +471,7 @@ class _PersonalityTag extends StatelessWidget {
         label,
         style: GardenTextStyles.label.copyWith(
           fontSize: 10,
-          color: GardenColors.charcoal,
+          color: GardenColors.ink,
           fontWeight: FontWeight.w600,
         ),
       ),
@@ -515,12 +515,12 @@ class _FriendPlantsSection extends StatelessWidget {
         Row(
           children: [
             const Icon(Icons.people_outline_rounded,
-                size: 20, color: GardenColors.dust),
+                size: 20, color: GardenColors.inkSoft),
             const SizedBox(width: 8),
             Text(
               'Plantas de amigos',
               style: GardenTextStyles.title.copyWith(
-                color: GardenColors.charcoal,
+                color: GardenColors.ink,
                 fontWeight: FontWeight.w800,
                 fontSize: 18,
               ),
@@ -568,7 +568,7 @@ class _FriendPlantCard extends StatelessWidget {
         child: Container(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: GardenColors.dustLight),
+            border: Border.all(color: GardenColors.creamPaper),
           ),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
@@ -577,12 +577,12 @@ class _FriendPlantCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: GardenColors.sageLight,
+                  color: GardenColors.creamLight,
                   shape: BoxShape.circle,
                 ),
                 child: const Icon(
                   Icons.eco_rounded,
-                  color: GardenColors.forest,
+                  color: GardenColors.leafDark,
                   size: 24,
                 ),
               ),
@@ -597,7 +597,7 @@ class _FriendPlantCard extends StatelessWidget {
                           child: Text(
                             plantName,
                             style: GardenTextStyles.title.copyWith(
-                              color: GardenColors.charcoal,
+                              color: GardenColors.ink,
                               fontSize: 15,
                               fontWeight: FontWeight.w700,
                             ),
@@ -627,7 +627,7 @@ class _FriendPlantCard extends StatelessWidget {
                     RichText(
                       text: TextSpan(
                         style: GardenTextStyles.bodySmall.copyWith(
-                          color: GardenColors.dust,
+                          color: GardenColors.inkSoft,
                           fontSize: 12,
                         ),
                         children: [
@@ -635,7 +635,7 @@ class _FriendPlantCard extends StatelessWidget {
                             text: 'de $friendName',
                             style: const TextStyle(
                               fontWeight: FontWeight.w700,
-                              color: GardenColors.charcoal,
+                              color: GardenColors.ink,
                             ),
                           ),
                           TextSpan(text: ' · $species'),
@@ -646,7 +646,7 @@ class _FriendPlantCard extends StatelessWidget {
                     Text(
                       quote,
                       style: GardenTextStyles.bodySmall.copyWith(
-                        color: GardenColors.dust,
+                        color: GardenColors.inkSoft,
                         fontSize: 12,
                         fontStyle: FontStyle.italic,
                       ),
@@ -656,7 +656,7 @@ class _FriendPlantCard extends StatelessWidget {
               ),
               const Icon(
                 Icons.chevron_right_rounded,
-                color: GardenColors.dust,
+                color: GardenColors.inkSoft,
                 size: 22,
               ),
             ],

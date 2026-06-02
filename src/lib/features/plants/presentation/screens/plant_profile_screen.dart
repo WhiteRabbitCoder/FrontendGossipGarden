@@ -29,7 +29,7 @@ class PlantProfileScreen extends ConsumerWidget {
       data: (plants) {
         if (plants.isEmpty) {
           return Scaffold(
-            backgroundColor: GardenColors.cream,
+            backgroundColor: GardenColors.creamPaper,
             appBar: AppBar(
               leading: IconButton(
                 icon: const Icon(Icons.arrow_back_ios_new_rounded),
@@ -55,13 +55,13 @@ class PlantProfileScreen extends ConsumerWidget {
         final humidity = realtime?.humidity ?? plant.sensors.humidity;
 
         return Scaffold(
-          backgroundColor: GardenColors.cream,
+          backgroundColor: GardenColors.creamPaper,
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
             leading: IconButton(
               icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                  color: GardenColors.charcoal),
+                  color: GardenColors.ink),
               onPressed: onBack,
             ),
             title: Column(
@@ -69,14 +69,14 @@ class PlantProfileScreen extends ConsumerWidget {
                 Text(
                   plant.name,
                   style: GardenTextStyles.title.copyWith(
-                    color: GardenColors.charcoal,
+                    color: GardenColors.ink,
                     fontWeight: FontWeight.w700,
                   ),
                 ),
                 Text(
                   plant.species,
                   style: GardenTextStyles.label.copyWith(
-                    color: GardenColors.dust,
+                    color: GardenColors.inkSoft,
                   ),
                 ),
               ],
@@ -86,12 +86,12 @@ class PlantProfileScreen extends ConsumerWidget {
               Container(
                 margin: const EdgeInsets.only(right: 16),
                 decoration: BoxDecoration(
-                  color: GardenColors.sageLight,
+                  color: GardenColors.creamLight,
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
                   icon: const Icon(Icons.chat_bubble_outline_rounded,
-                      color: GardenColors.forest, size: 20),
+                      color: GardenColors.leafDark, size: 20),
                   onPressed: () => onOpenChat(plantId),
                 ),
               ),
@@ -144,7 +144,7 @@ class PlantProfileScreen extends ConsumerWidget {
         );
       },
       loading: () => const Scaffold(
-        body: Center(child: CircularProgressIndicator(color: GardenColors.moss)),
+        body: Center(child: CircularProgressIndicator(color: GardenColors.leafGreen)),
       ),
       error: (e, _) => Scaffold(
         body: Center(child: Text('Error: $e', style: GardenTextStyles.bodySmall)),
@@ -169,7 +169,7 @@ class _PlantHeroCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: GardenColors.dustLight),
+        border: Border.all(color: GardenColors.creamPaper),
       ),
       child: Column(
         children: [
@@ -181,19 +181,19 @@ class _PlantHeroCard extends StatelessWidget {
                 padding:
                     const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                 decoration: BoxDecoration(
-                  color: GardenColors.sageLight,
+                  color: GardenColors.creamLight,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     const Icon(Icons.favorite_rounded,
-                        size: 12, color: GardenColors.forest),
+                        size: 12, color: GardenColors.leafDark),
                     const SizedBox(width: 4),
                     Text(
                       'Montse', // TODO(backend): conectar nombre del dueño desde perfil
                       style: GardenTextStyles.label.copyWith(
-                        color: GardenColors.forest,
+                        color: GardenColors.leafDark,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
@@ -220,14 +220,14 @@ class _PlantHeroCard extends StatelessWidget {
                       errorBuilder: (_, __, ___) => Icon(
                         _getPlantIcon(plant.species),
                         size: 64,
-                        color: GardenColors.forest,
+                        color: GardenColors.leafDark,
                       ),
                     ),
                   )
                 : Icon(
                     _getPlantIcon(plant.species),
                     size: 64,
-                    color: GardenColors.forest,
+                    color: GardenColors.leafDark,
                   ),
           ),
           const SizedBox(height: 16),
@@ -238,7 +238,7 @@ class _PlantHeroCard extends StatelessWidget {
           Text(
             '${plant.health.toInt()}% Salud',
             style: GardenTextStyles.display.copyWith(
-              color: GardenColors.charcoal,
+              color: GardenColors.ink,
               fontSize: 26,
               fontWeight: FontWeight.w800,
             ),
@@ -250,7 +250,7 @@ class _PlantHeroCard extends StatelessWidget {
               '"${plant.insights.first}"',
               textAlign: TextAlign.center,
               style: GardenTextStyles.bodySmall.copyWith(
-                color: GardenColors.dust,
+                color: GardenColors.inkSoft,
                 fontStyle: FontStyle.italic,
               ),
             ),
@@ -349,7 +349,7 @@ class _PersonalityTag extends StatelessWidget {
         label,
         style: GardenTextStyles.label.copyWith(
           fontWeight: FontWeight.w600,
-          color: GardenColors.charcoal,
+          color: GardenColors.ink,
         ),
       ),
     );
@@ -402,7 +402,7 @@ class _PersonalitySection extends StatelessWidget {
             Text(
               'Personalidad',
               style: GardenTextStyles.title.copyWith(
-                color: GardenColors.charcoal,
+                color: GardenColors.ink,
                 fontWeight: FontWeight.w800,
                 fontSize: 18,
               ),
@@ -416,7 +416,7 @@ class _PersonalitySection extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: GardenColors.dustLight),
+            border: Border.all(color: GardenColors.creamPaper),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -424,7 +424,7 @@ class _PersonalitySection extends StatelessWidget {
               Text(
                 info.description,
                 style: GardenTextStyles.bodySmall.copyWith(
-                  color: GardenColors.dust,
+                  color: GardenColors.inkSoft,
                   height: 1.5,
                 ),
               ),
@@ -437,13 +437,13 @@ class _PersonalitySection extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 5),
                         decoration: BoxDecoration(
-                          color: GardenColors.sageLight,
+                          color: GardenColors.creamLight,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
                           trait,
                           style: GardenTextStyles.label.copyWith(
-                            color: GardenColors.forest,
+                            color: GardenColors.leafDark,
                             fontWeight: FontWeight.w600,
                           ),
                         ),
@@ -484,7 +484,7 @@ class _SensorGrid extends StatelessWidget {
         Text(
           'Cómo se siente ahora',
           style: GardenTextStyles.title.copyWith(
-            color: GardenColors.charcoal,
+            color: GardenColors.ink,
             fontWeight: FontWeight.w800,
             fontSize: 18,
           ),
@@ -555,7 +555,7 @@ class _SensorTile extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: GardenColors.dustLight),
+        border: Border.all(color: GardenColors.creamPaper),
       ),
       child: Row(
         children: [
@@ -576,7 +576,7 @@ class _SensorTile extends StatelessWidget {
               Text(
                 label,
                 style: GardenTextStyles.label.copyWith(
-                  color: GardenColors.dust,
+                  color: GardenColors.inkSoft,
                   fontSize: 10,
                   letterSpacing: 0.8,
                 ),
@@ -584,7 +584,7 @@ class _SensorTile extends StatelessWidget {
               Text(
                 value,
                 style: GardenTextStyles.title.copyWith(
-                  color: GardenColors.charcoal,
+                  color: GardenColors.ink,
                   fontSize: 20,
                   fontWeight: FontWeight.w800,
                 ),
@@ -643,7 +643,7 @@ class _AboutSection extends StatelessWidget {
         Text(
           'Sobre ${plant.name}',
           style: GardenTextStyles.title.copyWith(
-            color: GardenColors.charcoal,
+            color: GardenColors.ink,
             fontWeight: FontWeight.w800,
             fontSize: 18,
           ),
@@ -653,7 +653,7 @@ class _AboutSection extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: GardenColors.dustLight),
+            border: Border.all(color: GardenColors.creamPaper),
           ),
           child: Column(
             children: rows.asMap().entries.map((entry) {
@@ -667,19 +667,19 @@ class _AboutSection extends StatelessWidget {
                     child: Row(
                       children: [
                         Icon(row.$1,
-                            size: 18, color: GardenColors.dust),
+                            size: 18, color: GardenColors.inkSoft),
                         const SizedBox(width: 12),
                         Text(
                           row.$2,
                           style: GardenTextStyles.bodySmall.copyWith(
-                            color: GardenColors.dust,
+                            color: GardenColors.inkSoft,
                           ),
                         ),
                         const Spacer(),
                         Text(
                           row.$3,
                           style: GardenTextStyles.bodySmall.copyWith(
-                            color: GardenColors.charcoal,
+                            color: GardenColors.ink,
                             fontWeight: FontWeight.w500,
                           ),
                           textAlign: TextAlign.right,
@@ -691,7 +691,7 @@ class _AboutSection extends StatelessWidget {
                     Divider(
                       height: 1,
                       thickness: 1,
-                      color: GardenColors.dustLight,
+                      color: GardenColors.creamPaper,
                       indent: 16,
                       endIndent: 16,
                     ),
@@ -750,7 +750,7 @@ class _CareSection extends StatelessWidget {
         Text(
           'Cuidados generales',
           style: GardenTextStyles.title.copyWith(
-            color: GardenColors.charcoal,
+            color: GardenColors.ink,
             fontWeight: FontWeight.w800,
             fontSize: 18,
           ),
@@ -760,7 +760,7 @@ class _CareSection extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: GardenColors.dustLight),
+            border: Border.all(color: GardenColors.creamPaper),
           ),
           child: Column(
             children: items.asMap().entries.map((entry) {
@@ -777,11 +777,11 @@ class _CareSection extends StatelessWidget {
                           width: 36,
                           height: 36,
                           decoration: BoxDecoration(
-                            color: GardenColors.sageLight,
+                            color: GardenColors.creamLight,
                             shape: BoxShape.circle,
                           ),
                           child: Icon(item.$1,
-                              size: 18, color: GardenColors.forest),
+                              size: 18, color: GardenColors.leafDark),
                         ),
                         const SizedBox(width: 12),
                         Column(
@@ -790,7 +790,7 @@ class _CareSection extends StatelessWidget {
                             Text(
                               item.$2,
                               style: GardenTextStyles.label.copyWith(
-                                color: GardenColors.dust,
+                                color: GardenColors.inkSoft,
                                 fontSize: 10,
                                 letterSpacing: 0.8,
                               ),
@@ -798,7 +798,7 @@ class _CareSection extends StatelessWidget {
                             Text(
                               item.$3,
                               style: GardenTextStyles.bodySmall.copyWith(
-                                color: GardenColors.charcoal,
+                                color: GardenColors.ink,
                                 fontWeight: FontWeight.w500,
                               ),
                             ),
@@ -811,7 +811,7 @@ class _CareSection extends StatelessWidget {
                     Divider(
                       height: 1,
                       thickness: 1,
-                      color: GardenColors.dustLight,
+                      color: GardenColors.creamPaper,
                       indent: 16,
                       endIndent: 16,
                     ),
@@ -839,7 +839,7 @@ class _CareSection extends StatelessWidget {
                   child: RichText(
                     text: TextSpan(
                       style: GardenTextStyles.bodySmall.copyWith(
-                        color: GardenColors.charcoal,
+                        color: GardenColors.ink,
                         height: 1.5,
                       ),
                       children: [

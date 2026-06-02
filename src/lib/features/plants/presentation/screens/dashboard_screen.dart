@@ -41,7 +41,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         : (authSession?.profile?.email?.split('@').first ?? 'Usuario');
 
     return Scaffold(
-      backgroundColor: GardenColors.cream,
+      backgroundColor: GardenColors.creamPaper,
       body: CustomScrollView(
         slivers: [
           // ── Header ──────────────────────────────────────────────────────────
@@ -59,7 +59,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           Text(
                             'Buenos días, $userName',
                             style: GardenTextStyles.bodySmall.copyWith(
-                              color: GardenColors.dust,
+                              color: GardenColors.inkSoft,
                             ),
                           ),
                           const SizedBox(height: 2),
@@ -70,7 +70,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                               Text(
                                 'Tu Jardín',
                                 style: GardenTextStyles.display.copyWith(
-                                  color: GardenColors.charcoal,
+                                  color: GardenColors.ink,
                                   fontSize: 28,
                                   fontWeight: FontWeight.w800,
                                 ),
@@ -80,7 +80,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           Text(
                             'Resumen de hoy',
                             style: GardenTextStyles.bodySmall.copyWith(
-                              color: GardenColors.dust,
+                              color: GardenColors.inkSoft,
                             ),
                           ),
                         ],
@@ -134,7 +134,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   Text(
                     'Estado Actual',
                     style: GardenTextStyles.title.copyWith(
-                      color: GardenColors.charcoal,
+                      color: GardenColors.ink,
                       fontWeight: FontWeight.w800,
                       fontSize: 18,
                     ),
@@ -145,8 +145,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     child: Icon(
                       Icons.grid_view_rounded,
                       size: 20,
-                      color:
-                          !_isListView ? GardenColors.forest : GardenColors.dust,
+                      color: !_isListView
+                          ? GardenColors.leafDark
+                          : GardenColors.inkSoft,
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -155,8 +156,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     child: Icon(
                       Icons.format_list_bulleted_rounded,
                       size: 20,
-                      color:
-                          _isListView ? GardenColors.forest : GardenColors.dust,
+                      color: _isListView
+                          ? GardenColors.leafDark
+                          : GardenColors.inkSoft,
                     ),
                   ),
                 ],
@@ -182,13 +184,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               child: Padding(
                 padding: EdgeInsets.all(32),
                 child: Center(
-                    child: CircularProgressIndicator(color: GardenColors.moss)),
+                    child: CircularProgressIndicator(
+                        color: GardenColors.leafGreen)),
               ),
             ),
             error: (e, _) => SliverToBoxAdapter(
               child: Center(
-                  child: Text('Error: $e',
-                      style: GardenTextStyles.bodySmall)),
+                  child: Text('Error: $e', style: GardenTextStyles.bodySmall)),
             ),
           ),
 
@@ -236,11 +238,11 @@ class _NotificationBell extends StatelessWidget {
           decoration: BoxDecoration(
             color: Colors.white,
             shape: BoxShape.circle,
-            border: Border.all(color: GardenColors.dustLight),
+            border: Border.all(color: GardenColors.creamPaper),
           ),
           child: const Icon(
             Icons.notifications_none_rounded,
-            color: GardenColors.charcoal,
+            color: GardenColors.ink,
             size: 22,
           ),
         ),
@@ -252,7 +254,7 @@ class _NotificationBell extends StatelessWidget {
               width: 17,
               height: 17,
               decoration: const BoxDecoration(
-                color: GardenColors.errorRose,
+                color: GardenColors.heartRed,
                 shape: BoxShape.circle,
               ),
               child: Center(
@@ -286,25 +288,33 @@ class _SensorAlertRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: GardenColors.dustLight),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: GardenColors.dustLight, width: 1.1),
+        boxShadow: [
+          BoxShadow(
+            color: GardenColors.ink.withOpacity(0.05),
+            blurRadius: 14,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Row(
         children: [
-          const Icon(Icons.wifi_off_rounded, size: 18, color: GardenColors.dust),
+          const Icon(Icons.wifi_off_rounded,
+              size: 18, color: GardenColors.inkSoft),
           const SizedBox(width: 12),
           Expanded(
             child: RichText(
               text: TextSpan(
                 style: GardenTextStyles.bodySmall
-                    .copyWith(color: GardenColors.dust),
+                    .copyWith(color: GardenColors.inkSoft),
                 children: [
                   const TextSpan(text: 'Sensor desconectado en '),
                   TextSpan(
                     text: plantName,
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
-                      color: GardenColors.charcoal,
+                      color: GardenColors.ink,
                     ),
                   ),
                 ],
@@ -316,7 +326,7 @@ class _SensorAlertRow extends StatelessWidget {
             child: Text(
               'Revisar',
               style: GardenTextStyles.label.copyWith(
-                color: GardenColors.forest,
+                color: GardenColors.leafDark,
                 fontWeight: FontWeight.w700,
               ),
             ),
@@ -351,7 +361,7 @@ class _UpcomingCareSection extends StatelessWidget {
             Text(
               'Próximos Cuidados',
               style: GardenTextStyles.title.copyWith(
-                color: GardenColors.charcoal,
+                color: GardenColors.ink,
                 fontWeight: FontWeight.w800,
                 fontSize: 18,
               ),
@@ -363,8 +373,15 @@ class _UpcomingCareSection extends StatelessWidget {
           width: double.infinity,
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(14),
-            border: Border.all(color: GardenColors.dustLight),
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: GardenColors.dustLight, width: 1.1),
+            boxShadow: [
+              BoxShadow(
+                color: GardenColors.ink.withOpacity(0.05),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
+              ),
+            ],
           ),
           child: IntrinsicHeight(
             child: Row(
@@ -375,7 +392,7 @@ class _UpcomingCareSection extends StatelessWidget {
                   decoration: BoxDecoration(
                     color: GardenColors.golden,
                     borderRadius: const BorderRadius.horizontal(
-                        left: Radius.circular(14)),
+                        left: Radius.circular(16)),
                   ),
                 ),
                 Expanded(
@@ -384,13 +401,13 @@ class _UpcomingCareSection extends StatelessWidget {
                     child: RichText(
                       text: TextSpan(
                         style: GardenTextStyles.bodySmall
-                            .copyWith(color: GardenColors.dust, height: 1.5),
+                            .copyWith(color: GardenColors.inkSoft, height: 1.5),
                         children: [
                           TextSpan(
                             text: '$plantName ',
                             style: const TextStyle(
                               fontWeight: FontWeight.w700,
-                              color: GardenColors.charcoal,
+                              color: GardenColors.ink,
                             ),
                           ),
                           TextSpan(text: careText),
