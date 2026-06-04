@@ -973,10 +973,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     );
   }
 
-  Widget _buildBenefitRow(IconData icon, String title, String subtitle) {
+  Widget _buildBenefitRow(FaIconData icon, String title, String subtitle) {
     return Row(
       children: [
-        Icon(icon, size: 24, color: const Color(0xFF4A6741)),
+        FaIcon(icon, size: 24, color: const Color(0xFF4A6741)),
         const SizedBox(width: 12),
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
