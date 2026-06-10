@@ -13,7 +13,14 @@ class PersonalInfoScreen extends ConsumerStatefulWidget {
 
 class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
   late final TextEditingController _usernameController;
+  final _currentPasswordController = TextEditingController();
+  final _newPasswordController = TextEditingController();
+  final _confirmPasswordController = TextEditingController();
   bool _isLoading = false;
+  bool _isUpdatingPassword = false;
+  bool _obscureCurrentPassword = true;
+  bool _obscureNewPassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void initState() {
@@ -26,6 +33,9 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
   @override
   void dispose() {
     _usernameController.dispose();
+    _currentPasswordController.dispose();
+    _newPasswordController.dispose();
+    _confirmPasswordController.dispose();
     super.dispose();
   }
 
@@ -58,6 +68,47 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
         setState(() => _isLoading = false);
       }
     }
+  }
+
+  Future<void> _updatePassword() async {
+    final current = _currentPasswordController.text;
+    final newPassword = _newPasswordController.text;
+    final confirm = _confirmPasswordController.text;
+
+    if (current.isEmpty || newPassword.isEmpty || confirm.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Completa todos los campos de contraseña.')),
+      );
+      return;
+    }
+
+    if (newPassword.length < 6) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('La nueva contraseña debe tener al menos 6 caracteres.')),
+      );
+      return;
+    }
+
+    if (newPassword != confirm) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Las contraseñas nuevas no coinciden.')),
+      );
+      return;
+    }
+
+    setState(() => _isUpdatingPassword = true);
+    await Future.delayed(const Duration(milliseconds: 600));
+
+    if (!mounted) return;
+    setState(() => _isUpdatingPassword = false);
+
+    _currentPasswordController.clear();
+    _newPasswordController.clear();
+    _confirmPasswordController.clear();
+
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(content: Text('Contraseña actualizada correctamente.')),
+    );
   }
 
   @override
@@ -199,6 +250,95 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                   ],
                 ),
               ),
+              const SizedBox(height: 24),
+
+              Container(
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: GardenColors.creamPaper),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'CONTRASEÑA',
+                      style: GardenTextStyles.label.copyWith(
+                        color: GardenColors.inkSoft,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _currentPasswordController,
+                      obscureText: _obscureCurrentPassword,
+                      decoration: _passwordDecoration(
+                        hint: 'Contraseña actual',
+                        obscure: _obscureCurrentPassword,
+                        onToggle: () => setState(
+                          () => _obscureCurrentPassword = !_obscureCurrentPassword,
+                        ),
+                      ),
+                      style: GardenTextStyles.body,
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _newPasswordController,
+                      obscureText: _obscureNewPassword,
+                      decoration: _passwordDecoration(
+                        hint: 'Nueva contraseña',
+                        obscure: _obscureNewPassword,
+                        onToggle: () => setState(
+                          () => _obscureNewPassword = !_obscureNewPassword,
+                        ),
+                      ),
+                      style: GardenTextStyles.body,
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: _confirmPasswordController,
+                      obscureText: _obscureConfirmPassword,
+                      decoration: _passwordDecoration(
+                        hint: 'Confirmar nueva contraseña',
+                        obscure: _obscureConfirmPassword,
+                        onToggle: () => setState(
+                          () => _obscureConfirmPassword = !_obscureConfirmPassword,
+                        ),
+                      ),
+                      style: GardenTextStyles.body,
+                    ),
+                    const SizedBox(height: 20),
+                    OutlinedButton(
+                      onPressed: _isUpdatingPassword ? null : _updatePassword,
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: GardenColors.leafDark,
+                        side: const BorderSide(color: GardenColors.leafGreen),
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                      ),
+                      child: _isUpdatingPassword
+                          ? const SizedBox(
+                              width: 22,
+                              height: 22,
+                              child: CircularProgressIndicator(
+                                color: GardenColors.leafDark,
+                                strokeWidth: 2,
+                              ),
+                            )
+                          : Text(
+                              'Actualizar contraseña',
+                              style: GardenTextStyles.bodySmall.copyWith(
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 40),
 
               // Botón Guardar Cambios
@@ -228,6 +368,40 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
           ),
         ),
       ),
+    );
+  }
+
+  InputDecoration _passwordDecoration({
+    required String hint,
+    required bool obscure,
+    required VoidCallback onToggle,
+  }) {
+    return InputDecoration(
+      hintText: hint,
+      hintStyle: GardenTextStyles.body.copyWith(color: GardenColors.inkSoft),
+      prefixIcon: const Icon(Icons.lock_outline_rounded, color: GardenColors.leafGreen),
+      suffixIcon: IconButton(
+        icon: Icon(
+          obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+          color: GardenColors.inkSoft,
+        ),
+        onPressed: onToggle,
+      ),
+      filled: true,
+      fillColor: GardenColors.creamPaper.withOpacity(0.5),
+      border: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: GardenColors.creamPaper),
+      ),
+      enabledBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: GardenColors.creamPaper),
+      ),
+      focusedBorder: OutlineInputBorder(
+        borderRadius: BorderRadius.circular(16),
+        borderSide: const BorderSide(color: GardenColors.leafGreen, width: 2),
+      ),
+      contentPadding: const EdgeInsets.symmetric(vertical: 16),
     );
   }
 }

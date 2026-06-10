@@ -7,10 +7,12 @@ import 'package:gossip_garden/features/auth/presentation/providers/auth_provider
 import '../../../../core/theme/garden_colors.dart';
 import '../../../../core/theme/garden_text_styles.dart';
 import 'personal_info_screen.dart';
-
-// ── Local providers (sin cambios) ────────────────────────────────────────────
-final favoritePlantsProvider =
-    StateProvider<List<String>>((ref) => ['1', '2']);
+import 'help_center_screen.dart';
+import 'contact_support_screen.dart';
+import 'rate_app_screen.dart';
+import '../providers/achievement_providers.dart';
+import 'achievement_detail_screen.dart';
+import '../../data/models/achievement.dart';
 
 // ── Pantalla de perfil ────────────────────────────────────────────────────────────
 
@@ -48,13 +50,6 @@ class ProfileSettingsScreen extends ConsumerWidget {
                     child: _ProfileHeader(
                       userName: userName,
                       plantCount: plants.length,
-                      onEditTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const PersonalInfoScreen(),
-                          ),
-                        );
-                      },
                       onSettingsTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
@@ -71,7 +66,7 @@ class ProfileSettingsScreen extends ConsumerWidget {
               const SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(20, 28, 20, 0),
-                  child: _AchievementsSection(),
+                  child: AchievementsSection(),
                 ),
               ),
 
@@ -106,13 +101,11 @@ class ProfileSettingsScreen extends ConsumerWidget {
 class _ProfileHeader extends StatelessWidget {
   final String userName;
   final int plantCount;
-  final VoidCallback onEditTap;
   final VoidCallback onSettingsTap;
 
   const _ProfileHeader({
     required this.userName,
     required this.plantCount,
-    required this.onEditTap,
     required this.onSettingsTap,
   });
 
@@ -167,19 +160,9 @@ class _ProfileHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        // Botones editar + ajustes
-        Column(
-          children: [
-            _IconCircleButton(
-              icon: Icons.edit_outlined,
-              onTap: onEditTap,
-            ),
-            const SizedBox(height: 8),
-            _IconCircleButton(
-              icon: Icons.settings_outlined,
-              onTap: onSettingsTap,
-            ),
-          ],
+        _IconCircleButton(
+          icon: Icons.settings_outlined,
+          onTap: onSettingsTap,
         ),
       ],
     );
@@ -210,19 +193,27 @@ class _IconCircleButton extends StatelessWidget {
 }
 
 // ── Achievements Section ──────────────────────────────────────────────────────
-// TODO(backend): traer logros desde endpoint de achievements cuando esté disponible
 
-class _AchievementsSection extends StatelessWidget {
-  const _AchievementsSection();
+class AchievementsSection extends ConsumerStatefulWidget {
+  const AchievementsSection({super.key});
 
-  static const _achievements = [
-    (icon: '🏅', label: 'Rey de la Lluvia', locked: false, progress: null as int?, total: null as int?),
-    (icon: '🎖️', label: 'Pulgar Verde', locked: false, progress: null as int?, total: null as int?),
-    (icon: '🔬', label: 'Científico Botánico', locked: true, progress: 12, total: 20),
-  ];
+  @override
+  ConsumerState<AchievementsSection> createState() => _AchievementsSectionState();
+}
+
+class _AchievementsSectionState extends ConsumerState<AchievementsSection> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(achievementStatsProvider.notifier).recordLoginSession();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final achievementsAsync = ref.watch(achievementProgressListProvider);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -235,22 +226,40 @@ class _AchievementsSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        SizedBox(
-          height: 120,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: _achievements.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (context, index) {
-              final a = _achievements[index];
-              return _AchievementCard(
-                icon: a.icon,
-                label: a.label,
-                locked: a.locked,
-                progress: a.progress,
-                total: a.total,
-              );
-            },
+        achievementsAsync.when(
+          loading: () => const SizedBox(
+            height: 132,
+            child: Center(
+              child: CircularProgressIndicator(color: GardenColors.leafGreen),
+            ),
+          ),
+          error: (e, _) => SizedBox(
+            height: 132,
+            child: Center(
+              child: Text('Error al cargar logros', style: GardenTextStyles.bodySmall),
+            ),
+          ),
+          data: (achievements) => SizedBox(
+            height: 132,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: achievements.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                return AchievementCard(
+                  progress: achievements[index],
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => AchievementDetailScreen(
+                          progress: achievements[index],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ),
       ],
@@ -258,75 +267,89 @@ class _AchievementsSection extends StatelessWidget {
   }
 }
 
-class _AchievementCard extends StatelessWidget {
-  final String icon;
-  final String label;
-  final bool locked;
-  final int? progress;
-  final int? total;
+class AchievementCard extends StatelessWidget {
+  final AchievementProgress progress;
+  final VoidCallback onTap;
 
-  const _AchievementCard({
-    required this.icon,
-    required this.label,
-    required this.locked,
-    this.progress,
-    this.total,
+  const AchievementCard({
+    super.key,
+    required this.progress,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 100,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: GardenColors.creamPaper),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              const Icon(Icons.info_outline_rounded,
-                  size: 14, color: GardenColors.inkSoft),
-            ],
+    final def = progress.definition;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 104,
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: progress.unlocked
+                ? GardenColors.golden.withOpacity(0.5)
+                : GardenColors.creamPaper,
           ),
-          Text(icon, style: const TextStyle(fontSize: 28)),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: GardenTextStyles.label.copyWith(
-              color: GardenColors.ink,
-              fontWeight: FontWeight.w600,
-              fontSize: 10,
+        ),
+        child: Column(
+          children: [
+            Align(
+              alignment: Alignment.centerRight,
+              child: Icon(
+                progress.unlocked
+                    ? Icons.check_circle_rounded
+                    : Icons.info_outline_rounded,
+                size: 14,
+                color: progress.unlocked
+                    ? GardenColors.leafDark
+                    : GardenColors.inkSoft,
+              ),
             ),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          if (locked && progress != null && total != null) ...[
-            const SizedBox(height: 4),
-            ClipRRect(
-              borderRadius: BorderRadius.circular(4),
-              child: LinearProgressIndicator(
-                value: progress! / total!,
-                minHeight: 4,
-                backgroundColor: GardenColors.creamLight,
-                color: GardenColors.leafGreen,
+            Text(
+              def.icon,
+              style: TextStyle(
+                fontSize: 26,
+                color: progress.unlocked ? null : Colors.black.withOpacity(0.45),
               ),
             ),
             const SizedBox(height: 2),
             Text(
-              '$progress/$total',
+              def.title,
+              style: GardenTextStyles.label.copyWith(
+                color: GardenColors.ink,
+                fontWeight: FontWeight.w600,
+                fontSize: 9,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const Spacer(),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: progress.ratio,
+                minHeight: 4,
+                backgroundColor: GardenColors.creamLight,
+                color: progress.unlocked
+                    ? GardenColors.golden
+                    : GardenColors.leafGreen,
+              ),
+            ),
+            const SizedBox(height: 2),
+            Text(
+              '${progress.displayCurrent}/${progress.goal}',
               style: GardenTextStyles.label.copyWith(
                 color: GardenColors.inkSoft,
-                fontSize: 9,
+                fontSize: 8,
               ),
             ),
           ],
-        ],
+        ),
       ),
     );
   }
@@ -579,8 +602,6 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final authSession = ref.watch(authStateProvider).value;
-
     return Scaffold(
       backgroundColor: GardenColors.creamPaper,
       appBar: AppBar(
@@ -615,7 +636,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
               _SettingsTile(
                 icon: Icons.person_outline_rounded,
                 title: 'Información personal',
-                subtitle: 'Nombre, bio, avatar',
+                subtitle: 'Nombre, bio, avatar, contraseña',
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -623,20 +644,6 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
                     ),
                   );
                 },
-              ),
-              _SettingsDivider(),
-              _SettingsTile(
-                icon: Icons.mail_outline_rounded,
-                title: 'Correo electrónico',
-                subtitle: authSession?.profile?.email ?? '',
-                onTap: () {},
-              ),
-              _SettingsDivider(),
-              _SettingsTile(
-                icon: Icons.lock_outline_rounded,
-                title: 'Contraseña',
-                subtitle: 'Última actualización hace 2 meses',
-                onTap: () {},
               ),
             ],
           ),
@@ -712,21 +719,39 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
                 icon: Icons.help_outline_rounded,
                 title: 'Centro de ayuda',
                 subtitle: 'Preguntas frecuentes y guías',
-                onTap: () {},
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const HelpCenterScreen(),
+                    ),
+                  );
+                },
               ),
               _SettingsDivider(),
               _SettingsTile(
                 icon: Icons.chat_bubble_outline_rounded,
                 title: 'Contactar soporte',
                 subtitle: 'Escríbenos, respondemos en 24h',
-                onTap: () {},
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const ContactSupportScreen(),
+                    ),
+                  );
+                },
               ),
               _SettingsDivider(),
               _SettingsTile(
                 icon: Icons.star_outline_rounded,
                 title: 'Calificar la app',
                 subtitle: 'Tu opinión nos ayuda a mejorar',
-                onTap: () {},
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const RateAppScreen(),
+                    ),
+                  );
+                },
               ),
             ],
           ),
