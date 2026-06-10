@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../providers/navigation_provider.dart';
+import '../providers/plant_providers.dart';
+import '../providers/achievement_providers.dart';
 
 import 'dashboard_screen.dart';
 import 'chat_list_screen.dart';
@@ -19,6 +21,14 @@ class MainScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final nav = ref.watch(navigationProvider);
     final notifier = ref.read(navigationProvider.notifier);
+
+    ref.watch(achievementStatsProvider);
+    final plants = ref.watch(plantsProvider).valueOrNull;
+    if (plants != null) {
+      for (final plant in plants) {
+        ref.watch(achievementWateringWatcherProvider(plant.id));
+      }
+    }
 
     final hasOverlay =
         nav.showChat || nav.showPlantProfile || nav.selectedFriendId != null;

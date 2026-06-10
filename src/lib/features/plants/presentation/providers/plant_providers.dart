@@ -105,6 +105,9 @@ final plantsProvider = FutureProvider<List<Plant>>(
   (_) async => [_demoMonstera, _demoSuculenta, _demoFicus],
 );
 
+final favoritePlantsProvider =
+    StateProvider<List<String>>((ref) => ['1', '2']);
+
 final wifiSetupDatasourceProvider = Provider<WifiSetupDatasource>(
   (ref) => const WifiSetupDatasource(),
 );

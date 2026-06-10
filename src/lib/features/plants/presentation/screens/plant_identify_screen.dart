@@ -1,21 +1,23 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/garden_colors.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../providers/achievement_providers.dart';
 
 // Flujo: método → cámara/búsqueda → resultado identificado → agregar
 enum _IdentifyMode { select, camera, matches, search, result }
 
-class PlantIdentifyScreen extends StatefulWidget {
+class PlantIdentifyScreen extends ConsumerStatefulWidget {
   final VoidCallback? onBack;
   final VoidCallback? onCompleted;
 
   const PlantIdentifyScreen({super.key, this.onBack, this.onCompleted});
 
   @override
-  State<PlantIdentifyScreen> createState() => _PlantIdentifyScreenState();
+  ConsumerState<PlantIdentifyScreen> createState() => _PlantIdentifyScreenState();
 }
 
-class _PlantIdentifyScreenState extends State<PlantIdentifyScreen> {
+class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen> {
   _IdentifyMode _mode = _IdentifyMode.select;
   final _searchController = TextEditingController();
   String _searchQuery = '';
@@ -80,14 +82,20 @@ class _PlantIdentifyScreenState extends State<PlantIdentifyScreen> {
         );
       case _IdentifyMode.matches:
         return _MatchesView(
-          onSelectMatch: () => setState(() => _mode = _IdentifyMode.result),
+          onSelectMatch: () {
+            ref.read(achievementStatsProvider.notifier).recordIdentification();
+            setState(() => _mode = _IdentifyMode.result);
+          },
         );
       case _IdentifyMode.search:
         return _SearchView(
           controller: _searchController,
           query: _searchQuery,
           onQueryChanged: (q) => setState(() => _searchQuery = q),
-          onSelectPlant: () => setState(() => _mode = _IdentifyMode.result),
+          onSelectPlant: () {
+            ref.read(achievementStatsProvider.notifier).recordIdentification();
+            setState(() => _mode = _IdentifyMode.result);
+          },
         );
       case _IdentifyMode.result:
         return _ResultView(

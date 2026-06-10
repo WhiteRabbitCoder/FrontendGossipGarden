@@ -2,17 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/plant_providers.dart';
 import '../providers/navigation_provider.dart';
+import '../providers/achievement_providers.dart';
 import '../../data/models/plant.dart';
 import '../../data/models/plant_enums.dart';
 import '../../../../core/theme/garden_colors.dart';
 import '../../../../core/theme/garden_text_styles.dart';
 import 'plant_identify_screen.dart';
 
-class GardenViewScreen extends ConsumerWidget {
+class GardenViewScreen extends ConsumerStatefulWidget {
   const GardenViewScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<GardenViewScreen> createState() => _GardenViewScreenState();
+}
+
+class _GardenViewScreenState extends ConsumerState<GardenViewScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(achievementStatsProvider.notifier).recordGardenVisit();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final plantsAsync = ref.watch(plantsProvider);
     final navNotifier = ref.read(navigationProvider.notifier);
 

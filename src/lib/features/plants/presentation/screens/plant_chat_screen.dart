@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/plant_providers.dart';
 import '../providers/chat_providers.dart';
+import '../providers/achievement_providers.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/telemetry_panel.dart';
@@ -61,6 +62,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
 
     // 1. Añadir mensaje del usuario al estado local
     ref.read(chatMessagesProvider(widget.plantId).notifier).addMessage(text);
+    ref.read(achievementStatsProvider.notifier).recordChatMessage();
     setState(() => _waitingForPlant = true);
 
     // 2. Llamar al backend

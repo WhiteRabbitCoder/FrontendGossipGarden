@@ -5,6 +5,7 @@ import 'package:gossip_garden/core/theme/garden_colors.dart';
 import 'package:gossip_garden/features/plants/presentation/providers/navigation_provider.dart';
 import 'package:gossip_garden/features/auth/presentation/providers/auth_provider.dart';
 import 'package:gossip_garden/features/plants/presentation/screens/plant_identify_screen.dart';
+import 'package:gossip_garden/features/plants/presentation/providers/achievement_providers.dart';
 
 enum OnboardingStep { wow, choosePath, connect, identify, firstInsight, config }
 
@@ -120,6 +121,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.error;
     } else {
       ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.connected;
+      ref.read(achievementStatsProvider.notifier).recordSensorSetup();
     }
   }
 
