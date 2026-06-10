@@ -1,18 +1,19 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:gossip_garden/core/theme/garden_colors.dart';
 import 'package:gossip_garden/features/plants/presentation/providers/navigation_provider.dart';
 import 'package:gossip_garden/features/auth/presentation/providers/auth_provider.dart';
 import 'package:gossip_garden/features/plants/presentation/screens/plant_identify_screen.dart';
 
-enum OnboardingStep { wow, welcome, connect, identify, firstInsight, config }
+enum OnboardingStep { wow, choosePath, connect, identify, firstInsight, config }
 
 final onboardingStepProvider =
     StateProvider<OnboardingStep>((ref) => OnboardingStep.wow);
 
 final connectionStatusProvider = StateProvider<String>((ref) => 'idle');
+
+final usesSensorProvider = StateProvider<bool>((ref) => true);
 
 final notificationPreferenceProvider =
     StateProvider<String>((ref) => 'important');
@@ -272,8 +273,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     switch (step) {
       case OnboardingStep.wow:
         return _buildScrollableStep(_buildWowStep());
-      case OnboardingStep.welcome:
-        return _buildScrollableStep(_buildWelcomeStep());
+      case OnboardingStep.choosePath:
+        return _buildChoosePathStep();
       case OnboardingStep.connect:
         return _buildScrollableStep(_buildWifiSetupStep());
       case OnboardingStep.identify:
@@ -359,39 +360,485 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
         const SizedBox(height: 48),
         _primaryButton('Quiero escucharlas', () {
           ref.read(onboardingStepProvider.notifier).state =
-              OnboardingStep.welcome;
+              OnboardingStep.choosePath;
         }),
       ],
     );
   }
 
-  // ── Paso 2: Bienvenida ──────────────────────────────────────────────────
-// esta parte de la pagina se va a refactorizar por completo//
 
-  Widget _buildWelcomeStep() {
+
+  // ── Paso 2b: Elegir ruta (con o sin sensor) ────────────────────────────
+
+  Widget _buildChoosePathStep() {
+    final usesSensor = ref.watch(usesSensorProvider);
+
     return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _card(
-          child: Column(
+        // ── Logo + brand ────────────────────────────────────────────────
+        Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(10),
+                color: GardenColors.leafDark,
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(10),
+                child: Image.asset('images/logo_no_text.png', fit: BoxFit.cover),
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Text(
+              'Gossip Garden',
+              style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: GardenColors.ink),
+            ),
+          ],
+        ),
+        const SizedBox(height: 28),
+
+        // ── Título ──────────────────────────────────────────────────────
+        const Text(
+          'Tu jardín te espera',
+          style: TextStyle(
+              fontSize: 26,
+              fontWeight: FontWeight.w800,
+              color: GardenColors.ink,
+              height: 1.1),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Elige cómo quieres comenzar',
+          style: TextStyle(fontSize: 14, color: GardenColors.inkSoft),
+        ),
+        const SizedBox(height: 10),
+        Container(
+          width: 56,
+          height: 3,
+          decoration: BoxDecoration(
+            color: GardenColors.leafDark,
+            borderRadius: BorderRadius.circular(2),
+          ),
+        ),
+        const SizedBox(height: 24),
+
+        // ── Toggle Con sensor / Sin sensor ──────────────────────────────
+        Container(
+          decoration: BoxDecoration(
+            color: GardenColors.dustLight,
+            borderRadius: BorderRadius.circular(14),
+          ),
+          padding: const EdgeInsets.all(4),
+          child: Row(
             children: [
-              _buildBenefitRow(FontAwesomeIcons.commentDots, 'Plantas hablan',
-                  'Escucha lo que necesitan'),
-              const SizedBox(height: 16),
-              _buildBenefitRow(FontAwesomeIcons.towerBroadcast, 'Sensores',
-                  'Monitoreo en tiempo real'),
-              const SizedBox(height: 16),
-              _buildBenefitRow(
-                  FontAwesomeIcons.brain, 'IA', 'Predicciones inteligentes'),
+              _sensorToggleOption('Con sensor', Icons.wifi_rounded, true, usesSensor),
+              _sensorToggleOption('Sin sensor', Icons.eco_outlined, false, usesSensor),
             ],
           ),
         ),
-        const SizedBox(height: 48),
-        _primaryButton('Continuar', () {
-          ref.read(onboardingStepProvider.notifier).state =
-              OnboardingStep.connect;
-          _startPairing();
+        const SizedBox(height: 28),
+
+        // ── Stepper ─────────────────────────────────────────────────────
+        Expanded(
+          child: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 250),
+            transitionBuilder: (child, anim) =>
+                FadeTransition(opacity: anim, child: child),
+            child: usesSensor
+                ? _buildSensorStepper()
+                : _buildNoSensorStepper(),
+          ),
+        ),
+
+        const SizedBox(height: 16),
+
+        // ── CTA ─────────────────────────────────────────────────────────
+        _primaryButton('Siguiente paso  →', () {
+          if (usesSensor) {
+            ref.read(onboardingStepProvider.notifier).state =
+                OnboardingStep.connect;
+            _startPairing();
+          } else {
+            ref.read(onboardingStepProvider.notifier).state =
+                OnboardingStep.identify;
+          }
         }),
+      ],
+    );
+  }
+
+  Widget _sensorToggleOption(
+      String label, IconData icon, bool isSensor, bool usesSensor) {
+    final isSelected = isSensor == usesSensor;
+    return Expanded(
+      child: GestureDetector(
+        onTap: () =>
+            ref.read(usesSensorProvider.notifier).state = isSensor,
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
+          padding: const EdgeInsets.symmetric(vertical: 11),
+          decoration: BoxDecoration(
+            color: isSelected ? GardenColors.leafDark : Colors.transparent,
+            borderRadius: BorderRadius.circular(11),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: GardenColors.leafDark.withOpacity(0.25),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    )
+                  ]
+                : [],
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon,
+                  size: 16,
+                  color: isSelected ? Colors.white : GardenColors.inkSoft),
+              const SizedBox(width: 6),
+              Text(
+                label,
+                style: TextStyle(
+                  fontSize: 14,
+                  fontWeight: FontWeight.w600,
+                  color: isSelected ? Colors.white : GardenColors.inkSoft,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSensorStepper() {
+    return Column(
+      key: const ValueKey('sensor'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _stepperItem(
+          number: 1,
+          title: 'Crear cuenta',
+          isDone: true,
+          isLast: false,
+        ),
+        _stepperItem(
+          number: 2,
+          title: 'Conectar a la red del sensor',
+          description:
+              'Sal de la app y ve a los ajustes de tu celular. Conéctate a la red WiFi del sensor.',
+          isActive: true,
+          isLast: false,
+          actionWidget: Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+            decoration: BoxDecoration(
+              color: GardenColors.sageLight,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: GardenColors.sage, width: 1),
+            ),
+            child: const Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Icon(Icons.wifi_rounded,
+                    size: 14, color: GardenColors.leafDark),
+                SizedBox(width: 7),
+                Text(
+                  'gossip_garden',
+                  style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: GardenColors.leafDark,
+                      letterSpacing: 0.5),
+                ),
+              ],
+            ),
+          ),
+        ),
+        _stepperItem(
+          number: 3,
+          title: 'Volver a tu red local',
+          isLast: false,
+        ),
+        _stepperItem(
+          number: 4,
+          title: 'Agregar tu planta',
+          isLast: false,
+        ),
+        _stepperItem(
+          number: 5,
+          title: '¡Listo para tu jardín!',
+          isLast: true,
+        ),
+      ],
+    );
+  }
+
+  Widget _buildNoSensorStepper() {
+    return Column(
+      key: const ValueKey('nosensor'),
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _stepperItem(
+          number: 1,
+          title: 'Crear cuenta',
+          isDone: true,
+          isLast: false,
+        ),
+        _stepperItem(
+          number: 2,
+          title: 'Agregar tu planta',
+          description:
+              'Búscala por nombre o identificala con IA. Puedes conectar un sensor más adelante.',
+          isActive: true,
+          isLast: false,
+          actionWidget: Row(
+            children: [
+              // Buscar nombre — disponible
+              Expanded(
+                child: GestureDetector(
+                  onTap: () {
+                    ref.read(onboardingStepProvider.notifier).state =
+                        OnboardingStep.identify;
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: GardenColors.sageLight,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                          color: GardenColors.leafDark.withOpacity(0.3),
+                          width: 1),
+                    ),
+                    child: const Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(Icons.search_rounded,
+                            size: 20, color: GardenColors.leafDark),
+                        SizedBox(height: 4),
+                        Text(
+                          'Buscar nombre',
+                          style: TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: GardenColors.leafDark),
+                          textAlign: TextAlign.center,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              // Reconocer con IA — próximamente
+              Expanded(
+                child: Stack(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: GardenColors.creamLight,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                            color: GardenColors.dustLight, width: 1),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          ShaderMask(
+                            shaderCallback: (bounds) => LinearGradient(
+                              colors: [
+                                GardenColors.potOrange,
+                                GardenColors.leafGreen,
+                              ],
+                            ).createShader(bounds),
+                            child: const Icon(
+                              Icons.auto_awesome_rounded,
+                              size: 20,
+                              color: Colors.white,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Reconocer con IA',
+                            style: TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                color: GardenColors.inkSoft),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Badge próximamente
+                    Positioned(
+                      top: -1,
+                      right: -1,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 7, vertical: 3),
+                        decoration: BoxDecoration(
+                          gradient: const LinearGradient(
+                            colors: [
+                              GardenColors.potOrange,
+                              Color(0xFFE8825C),
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(8),
+                          boxShadow: [
+                            BoxShadow(
+                              color: GardenColors.potOrange.withOpacity(0.35),
+                              blurRadius: 6,
+                              offset: const Offset(0, 2),
+                            )
+                          ],
+                        ),
+                        child: const Text(
+                          'Próximo',
+                          style: TextStyle(
+                              fontSize: 9,
+                              fontWeight: FontWeight.w700,
+                              color: Colors.white,
+                              letterSpacing: 0.3),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ),
+        _stepperItem(
+          number: 3,
+          title: '¡Listo para tu jardín!',
+          isLast: true,
+        ),
+      ],
+    );
+  }
+
+  Widget _stepperItem({
+    required int number,
+    required String title,
+    String? description,
+    bool isDone = false,
+    bool isActive = false,
+    bool isLast = false,
+    Widget? actionWidget,
+  }) {
+    final Color circleColor = isDone
+        ? GardenColors.leafGreen
+        : isActive
+            ? GardenColors.leafDark
+            : GardenColors.dustLight;
+
+    final Widget circleContent = isDone
+        ? const Icon(Icons.check_rounded, size: 15, color: Colors.white)
+        : Text(
+            '$number',
+            style: TextStyle(
+              color: isActive ? Colors.white : GardenColors.inkSoft,
+              fontWeight: FontWeight.w700,
+              fontSize: 13,
+            ),
+          );
+
+    final double lineHeight = isActive ? 110.0 : 36.0;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // ── Círculo + línea ─────────────────────────────────────────────
+        Column(
+          children: [
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 200),
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: circleColor,
+                boxShadow: isActive
+                    ? [
+                        BoxShadow(
+                          color: GardenColors.leafDark.withOpacity(0.3),
+                          blurRadius: 8,
+                          offset: const Offset(0, 3),
+                        )
+                      ]
+                    : [],
+              ),
+              child: Center(child: circleContent),
+            ),
+            if (!isLast)
+              AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                width: 2,
+                height: lineHeight,
+                decoration: BoxDecoration(
+                  color: isDone
+                      ? GardenColors.leafGreen.withOpacity(0.5)
+                      : GardenColors.sage.withOpacity(0.6),
+                  borderRadius: BorderRadius.circular(1),
+                ),
+              ),
+          ],
+        ),
+        const SizedBox(width: 14),
+        // ── Contenido ────────────────────────────────────────────────────
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 6),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    fontSize: isActive ? 16 : 14,
+                    fontWeight:
+                        isActive ? FontWeight.w700 : FontWeight.w500,
+                    color: isDone
+                        ? GardenColors.inkSoft
+                        : isActive
+                            ? GardenColors.ink
+                            : GardenColors.inkSoft,
+                    decoration:
+                        isDone ? TextDecoration.lineThrough : null,
+                    decorationColor: GardenColors.inkSoft,
+                  ),
+                ),
+                if (isActive && description != null) ...
+                [
+                  const SizedBox(height: 5),
+                  Text(
+                    description,
+                    style: const TextStyle(
+                        fontSize: 13,
+                        color: GardenColors.inkSoft,
+                        height: 1.45),
+                  ),
+                ],
+                if (actionWidget != null) ...
+                [
+                  const SizedBox(height: 10),
+                  actionWidget,
+                ],
+                if (!isLast) const SizedBox(height: 6),
+              ],
+            ),
+          ),
+        ),
       ],
     );
   }
@@ -1034,23 +1481,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     );
   }
 
-  Widget _buildBenefitRow(FaIconData icon, String title, String subtitle) {
-    return Row(
-      children: [
-        FaIcon(icon, size: 24, color: GardenColors.leafDark),
-        const SizedBox(width: 12),
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title,
-                style: const TextStyle(
-                    fontWeight: FontWeight.w600, color: GardenColors.ink)),
-            Text(subtitle, style: const TextStyle(color: GardenColors.inkSoft)),
-          ],
-        )
-      ],
-    );
-  }
+
 
   Widget _primaryButton(String text, VoidCallback? onTap) {
     final enabled = onTap != null;

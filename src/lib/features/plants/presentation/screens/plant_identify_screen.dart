@@ -3,7 +3,7 @@ import '../../../../core/theme/garden_colors.dart';
 import '../../../../core/theme/garden_text_styles.dart';
 
 // Flujo: método → cámara/búsqueda → resultado identificado → agregar
-enum _IdentifyMode { select, camera, search, result }
+enum _IdentifyMode { select, camera, matches, search, result }
 
 class PlantIdentifyScreen extends StatefulWidget {
   final VoidCallback? onBack;
@@ -33,6 +33,8 @@ class _PlantIdentifyScreenState extends State<PlantIdentifyScreen> {
       } else {
         Navigator.pop(context);
       }
+    } else if (_mode == _IdentifyMode.matches) {
+      setState(() => _mode = _IdentifyMode.camera);
     } else {
       setState(() => _mode = _IdentifyMode.select);
     }
@@ -74,7 +76,11 @@ class _PlantIdentifyScreenState extends State<PlantIdentifyScreen> {
         );
       case _IdentifyMode.camera:
         return _CameraView(
-          onIdentified: () => setState(() => _mode = _IdentifyMode.result),
+          onIdentified: () => setState(() => _mode = _IdentifyMode.matches),
+        );
+      case _IdentifyMode.matches:
+        return _MatchesView(
+          onSelectMatch: () => setState(() => _mode = _IdentifyMode.result),
         );
       case _IdentifyMode.search:
         return _SearchView(
@@ -324,7 +330,7 @@ class _SearchView extends StatelessWidget {
     required this.onSelectPlant,
   });
 
-  // Demo hardcoded — TODO(backend): conectar endpoint de catálogo de plantas
+  //hardcoded — TODO(backend): conectar endpoint de catálogo de plantas
   static const _catalog = [
     (
       emoji: '🌿',
@@ -579,7 +585,7 @@ class _ResultView extends StatelessWidget {
                               .copyWith(color: GardenColors.ink, fontSize: 13),
                           children: const [
                             TextSpan(
-                                text: 'Dificultad: ',
+                                text: 'Dificultad de cuidado: ',
                                 style: TextStyle(fontWeight: FontWeight.w700)),
                             TextSpan(text: 'Fácil'),
                           ],
@@ -679,7 +685,7 @@ class _ResultView extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('TIP DE ORO',
+                      Text('Concejo jardinero',
                           style: GardenTextStyles.label.copyWith(
                               color: GardenColors.leafDark,
                               fontSize: 10,
@@ -719,6 +725,346 @@ class _ResultView extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+}
+
+// ── 4. Matches IA (Slide Cards) ───────────────────────────────────────────────
+
+class _MatchesView extends StatefulWidget {
+  final VoidCallback onSelectMatch;
+  const _MatchesView({required this.onSelectMatch});
+
+  @override
+  State<_MatchesView> createState() => _MatchesViewState();
+}
+
+class _MatchesViewState extends State<_MatchesView> {
+  int _currentIndex = 0;
+  final PageController _pageController = PageController(viewportFraction: 0.82);
+
+  static const _matches = [
+    (
+      name: 'Monstera',
+      species: 'Monstera deliciosa',
+      pct: 94,
+      tags: ['Fácil', 'Interior', 'México'],
+      emoji: '🌿'
+    ),
+    (
+      name: 'Philodendron',
+      species: 'Philodendron bipinnatifidum',
+      pct: 73,
+      tags: ['Fácil', 'Interior'],
+      emoji: '🍃'
+    ),
+    (
+      name: 'Pothos',
+      species: 'Epipremnum aureum',
+      pct: 45,
+      tags: ['Fácil', 'Interior', 'Baño'],
+      emoji: '🌱'
+    ),
+  ];
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final currentMatch = _matches[_currentIndex];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Header info
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 20, 24, 8),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                decoration: BoxDecoration(
+                  color: GardenColors.leafDark.withOpacity(0.08),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Text(
+                  '${_matches.length} POSIBLES COINCIDENCIAS',
+                  style: GardenTextStyles.label.copyWith(
+                    color: GardenColors.leafDark,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w800,
+                    letterSpacing: 0.6,
+                  ),
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                '¿Cuál de estas es tu planta?',
+                style: GardenTextStyles.title.copyWith(
+                  color: GardenColors.ink,
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Selecciona la opción correcta para ver sus cuidados detallados.',
+                style: GardenTextStyles.bodySmall.copyWith(
+                  color: GardenColors.inkSoft,
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        // Cards list using PageView
+        Expanded(
+          child: PageView.builder(
+            controller: _pageController,
+            itemCount: _matches.length,
+            onPageChanged: (index) {
+              setState(() {
+                _currentIndex = index;
+              });
+            },
+            physics: const BouncingScrollPhysics(),
+            itemBuilder: (context, index) {
+              final match = _matches[index];
+              final isActive = index == _currentIndex;
+              
+              // Color badge logic
+              final Color badgeColor = match.pct >= 80
+                  ? GardenColors.leafDark
+                  : match.pct >= 60
+                      ? GardenColors.potOrange
+                      : GardenColors.heartRed;
+
+              return AnimatedContainer(
+                duration: const Duration(milliseconds: 300),
+                curve: Curves.easeOutCubic,
+                margin: EdgeInsets.symmetric(
+                  horizontal: 8,
+                  vertical: isActive ? 16 : 28,
+                ),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: isActive
+                        ? GardenColors.leafDark.withOpacity(0.3)
+                        : GardenColors.dustLight,
+                    width: isActive ? 1.5 : 1.0,
+                  ),
+                  boxShadow: [
+                    BoxShadow(
+                      color: GardenColors.ink.withOpacity(isActive ? 0.12 : 0.04),
+                      blurRadius: isActive ? 24 : 12,
+                      offset: Offset(0, isActive ? 12 : 6),
+                    ),
+                  ],
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    // Emoji / Image container
+                    Expanded(
+                      flex: 5,
+                      child: Stack(
+                        children: [
+                          Container(
+                            decoration: const BoxDecoration(
+                              color: GardenColors.sageLight,
+                              borderRadius: BorderRadius.vertical(
+                                top: Radius.circular(22),
+                              ),
+                            ),
+                            child: Center(
+                              child: AnimatedScale(
+                                duration: const Duration(milliseconds: 300),
+                                scale: isActive ? 1.15 : 1.0,
+                                child: Text(
+                                  match.emoji,
+                                  style: const TextStyle(fontSize: 84),
+                                ),
+                              ),
+                            ),
+                          ),
+                          // Percentage badge
+                          Positioned(
+                            top: 14,
+                            right: 14,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 6,
+                              ),
+                              decoration: BoxDecoration(
+                                color: badgeColor,
+                                borderRadius: BorderRadius.circular(20),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: badgeColor.withOpacity(0.3),
+                                    blurRadius: 8,
+                                    offset: const Offset(0, 3),
+                                  )
+                                ],
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    '${match.pct}%',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.w800,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  const SizedBox(width: 2),
+                                  const Text(
+                                    'match',
+                                    style: TextStyle(
+                                      color: Colors.white70,
+                                      fontWeight: FontWeight.w500,
+                                      fontSize: 10,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    
+                    // Info area
+                    Expanded(
+                      flex: 4,
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              match.name,
+                              style: GardenTextStyles.title.copyWith(
+                                color: GardenColors.ink,
+                                fontSize: 22,
+                                fontWeight: FontWeight.w800,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              match.species,
+                              style: GardenTextStyles.bodySmall.copyWith(
+                                color: GardenColors.inkSoft,
+                                fontStyle: FontStyle.italic,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const Spacer(),
+                            // Tag chips
+                            Wrap(
+                              spacing: 6,
+                              runSpacing: 6,
+                              children: match.tags.map((tag) {
+                                return Container(
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    color: GardenColors.creamPaper,
+                                    borderRadius: BorderRadius.circular(8),
+                                    border: Border.all(
+                                      color: GardenColors.dustLight,
+                                      width: 0.8,
+                                    ),
+                                  ),
+                                  child: Text(
+                                    tag,
+                                    style: GardenTextStyles.label.copyWith(
+                                      color: GardenColors.inkSoft,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+
+        // Bottom CTA controls
+        Padding(
+          padding: const EdgeInsets.fromLTRB(24, 8, 24, 32),
+          child: Column(
+            children: [
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: widget.onSelectMatch,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: GardenColors.leafDark,
+                    foregroundColor: Colors.white,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(16),
+                    ),
+                    elevation: 3,
+                    shadowColor: GardenColors.leafDark.withOpacity(0.3),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const Icon(Icons.check_circle_outline_rounded, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Es la ${currentMatch.name}, confirmar',
+                        style: const TextStyle(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w700,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.swipe_left_rounded, size: 14, color: GardenColors.inkSoft.withOpacity(0.7)),
+                  const SizedBox(width: 6),
+                  Text(
+                    'Desliza para ver más opciones',
+                    style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      color: GardenColors.inkSoft,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }

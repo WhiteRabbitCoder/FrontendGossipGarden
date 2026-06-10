@@ -18,6 +18,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
   bool _obscurePassword = true;
+  bool _obscureConfirmPassword = true;
 
   @override
   void dispose() {
@@ -174,13 +175,23 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   const SizedBox(height: 16),
                   TextField(
                     controller: _confirmController,
-                    obscureText: true,
+                    obscureText: _obscureConfirmPassword,
                     decoration: InputDecoration(
                       hintText: 'Confirmar contraseña',
                       hintStyle: GardenTextStyles.body
                           .copyWith(color: GardenColors.inkSoft),
                       prefixIcon: const Icon(Icons.lock_outline,
                           color: GardenColors.leafGreen),
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscureConfirmPassword
+                              ? Icons.visibility_off_outlined
+                              : Icons.visibility_outlined,
+                          color: GardenColors.inkSoft,
+                        ),
+                        onPressed: () => setState(
+                            () => _obscureConfirmPassword = !_obscureConfirmPassword),
+                      ),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
