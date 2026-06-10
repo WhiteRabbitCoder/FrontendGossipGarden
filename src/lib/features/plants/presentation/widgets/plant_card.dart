@@ -35,11 +35,11 @@ class PlantCard extends StatelessWidget {
           ),
         ),
       ),
-    );
+    );  // card, revisar 
   }
-
+  
   Widget _buildPlantAvatar(Plant plant) {
-    return Container(
+    return Container( 
       width: 48,
       height: 48,
       decoration: const BoxDecoration(
