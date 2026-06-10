@@ -101,7 +101,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     ref.read(navigationProvider.notifier).changeTab(TabId.dashboard);
   }
 
-  void _startWifiConnection() {
+  void _startWifiConnection() async {
     final ssid = _ssidController.text.trim();
     final password = _passwordController.text;
     if (ssid.isEmpty) return;
@@ -109,6 +109,17 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     ref.read(wifiSsidProvider.notifier).state = ssid;
     ref.read(wifiPasswordProvider.notifier).state = password;
     ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.connecting;
+
+    // Simulate network connection delay
+    await Future.delayed(const Duration(seconds: 3));
+    if (!mounted) return;
+
+    // Simulate success or failure (e.g. fail if password is 'error' or too short)
+    if (password.isNotEmpty && password.length < 5) {
+      ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.error;
+    } else {
+      ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.connected;
+    }
   }
 
   void _showWifiConnected() {
@@ -145,28 +156,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   void _verifyAndStartScanning() async {
     if (!mounted) return;
     ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.verifying;
-    if (mounted) return;
-    await Future.delayed(const Duration(milliseconds: 1200));
+    
+    await Future.delayed(const Duration(milliseconds: 2500));
 
     if (!mounted) return;
     ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.scanning;
-    await Future.delayed(const Duration(milliseconds: 2000));
-
-    if (!mounted) return;
-    // Inyectar redes falsas y saltar directo a connecting con SSID pre-elegido
-    ref.read(wifiNetworksProvider.notifier).state = const [
-      _WifiNetwork(ssid: 'GossipGarden_Home', signal: 4, secured: true),
-      _WifiNetwork(ssid: 'CasaDeAngelo_5G', signal: 3, secured: true),
-      _WifiNetwork(ssid: 'Vecinos_WiFi', signal: 2, secured: true),
-    ];
-    ref.read(wifiSsidProvider.notifier).state = 'GossipGarden_Home';
-    _ssidController.text = 'GossipGarden_Home';
-    _passwordController.text = '••••••••';
-    ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.connecting;
-    await Future.delayed(const Duration(milliseconds: 2200));
-
-    if (!mounted) return;
-    ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.connected;
   }
 
   void _scanNetworks() async {
@@ -347,21 +341,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             Icons.wb_sunny,
             Icons.thermostat,
           ].map((e) {
-            return AnimatedBuilder(
-              animation: _iconAnimation,
-              builder: (_, __) => Transform.scale(
-                scale: _iconAnimation.value,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 12),
-                  child: Icon(e, size: 32, color: GardenColors.leafDark),
-                ),
-              ),
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              child: Icon(e, size: 32, color: GardenColors.leafDark),
             );
           }).toList(),
         ),
         const SizedBox(height: 32),
         const Text(
-          'Tus plantas tienen algo que decirte',
+          'Tus plantas tienen algo que decirte....',
           textAlign: TextAlign.center,
           style: TextStyle(
               fontSize: 24,
@@ -378,6 +366,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   }
 
   // ── Paso 2: Bienvenida ──────────────────────────────────────────────────
+// esta parte de la pagina se va a refactorizar por completo//
 
   Widget _buildWelcomeStep() {
     return Column(
@@ -761,7 +750,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             size: 64, color: GardenColors.leafDark),
         const SizedBox(height: 24),
         const Text(
-          'Configuración del Sensor',
+          'Configuración del chip',
           style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
         ),
         const SizedBox(height: 16),
@@ -769,7 +758,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           child: const Column(
             children: [
               Text(
-                'Conectando con el sensor...',
+                'Conectate a la red wifi del sensor en los ajustes del dispositivo',
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 15),
               ),
@@ -787,7 +776,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           ),
         ),
         const SizedBox(height: 40),
-        _primaryButton('Buscar sensor', _verifyAndStartScanning),
+        _primaryButton('Verificar conexión', _verifyAndStartScanning),
       ],
     );
   }
@@ -800,13 +789,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           const CircularProgressIndicator(color: GardenColors.leafDark),
           const SizedBox(height: 32),
           const Text(
-            'Sincronizando con el sensor...',
+            'Sincronizando con el chip...',
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
-          const Text('Recibiendo endpoints de configuración'),
-          const SizedBox(height: 48),
-          _primaryButton('Continuar', _showWifiScanning),
+          const Text('Estamos recibiendo informacion, espere un momento'),
         ],
       ),
     );
@@ -829,7 +816,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           ),
           const SizedBox(height: 32),
           const Text(
-            'Conectado al sensor',
+            'Chip en linea',
             style: TextStyle(
                 fontSize: 20,
                 fontWeight: FontWeight.w700,
@@ -837,7 +824,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           ),
           const SizedBox(height: 12),
           Text(
-            'El chip está buscando redes WiFi reales\nen tu entorno...',
+            'Conecta tu dispositivo a redes wifi disponibles en tu entorno para continuar',
             textAlign: TextAlign.center,
             style: TextStyle(color: GardenColors.inkSoft, height: 1.5),
           ),
@@ -883,8 +870,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             textAlign: TextAlign.center,
             style: TextStyle(color: GardenColors.inkSoft, height: 1.5),
           ),
-          const SizedBox(height: 40),
-          _primaryButton('Ver sensor en linea', _showWifiConnected),
         ],
       ),
     );
