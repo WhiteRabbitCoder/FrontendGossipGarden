@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../providers/navigation_provider.dart';
 import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../../../../core/widgets/garden_icon.dart';
 
 class AnimatedBottomNav extends StatelessWidget {
   final TabId activeTab;
@@ -16,10 +18,10 @@ class AnimatedBottomNav extends StatelessWidget {
   });
 
   static const _tabs = [
-    (TabId.dashboard, Icons.home_rounded, 'Inicio'),
-    (TabId.garden, Icons.eco_rounded, 'Jardín'),
-    (TabId.chat, Icons.chat_bubble_rounded, 'Chats'),
-    (TabId.profile, Icons.person_rounded, 'Perfil'),
+    (TabId.dashboard, GardenIcons.home, 'Inicio'),
+    (TabId.garden, GardenIcons.garden, 'Jardín'),
+    (TabId.chat, GardenIcons.chat, 'Chats'),
+    (TabId.profile, GardenIcons.profile, 'Perfil'),
   ];
 
   @override
@@ -64,30 +66,23 @@ class AnimatedBottomNav extends StatelessWidget {
                       children: [
                         AnimatedContainer(
                           duration: const Duration(milliseconds: 300),
-                          padding: const EdgeInsets.all(10),
+                          padding: const EdgeInsets.all(8),
                           decoration: BoxDecoration(
-                            color: (isActive && tab.$1 != TabId.dashboard) ? GardenColors.leafDark : Colors.transparent,
+                            color: isActive
+                                ? GardenColors.leafDark
+                                : Colors.transparent,
                             shape: BoxShape.circle,
                           ),
-                          child: tab.$1 == TabId.dashboard
-                              ? AnimatedScale(
-                                  scale: isActive ? 1.3 : 1.0,
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.easeOutBack,
-                                  child: Opacity(
-                                    opacity: isActive ? 1.0 : 0.6,
-                                    child: Image.asset(
-                                      'images/house_icon.png',
-                                      width: 32,
-                                      height: 32,
-                                    ),
-                                  ),
-                                )
-                              : Icon(
-                                  tab.$2,
-                                  size: 24,
-                                  color: isActive ? Colors.white : GardenColors.inkSoft,
-                                ),
+                          child: AnimatedScale(
+                            scale: isActive ? 1.15 : 1.0,
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeOutBack,
+                            child: GardenIcon(
+                              asset: tab.$2,
+                              size: 26,
+                              opacity: isActive ? 1.0 : 0.55,
+                            ),
+                          ),
                         ),
                         if (isActive) const SizedBox(height: 2),
                         if (isActive)
@@ -98,7 +93,7 @@ class AnimatedBottomNav extends StatelessWidget {
                               color: GardenColors.leafDark,
                               fontWeight: FontWeight.w800,
                             ),
-                          )
+                          ),
                       ],
                     ),
                   ),

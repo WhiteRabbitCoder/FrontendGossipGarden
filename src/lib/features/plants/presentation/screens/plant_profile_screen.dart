@@ -6,7 +6,10 @@ import '../../data/models/plant.dart';
 import '../../data/models/plant_enums.dart';
 import '../../data/models/comfort_zones.dart';
 import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../../../../core/widgets/garden_icon.dart';
+import 'sensor_settings_screen.dart';
 
 class PlantProfileScreen extends ConsumerWidget {
   final String plantId;
@@ -32,7 +35,7 @@ class PlantProfileScreen extends ConsumerWidget {
             backgroundColor: GardenColors.creamPaper,
             appBar: AppBar(
               leading: IconButton(
-                icon: const Icon(Icons.arrow_back_ios_new_rounded),
+                icon: const GardenIcon(asset: GardenIcons.back, size: 20),
                 onPressed: onBack,
               ),
               title: const Text('Perfil de planta'),
@@ -60,8 +63,7 @@ class PlantProfileScreen extends ConsumerWidget {
             backgroundColor: Colors.transparent,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                  color: GardenColors.ink),
+              icon: const GardenIcon(asset: GardenIcons.back, size: 20),
               onPressed: onBack,
             ),
             title: Column(
@@ -90,8 +92,7 @@ class PlantProfileScreen extends ConsumerWidget {
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
-                  icon: const Icon(Icons.chat_bubble_outline_rounded,
-                      color: GardenColors.leafDark, size: 20),
+                  icon: const GardenIcon(asset: GardenIcons.chat, size: 20),
                   onPressed: () => onOpenChat(plantId),
                 ),
               ),
@@ -109,6 +110,13 @@ class PlantProfileScreen extends ConsumerWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: _PersonalitySection(plant: plant),
+                ),
+                const SizedBox(height: 24),
+
+                // ── Estado del sensor ──────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: _SensorStatusCard(plant: plant),
                 ),
                 const SizedBox(height: 24),
 
@@ -187,8 +195,10 @@ class _PlantHeroCard extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(Icons.favorite_rounded,
-                        size: 12, color: GardenColors.leafDark),
+                    const GardenIcon(
+                      asset: GardenIcons.logroFavorita,
+                      size: 12,
+                    ),
                     const SizedBox(width: 4),
                     Text(
                       'Montse', // TODO(backend): conectar nombre del dueño desde perfil
@@ -217,17 +227,15 @@ class _PlantHeroCard extends StatelessWidget {
                     child: Image.network(
                       plant.image,
                       fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => Icon(
-                        _getPlantIcon(plant.species),
+                      errorBuilder: (_, __, ___) => GardenIcon(
+                        asset: _getPlantIcon(plant.species),
                         size: 64,
-                        color: GardenColors.leafDark,
                       ),
                     ),
                   )
-                : Icon(
-                    _getPlantIcon(plant.species),
+                : GardenIcon(
+                    asset: _getPlantIcon(plant.species),
                     size: 64,
-                    color: GardenColors.leafDark,
                   ),
           ),
           const SizedBox(height: 16),
@@ -275,16 +283,8 @@ class _PlantHeroCard extends StatelessWidget {
     }
   }
 
-  IconData _getPlantIcon(String species) {
-    final lower = species.toLowerCase();
-    if (lower.contains('echeveria') || lower.contains('suculenta')) {
-      return Icons.local_florist_outlined;
-    }
-    if (lower.contains('ficus')) {
-      return Icons.park_outlined;
-    }
-    return Icons.eco_outlined;
-  }
+  String _getPlantIcon(String species) =>
+      GardenIcons.plantAssetForSpecies(species);
 }
 
 // ── Mood Badge ────────────────────────────────────────────────────────────────
@@ -459,6 +459,126 @@ class _PersonalitySection extends StatelessWidget {
   }
 }
 
+// ── Sensor Status Card ────────────────────────────────────────────────────────
+
+class _SensorStatusCard extends StatelessWidget {
+  final Plant plant;
+
+  const _SensorStatusCard({required this.plant});
+
+  void _openSensorSettings(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => SensorSettingsScreen(initialPlantId: plant.id),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, color, iconAsset, subtitle) = switch (plant.sensorStatus) {
+      SensorStatus.online => (
+          'En línea',
+          GardenColors.okGreen,
+          GardenIcons.wifi,
+          'Recibiendo datos en tiempo real',
+        ),
+      SensorStatus.degraded => (
+          'Señal débil',
+          GardenColors.golden,
+          GardenIcons.signal,
+          'Datos con retraso o señal inestable',
+        ),
+      SensorStatus.offline => (
+          'Sin conexión',
+          GardenColors.heartRed,
+          GardenIcons.sensorOffline,
+          'No hay datos del sensor',
+        ),
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Estado del sensor',
+          style: GardenTextStyles.title.copyWith(
+            color: GardenColors.ink,
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Material(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => _openSensorSettings(context),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: color.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: GardenIcon(asset: iconAsset, size: 22),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          label,
+                          style: GardenTextStyles.bodySmall.copyWith(
+                            color: color,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          style: GardenTextStyles.bodySmall.copyWith(
+                            color: GardenColors.inkSoft,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          plant.sensorStatus == SensorStatus.offline
+                              ? 'Toca para reconectar o revisar la falla'
+                              : 'Toca para ver detalles y configuración',
+                          style: GardenTextStyles.label.copyWith(
+                            color: GardenColors.leafDark,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const GardenIcon(
+                    asset: GardenIcons.forward,
+                    size: 22,
+                    opacity: 0.6,
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 // ── Sensor Grid ───────────────────────────────────────────────────────────────
 
 class _SensorGrid extends StatelessWidget {
@@ -501,28 +621,28 @@ class _SensorGrid extends StatelessWidget {
             _SensorTile(
               label: 'TIERRA',
               value: '${soilMoisture.toInt()}%',
-              icon: Icons.water_drop_outlined,
+              iconAsset: GardenIcons.water,
               iconBg: const Color(0xFFE0F0FF),
               iconColor: const Color(0xFF2563EB),
             ),
             _SensorTile(
               label: 'LUZ',
               value: '${light.toInt()}%',
-              icon: Icons.wb_sunny_outlined,
+              iconAsset: GardenIcons.sun,
               iconBg: const Color(0xFFFFF8E0),
               iconColor: const Color(0xFFD97706),
             ),
             _SensorTile(
               label: 'TEMP.',
               value: '${temperature.toStringAsFixed(0)}°C',
-              icon: Icons.thermostat_outlined,
+              iconAsset: GardenIcons.thermostat,
               iconBg: const Color(0xFFFFEDED),
               iconColor: const Color(0xFFD94040),
             ),
             _SensorTile(
               label: 'HUMEDAD',
               value: '${humidity.toInt()}%',
-              icon: Icons.air_outlined,
+              iconAsset: GardenIcons.humidity,
               iconBg: const Color(0xFFE0F0FF),
               iconColor: const Color(0xFF2563EB),
             ),
@@ -536,14 +656,14 @@ class _SensorGrid extends StatelessWidget {
 class _SensorTile extends StatelessWidget {
   final String label;
   final String value;
-  final IconData icon;
+  final String iconAsset;
   final Color iconBg;
   final Color iconColor;
 
   const _SensorTile({
     required this.label,
     required this.value,
-    required this.icon,
+    required this.iconAsset,
     required this.iconBg,
     required this.iconColor,
   });
@@ -566,7 +686,7 @@ class _SensorTile extends StatelessWidget {
               color: iconBg,
               shape: BoxShape.circle,
             ),
-            child: Icon(icon, color: iconColor, size: 20),
+            child: GardenIcon(asset: iconAsset, size: 20),
           ),
           const SizedBox(width: 12),
           Column(
@@ -632,9 +752,9 @@ class _AboutSection extends StatelessWidget {
         );
 
     final rows = [
-      (Icons.landscape_outlined, 'Origen', info.origin),
-      (Icons.calendar_today_outlined, 'Edad', info.age),
-      (Icons.location_on_outlined, 'Vive en', info.location),
+      (GardenIcons.mountain, 'Origen', info.origin),
+      (GardenIcons.calendar, 'Edad', info.age),
+      (GardenIcons.map, 'Vive en', info.location),
     ];
 
     return Column(
@@ -666,8 +786,7 @@ class _AboutSection extends StatelessWidget {
                         horizontal: 16, vertical: 14),
                     child: Row(
                       children: [
-                        Icon(row.$1,
-                            size: 18, color: GardenColors.inkSoft),
+                        GardenIcon(asset: row.$1, size: 18, opacity: 0.6),
                         const SizedBox(width: 12),
                         Text(
                           row.$2,
@@ -714,22 +833,22 @@ class _CareSection extends StatelessWidget {
   // Demo hardcoded — TODO(backend): traer desde plant_species endpoint
   static const _careItems = {
     '1': [
-      (Icons.water_drop_outlined, 'RIEGO', 'Cada 7 días, 250ml'),
-      (Icons.wb_sunny_outlined, 'LUZ', 'Luz indirecta brillante'),
-      (Icons.grass_outlined, 'SUSTRATO', 'Mezcla aireada con perlita'),
-      (Icons.air_outlined, 'HUMEDAD', 'Le encanta la humedad alta (60%+)'),
+      (GardenIcons.water, 'RIEGO', 'Cada 7 días, 250ml'),
+      (GardenIcons.sun, 'LUZ', 'Luz indirecta brillante'),
+      (GardenIcons.soil, 'SUSTRATO', 'Mezcla aireada con perlita'),
+      (GardenIcons.humidity, 'HUMEDAD', 'Le encanta la humedad alta (60%+)'),
     ],
     '2': [
-      (Icons.water_drop_outlined, 'RIEGO', 'Cada 14 días, 100ml'),
-      (Icons.wb_sunny_outlined, 'LUZ', 'Luz directa varias horas'),
-      (Icons.grass_outlined, 'SUSTRATO', 'Cactus y suculentas'),
-      (Icons.air_outlined, 'HUMEDAD', 'Prefiere ambiente seco (20-40%)'),
+      (GardenIcons.water, 'RIEGO', 'Cada 14 días, 100ml'),
+      (GardenIcons.sun, 'LUZ', 'Luz directa varias horas'),
+      (GardenIcons.soil, 'SUSTRATO', 'Cactus y suculentas'),
+      (GardenIcons.humidity, 'HUMEDAD', 'Prefiere ambiente seco (20-40%)'),
     ],
     '3': [
-      (Icons.water_drop_outlined, 'RIEGO', 'Cada 10 días, 300ml'),
-      (Icons.wb_sunny_outlined, 'LUZ', 'Luz indirecta brillante'),
-      (Icons.grass_outlined, 'SUSTRATO', 'Tierra bien drenada'),
-      (Icons.air_outlined, 'HUMEDAD', 'Humedad moderada (40-60%)'),
+      (GardenIcons.water, 'RIEGO', 'Cada 10 días, 300ml'),
+      (GardenIcons.sun, 'LUZ', 'Luz indirecta brillante'),
+      (GardenIcons.soil, 'SUSTRATO', 'Tierra bien drenada'),
+      (GardenIcons.humidity, 'HUMEDAD', 'Humedad moderada (40-60%)'),
     ],
   };
 
@@ -780,8 +899,7 @@ class _CareSection extends StatelessWidget {
                             color: GardenColors.creamLight,
                             shape: BoxShape.circle,
                           ),
-                          child: Icon(item.$1,
-                              size: 18, color: GardenColors.leafDark),
+                          child: GardenIcon(asset: item.$1, size: 18),
                         ),
                         const SizedBox(width: 12),
                         Column(
@@ -832,8 +950,7 @@ class _CareSection extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.lightbulb_outline_rounded,
-                    size: 18, color: Color(0xFFD94040)),
+                const GardenIcon(asset: GardenIcons.bulb, size: 18),
                 const SizedBox(width: 10),
                 Expanded(
                   child: RichText(

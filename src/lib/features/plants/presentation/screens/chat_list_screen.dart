@@ -6,7 +6,9 @@ import '../providers/navigation_provider.dart';
 import '../../data/models/plant.dart';
 import '../../data/models/plant_enums.dart';
 import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../../../../core/widgets/garden_icon.dart';
 
 class ChatListScreen extends ConsumerWidget {
   const ChatListScreen({super.key});
@@ -15,14 +17,6 @@ class ChatListScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final plantsAsync = ref.watch(plantsProvider);
     final navNotifier = ref.read(navigationProvider.notifier);
-
-    final totalUnread = plantsAsync.maybeWhen(
-      data: (plants) => plants.fold<int>(0, (acc, p) {
-        final msgs = ref.read(chatMessagesProvider(p.id));
-        return acc + (msgs.isNotEmpty && msgs.last.sender == 'plant' ? 1 : 0);
-      }),
-      orElse: () => 0,
-    );
 
     return Scaffold(
       backgroundColor: GardenColors.creamPaper,
@@ -54,46 +48,6 @@ class ChatListScreen extends ConsumerWidget {
                           ),
                         ],
                       ),
-                    ),
-                    Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            border:
-                                Border.all(color: GardenColors.creamPaper),
-                          ),
-                          child: const Icon(
-                              Icons.notifications_none_rounded,
-                              color: GardenColors.ink,
-                              size: 22),
-                        ),
-                        if (totalUnread > 0)
-                          Positioned(
-                            top: 2,
-                            right: 2,
-                            child: Container(
-                              width: 17,
-                              height: 17,
-                              decoration: const BoxDecoration(
-                                  color: GardenColors.heartRed,
-                                  shape: BoxShape.circle),
-                              child: Center(
-                                child: Text(
-                                  '$totalUnread',
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w800),
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
                     ),
                   ],
                 ),
@@ -175,8 +129,10 @@ class _ChatCard extends StatelessWidget {
                     decoration: const BoxDecoration(
                         color: GardenColors.creamLight,
                         shape: BoxShape.circle),
-                    child: const Icon(Icons.park_rounded,
-                        color: GardenColors.leafDark, size: 26),
+                    child: GardenIcon(
+                      asset: GardenIcons.plantAssetForSpecies(plant.species),
+                      size: 26,
+                    ),
                   ),
                   if (unreadCount > 0)
                     Positioned(
@@ -234,8 +190,11 @@ class _ChatCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              const Icon(Icons.chevron_right_rounded,
-                  color: GardenColors.inkSoft, size: 22),
+              const GardenIcon(
+                asset: GardenIcons.forward,
+                size: 22,
+                opacity: 0.6,
+              ),
             ],
           ),
         ),

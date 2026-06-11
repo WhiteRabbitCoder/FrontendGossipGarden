@@ -2,12 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/plant_providers.dart';
 import '../providers/navigation_provider.dart';
+import '../providers/urgent_tasks_provider.dart';
 import '../widgets/plant_feed_card.dart';
 import '../widgets/summary_banner.dart';
+import '../widgets/urgent_tasks_sheet.dart';
 import '../../data/models/plant.dart';
 import '../../data/models/plant_enums.dart';
 import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../../../../core/widgets/garden_icon.dart';
 import 'package:gossip_garden/features/auth/presentation/providers/auth_provider.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -27,12 +31,48 @@ class DashboardScreen extends ConsumerStatefulWidget {
 }
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
-  // Toggle visual lista/cuadrícula — no afecta lógica de navegación
   bool _isListView = true;
+
+  Widget _buildPlantsSliver(List<Plant> plants) {
+    if (_isListView) {
+      return SliverList(
+        delegate: SliverChildBuilderDelegate(
+          (context, index) => Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: PlantFeedCard(
+              plant: plants[index],
+              onTap: () => widget.onSelectPlant(plants[index].id),
+            ),
+          ),
+          childCount: plants.length,
+        ),
+      );
+    }
+
+    return SliverPadding(
+      padding: const EdgeInsets.symmetric(horizontal: 20),
+      sliver: SliverGrid(
+        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+          crossAxisCount: 2,
+          crossAxisSpacing: 12,
+          mainAxisSpacing: 12,
+          childAspectRatio: 0.82,
+        ),
+        delegate: SliverChildBuilderDelegate(
+          (context, index) => PlantFeedGridCard(
+            plant: plants[index],
+            onTap: () => widget.onSelectPlant(plants[index].id),
+          ),
+          childCount: plants.length,
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     final plantsAsync = ref.watch(plantsProvider);
+    final urgentCount = ref.watch(pendingUrgentTasksCountProvider);
     final navNotifier = ref.read(navigationProvider.notifier);
     final authSession = ref.watch(authStateProvider).value;
     final displayName = authSession?.profile?.displayName;
@@ -86,7 +126,10 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                         ],
                       ),
                     ),
-                    _NotificationBell(count: 4),
+                    _NotificationBell(
+                      count: urgentCount,
+                      onTap: () => showUrgentTasksSheet(context),
+                    ),
                   ],
                 ),
               ),
@@ -140,25 +183,28 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     ),
                   ),
                   const Spacer(),
-                  GestureDetector(
-                    onTap: () => setState(() => _isListView = false),
-                    child: Icon(
-                      Icons.grid_view_rounded,
-                      size: 20,
-                      color: !_isListView
-                          ? GardenColors.leafDark
-                          : GardenColors.inkSoft,
+                  Container(
+                    padding: const EdgeInsets.all(4),
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: GardenColors.creamPaper),
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  GestureDetector(
-                    onTap: () => setState(() => _isListView = true),
-                    child: Icon(
-                      Icons.format_list_bulleted_rounded,
-                      size: 20,
-                      color: _isListView
-                          ? GardenColors.leafDark
-                          : GardenColors.inkSoft,
+                    child: Row(
+                      children: [
+                        _ViewModeToggle(
+                          asset: GardenIcons.viewGrid,
+                          tooltip: 'Vista en cuadrícula',
+                          isSelected: !_isListView,
+                          onTap: () => setState(() => _isListView = false),
+                        ),
+                        _ViewModeToggle(
+                          asset: GardenIcons.viewList,
+                          tooltip: 'Vista en lista',
+                          isSelected: _isListView,
+                          onTap: () => setState(() => _isListView = true),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -166,20 +212,9 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
             ),
           ),
 
-          // ── Lista de plantas ─────────────────────────────────────────────────
+          // ── Lista o cuadrícula de plantas ────────────────────────────────────
           plantsAsync.when(
-            data: (plants) => SliverList(
-              delegate: SliverChildBuilderDelegate(
-                (context, index) => Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: PlantFeedCard(
-                    plant: plants[index],
-                    onTap: () => widget.onSelectPlant(plants[index].id),
-                  ),
-                ),
-                childCount: plants.length,
-              ),
-            ),
+            data: (plants) => _buildPlantsSliver(plants),
             loading: () => const SliverToBoxAdapter(
               child: Padding(
                 padding: EdgeInsets.all(32),
@@ -222,15 +257,61 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   }
 }
 
+// ── View mode toggle ──────────────────────────────────────────────────────────
+
+class _ViewModeToggle extends StatelessWidget {
+  final String asset;
+  final String tooltip;
+  final bool isSelected;
+  final VoidCallback onTap;
+
+  const _ViewModeToggle({
+    required this.asset,
+    required this.tooltip,
+    required this.isSelected,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: tooltip,
+      child: Material(
+        color: isSelected ? GardenColors.creamLight : Colors.transparent,
+        borderRadius: BorderRadius.circular(8),
+        child: InkWell(
+          borderRadius: BorderRadius.circular(8),
+          onTap: onTap,
+          child: Padding(
+            padding: const EdgeInsets.all(8),
+            child: GardenIcon(
+              asset: asset,
+              size: 20,
+              opacity: isSelected ? 1.0 : 0.45,
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ── Notification Bell ─────────────────────────────────────────────────────────
 
 class _NotificationBell extends StatelessWidget {
   final int count;
-  const _NotificationBell({required this.count});
+  final VoidCallback onTap;
+
+  const _NotificationBell({
+    required this.count,
+    required this.onTap,
+  });
 
   @override
   Widget build(BuildContext context) {
-    return Stack(
+    return GestureDetector(
+      onTap: onTap,
+      child: Stack(
       clipBehavior: Clip.none,
       children: [
         Container(
@@ -240,9 +321,8 @@ class _NotificationBell extends StatelessWidget {
             shape: BoxShape.circle,
             border: Border.all(color: GardenColors.creamPaper),
           ),
-          child: const Icon(
-            Icons.notifications_none_rounded,
-            color: GardenColors.ink,
+          child: const GardenIcon(
+            asset: GardenIcons.notification,
             size: 22,
           ),
         ),
@@ -270,6 +350,7 @@ class _NotificationBell extends StatelessWidget {
             ),
           ),
       ],
+    ),
     );
   }
 }
@@ -300,8 +381,11 @@ class _SensorAlertRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.wifi_off_rounded,
-              size: 18, color: GardenColors.inkSoft),
+          const GardenIcon(
+            asset: GardenIcons.sensorOffline,
+            size: 18,
+            opacity: 0.7,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: RichText(
@@ -355,8 +439,10 @@ class _UpcomingCareSection extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Icon(Icons.info_outline_rounded,
-                color: GardenColors.golden, size: 20),
+            const GardenIcon(
+              asset: GardenIcons.info,
+              size: 20,
+            ),
             const SizedBox(width: 8),
             Text(
               'Próximos Cuidados',

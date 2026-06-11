@@ -84,6 +84,40 @@ class Plant {
           [],
     );
   }
+
+  Plant copyWith({
+    String? id,
+    String? name,
+    String? species,
+    String? image,
+    PlantPersonality? personality,
+    double? health,
+    PlantMood? mood,
+    String? lastWatered,
+    Sensors? sensors,
+    SensorStatus? sensorStatus,
+    ConfidenceLevel? confidence,
+    List<PlantAction>? actions,
+    List<String>? insights,
+    ComfortZones? comfortZones,
+  }) {
+    return Plant(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      species: species ?? this.species,
+      image: image ?? this.image,
+      personality: personality ?? this.personality,
+      health: health ?? this.health,
+      mood: mood ?? this.mood,
+      lastWatered: lastWatered ?? this.lastWatered,
+      sensors: sensors ?? this.sensors,
+      sensorStatus: sensorStatus ?? this.sensorStatus,
+      confidence: confidence ?? this.confidence,
+      actions: actions ?? this.actions,
+      insights: insights ?? this.insights,
+      comfortZones: comfortZones ?? this.comfortZones,
+    );
+  }
 }
 
 /// Utilidad para convertir String de JSON a Enum de Dart de forma segura.

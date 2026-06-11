@@ -2,12 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/plant_providers.dart';
 import '../providers/chat_providers.dart';
+import '../providers/achievement_providers.dart';
 import '../../../auth/presentation/providers/auth_provider.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/telemetry_panel.dart';
 import '../../data/models/plant.dart';
 import '../../data/models/plant_enums.dart';
 import '../../../../../core/theme/garden_colors.dart';
+import '../../../../../core/theme/garden_icons.dart';
+import '../../../../../core/widgets/garden_icon.dart';
 
 class PlantChatScreen extends ConsumerStatefulWidget {
   final String plantId;
@@ -61,6 +64,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
 
     // 1. Añadir mensaje del usuario al estado local
     ref.read(chatMessagesProvider(widget.plantId).notifier).addMessage(text);
+    ref.read(achievementStatsProvider.notifier).recordChatMessage();
     setState(() => _waitingForPlant = true);
 
     // 2. Llamar al backend
@@ -115,7 +119,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
             backgroundColor: const Color(0xFFFDFCF8),
             appBar: AppBar(
               leading: IconButton(
-                icon: const Icon(Icons.arrow_back),
+                icon: const GardenIcon(asset: GardenIcons.back, size: 22),
                 onPressed: widget.onBack,
               ),
               title: const Text('Chat de planta'),
@@ -143,7 +147,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
           backgroundColor: const Color(0xFFFDFCF8),
           appBar: AppBar(
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back),
+              icon: const GardenIcon(asset: GardenIcons.back, size: 22),
               onPressed: widget.onBack,
             ),
             title: Row(
@@ -157,16 +161,14 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                             fit: BoxFit.cover,
                             width: 40,
                             height: 40,
-                            errorBuilder: (_, __, ___) => Icon(
-                              _getPlantIcon(_plant?.species ?? ''),
-                              color: GardenColors.leafDark, // GardenColors.leafDark
+                            errorBuilder: (_, __, ___) => GardenIcon(
+                              asset: _getPlantIcon(_plant?.species ?? ''),
                               size: 20,
                             ),
                           ),
                         )
-                      : Icon(
-                          _getPlantIcon(_plant?.species ?? ''),
-                          color: GardenColors.leafDark, // GardenColors.leafDark
+                      : GardenIcon(
+                          asset: _getPlantIcon(_plant?.species ?? ''),
                           size: 20,
                         ),
                 ),
@@ -235,7 +237,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                       min: _plant!.comfortZones.soilMoisture.min,
                       max: _plant!.comfortZones.soilMoisture.max,
                       unit: '%',
-                      icon: Icons.water_drop,
+                      iconAsset: GardenIcons.water,
                       color: const Color(0xFF4A6741),
                     ),
                     TelemetryData(
@@ -244,7 +246,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                       min: _plant!.comfortZones.temperature.min,
                       max: _plant!.comfortZones.temperature.max,
                       unit: '°C',
-                      icon: Icons.thermostat,
+                      iconAsset: GardenIcons.thermostat,
                       color: Colors.orange,
                     ),
                     TelemetryData(
@@ -253,7 +255,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                       min: _plant!.comfortZones.light.min,
                       max: _plant!.comfortZones.light.max,
                       unit: 'lux',
-                      icon: Icons.light_mode,
+                      iconAsset: GardenIcons.sun,
                       color: Colors.amber,
                     ),
                     TelemetryData(
@@ -262,7 +264,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                       min: _plant!.comfortZones.humidity.min,
                       max: _plant!.comfortZones.humidity.max,
                       unit: '%',
-                      icon: Icons.cloud,
+                      iconAsset: GardenIcons.humidity,
                       color: Colors.blue,
                     ),
                   ],
@@ -306,7 +308,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                               : const Color(0xFF4A6741),
                           borderRadius: BorderRadius.circular(24),
                         ),
-                        child: const Icon(Icons.send, color: Colors.white),
+                        child: const GardenIcon(asset: GardenIcons.forward, size: 22),
                       ),
                     ),
                   ],
@@ -322,14 +324,6 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
     );
   }
 
-  IconData _getPlantIcon(String species) {
-    final lower = species.toLowerCase();
-    if (lower.contains('echeveria') || lower.contains('suculenta')) {
-      return Icons.local_florist_outlined;
-    }
-    if (lower.contains('ficus')) {
-      return Icons.park_outlined;
-    }
-    return Icons.eco_outlined;
-  }
+  String _getPlantIcon(String species) =>
+      GardenIcons.plantAssetForSpecies(species);
 }

@@ -19,4 +19,18 @@ class Sensors {
       soilMoisture: (json['soilMoisture'] as num?)?.toDouble() ?? 0,
     );
   }
+
+  Sensors copyWith({
+    double? humidity,
+    double? temperature,
+    double? light,
+    double? soilMoisture,
+  }) {
+    return Sensors(
+      humidity: humidity ?? this.humidity,
+      temperature: temperature ?? this.temperature,
+      light: light ?? this.light,
+      soilMoisture: soilMoisture ?? this.soilMoisture,
+    );
+  }
 }

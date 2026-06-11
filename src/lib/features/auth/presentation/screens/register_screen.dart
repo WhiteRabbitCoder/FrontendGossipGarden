@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../../../../core/widgets/garden_icon.dart';
 import '../providers/auth_provider.dart';
 
 class RegisterScreen extends ConsumerStatefulWidget {
@@ -74,7 +76,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: GardenColors.leafDark),
+          icon: const GardenIcon(asset: GardenIcons.back, size: 22),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -110,8 +112,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       hintText: 'Nombre de usuario',
                       hintStyle: GardenTextStyles.body
                           .copyWith(color: GardenColors.inkSoft),
-                      prefixIcon: const Icon(Icons.person_outline,
-                          color: GardenColors.leafGreen),
+                      prefixIcon: const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: GardenIcon(asset: GardenIcons.profile, size: 22),
+                      ),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -130,8 +134,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       hintText: 'Correo electrónico',
                       hintStyle: GardenTextStyles.body
                           .copyWith(color: GardenColors.inkSoft),
-                      prefixIcon: const Icon(Icons.email_outlined,
-                          color: GardenColors.leafGreen),
+                      prefixIcon: const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: GardenIcon(asset: GardenIcons.email, size: 22),
+                      ),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -150,14 +156,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       hintText: 'Contraseña',
                       hintStyle: GardenTextStyles.body
                           .copyWith(color: GardenColors.inkSoft),
-                      prefixIcon: const Icon(Icons.lock_outline,
-                          color: GardenColors.leafGreen),
+                      prefixIcon: const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: GardenIcon(asset: GardenIcons.lock, size: 22),
+                      ),
                       suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                          color: GardenColors.inkSoft,
+                        icon: GardenIcon(
+                          asset: _obscurePassword
+                              ? GardenIcons.eyeClose
+                              : GardenIcons.eyeOpen,
+                          size: 22,
+                          opacity: 0.6,
                         ),
                         onPressed: () => setState(
                             () => _obscurePassword = !_obscurePassword),
@@ -180,14 +189,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                       hintText: 'Confirmar contraseña',
                       hintStyle: GardenTextStyles.body
                           .copyWith(color: GardenColors.inkSoft),
-                      prefixIcon: const Icon(Icons.lock_outline,
-                          color: GardenColors.leafGreen),
+                      prefixIcon: const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: GardenIcon(asset: GardenIcons.lock, size: 22),
+                      ),
                       suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscureConfirmPassword
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                          color: GardenColors.inkSoft,
+                        icon: GardenIcon(
+                          asset: _obscureConfirmPassword
+                              ? GardenIcons.eyeClose
+                              : GardenIcons.eyeOpen,
+                          size: 22,
+                          opacity: 0.6,
                         ),
                         onPressed: () => setState(
                             () => _obscureConfirmPassword = !_obscureConfirmPassword),

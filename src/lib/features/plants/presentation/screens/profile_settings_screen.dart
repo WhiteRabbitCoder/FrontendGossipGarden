@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/plant_providers.dart';
@@ -5,12 +7,20 @@ import '../../data/models/plant.dart';
 import '../../data/models/plant_enums.dart';
 import 'package:gossip_garden/features/auth/presentation/providers/auth_provider.dart';
 import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../../../../core/widgets/garden_icon.dart';
 import 'personal_info_screen.dart';
-
-// ── Local providers (sin cambios) ────────────────────────────────────────────
-final favoritePlantsProvider =
-    StateProvider<List<String>>((ref) => ['1', '2']);
+import 'help_center_screen.dart';
+import 'contact_support_screen.dart';
+import 'data_privacy_screen.dart';
+import 'profile_visibility_screen.dart';
+import 'sensor_settings_screen.dart';
+import '../providers/achievement_providers.dart';
+import '../widgets/profile_avatar.dart';
+import '../../../../core/utils/store_launcher.dart';
+import 'achievement_detail_screen.dart';
+import '../../data/models/achievement.dart';
 
 // ── Pantalla de perfil ────────────────────────────────────────────────────────────
 
@@ -22,9 +32,7 @@ class ProfileSettingsScreen extends ConsumerWidget {
     final plantsAsync = ref.watch(plantsProvider);
     final favorites = ref.watch(favoritePlantsProvider);
     final authSession = ref.watch(authStateProvider).value;
-
-
-// logica para traer el nombre del usuario 
+    final localAvatarBytes = ref.watch(localAvatarBytesProvider);
 
     final displayName = authSession?.profile?.displayName;
     final userName = (displayName != null && displayName.trim().isNotEmpty)
@@ -48,13 +56,8 @@ class ProfileSettingsScreen extends ConsumerWidget {
                     child: _ProfileHeader(
                       userName: userName,
                       plantCount: plants.length,
-                      onEditTap: () {
-                        Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const PersonalInfoScreen(),
-                          ),
-                        );
-                      },
+                      photoUrl: authSession?.profile?.photoUrl,
+                      localAvatarBytes: localAvatarBytes,
                       onSettingsTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
@@ -71,7 +74,7 @@ class ProfileSettingsScreen extends ConsumerWidget {
               const SliverToBoxAdapter(
                 child: Padding(
                   padding: EdgeInsets.fromLTRB(20, 28, 20, 0),
-                  child: _AchievementsSection(),
+                  child: AchievementsSection(),
                 ),
               ),
 
@@ -106,13 +109,15 @@ class ProfileSettingsScreen extends ConsumerWidget {
 class _ProfileHeader extends StatelessWidget {
   final String userName;
   final int plantCount;
-  final VoidCallback onEditTap;
+  final String? photoUrl;
+  final Uint8List? localAvatarBytes;
   final VoidCallback onSettingsTap;
 
   const _ProfileHeader({
     required this.userName,
     required this.plantCount,
-    required this.onEditTap,
+    this.photoUrl,
+    this.localAvatarBytes,
     required this.onSettingsTap,
   });
 
@@ -121,19 +126,11 @@ class _ProfileHeader extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Avatar
-        Container(
-          width: 68,
-          height: 68,
-          decoration: BoxDecoration(
-            color: GardenColors.creamLight,
-            shape: BoxShape.circle,
-            border: Border.all(color: GardenColors.leafGreen, width: 2),
-          ),
-          child: const Center(
-            // TODO(backend): reemplazar con Image.network(authSession.profile.photoUrl)
-            child: Text('🧑‍🌾', style: TextStyle(fontSize: 32)),
-          ),
+        ProfileAvatar(
+          photoUrl: photoUrl,
+          localBytes: localAvatarBytes,
+          size: 68,
+          fontSize: 32,
         ),
         const SizedBox(width: 16),
         Expanded(
@@ -167,19 +164,9 @@ class _ProfileHeader extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 8),
-        // Botones editar + ajustes
-        Column(
-          children: [
-            _IconCircleButton(
-              icon: Icons.edit_outlined,
-              onTap: onEditTap,
-            ),
-            const SizedBox(height: 8),
-            _IconCircleButton(
-              icon: Icons.settings_outlined,
-              onTap: onSettingsTap,
-            ),
-          ],
+        _IconCircleButton(
+          asset: GardenIcons.settings,
+          onTap: onSettingsTap,
         ),
       ],
     );
@@ -187,9 +174,9 @@ class _ProfileHeader extends StatelessWidget {
 }
 
 class _IconCircleButton extends StatelessWidget {
-  final IconData icon;
+  final String asset;
   final VoidCallback onTap;
-  const _IconCircleButton({required this.icon, required this.onTap});
+  const _IconCircleButton({required this.asset, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -203,26 +190,34 @@ class _IconCircleButton extends StatelessWidget {
           shape: BoxShape.circle,
           border: Border.all(color: GardenColors.creamPaper),
         ),
-        child: Icon(icon, size: 18, color: GardenColors.ink),
+        child: Center(child: GardenIcon(asset: asset, size: 18)),
       ),
     );
   }
 }
 
 // ── Achievements Section ──────────────────────────────────────────────────────
-// TODO(backend): traer logros desde endpoint de achievements cuando esté disponible
 
-class _AchievementsSection extends StatelessWidget {
-  const _AchievementsSection();
+class AchievementsSection extends ConsumerStatefulWidget {
+  const AchievementsSection({super.key});
 
-  static const _achievements = [
-    (icon: '🏅', label: 'Rey de la Lluvia', locked: false, progress: null as int?, total: null as int?),
-    (icon: '🎖️', label: 'Pulgar Verde', locked: false, progress: null as int?, total: null as int?),
-    (icon: '🔬', label: 'Científico Botánico', locked: true, progress: 12, total: 20),
-  ];
+  @override
+  ConsumerState<AchievementsSection> createState() => _AchievementsSectionState();
+}
+
+class _AchievementsSectionState extends ConsumerState<AchievementsSection> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ref.read(achievementStatsProvider.notifier).recordLoginSession();
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
+    final achievementsAsync = ref.watch(achievementProgressListProvider);
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -235,22 +230,40 @@ class _AchievementsSection extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 12),
-        SizedBox(
-          height: 120,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            itemCount: _achievements.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (context, index) {
-              final a = _achievements[index];
-              return _AchievementCard(
-                icon: a.icon,
-                label: a.label,
-                locked: a.locked,
-                progress: a.progress,
-                total: a.total,
-              );
-            },
+        achievementsAsync.when(
+          loading: () => const SizedBox(
+            height: 132,
+            child: Center(
+              child: CircularProgressIndicator(color: GardenColors.leafGreen),
+            ),
+          ),
+          error: (e, _) => SizedBox(
+            height: 132,
+            child: Center(
+              child: Text('Error al cargar logros', style: GardenTextStyles.bodySmall),
+            ),
+          ),
+          data: (achievements) => SizedBox(
+            height: 132,
+            child: ListView.separated(
+              scrollDirection: Axis.horizontal,
+              itemCount: achievements.length,
+              separatorBuilder: (_, __) => const SizedBox(width: 12),
+              itemBuilder: (context, index) {
+                return AchievementCard(
+                  progress: achievements[index],
+                  onTap: () {
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => AchievementDetailScreen(
+                          progress: achievements[index],
+                        ),
+                      ),
+                    );
+                  },
+                );
+              },
+            ),
           ),
         ),
       ],
@@ -258,75 +271,85 @@ class _AchievementsSection extends StatelessWidget {
   }
 }
 
-class _AchievementCard extends StatelessWidget {
-  final String icon;
-  final String label;
-  final bool locked;
-  final int? progress;
-  final int? total;
+class AchievementCard extends StatelessWidget {
+  final AchievementProgress progress;
+  final VoidCallback onTap;
 
-  const _AchievementCard({
-    required this.icon,
-    required this.label,
-    required this.locked,
-    this.progress,
-    this.total,
+  const AchievementCard({
+    super.key,
+    required this.progress,
+    required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      width: 100,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: GardenColors.creamPaper),
-      ),
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.end,
-            children: [
-              const Icon(Icons.info_outline_rounded,
-                  size: 14, color: GardenColors.inkSoft),
-            ],
+    final def = progress.definition;
+
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 104,
+        padding: const EdgeInsets.fromLTRB(10, 8, 10, 10),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(
+            color: progress.unlocked
+                ? GardenColors.golden.withOpacity(0.5)
+                : GardenColors.creamPaper,
           ),
-          Text(icon, style: const TextStyle(fontSize: 28)),
-          const SizedBox(height: 4),
-          Text(
-            label,
-            style: GardenTextStyles.label.copyWith(
-              color: GardenColors.ink,
-              fontWeight: FontWeight.w600,
-              fontSize: 10,
+        ),
+        child: Column(
+          children: [
+            Align(
+              alignment: Alignment.centerRight,
+              child: GardenIcon(
+                asset: progress.unlocked
+                    ? GardenIcons.logroDesbloqueado
+                    : GardenIcons.info,
+                size: 14,
+                opacity: progress.unlocked ? 1.0 : 0.6,
+              ),
             ),
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          if (locked && progress != null && total != null) ...[
-            const SizedBox(height: 4),
+            GardenIcon(
+              asset: GardenIcons.achievementAsset(def.id),
+              size: 30,
+              opacity: progress.unlocked ? 1.0 : 0.45,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              def.title,
+              style: GardenTextStyles.label.copyWith(
+                color: GardenColors.ink,
+                fontWeight: FontWeight.w600,
+                fontSize: 9,
+              ),
+              textAlign: TextAlign.center,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const Spacer(),
             ClipRRect(
               borderRadius: BorderRadius.circular(4),
               child: LinearProgressIndicator(
-                value: progress! / total!,
+                value: progress.ratio,
                 minHeight: 4,
                 backgroundColor: GardenColors.creamLight,
-                color: GardenColors.leafGreen,
+                color: progress.unlocked
+                    ? GardenColors.golden
+                    : GardenColors.leafGreen,
               ),
             ),
             const SizedBox(height: 2),
             Text(
-              '$progress/$total',
+              '${progress.displayCurrent}/${progress.goal}',
               style: GardenTextStyles.label.copyWith(
                 color: GardenColors.inkSoft,
-                fontSize: 9,
+                fontSize: 8,
               ),
             ),
           ],
-        ],
+        ),
       ),
     );
   }
@@ -415,8 +438,10 @@ class _FavoritePlantRow extends StatelessWidget {
               color: GardenColors.creamLight,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.park_rounded,
-                color: GardenColors.leafDark, size: 26),
+            child: const GardenIcon(
+              asset: GardenIcons.plantEco,
+              size: 26,
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -463,8 +488,11 @@ class _FavoritePlantRow extends StatelessWidget {
             ],
           ),
           const SizedBox(width: 8),
-          const Icon(Icons.chevron_right_rounded,
-              color: GardenColors.inkSoft, size: 22),
+          const GardenIcon(
+            asset: GardenIcons.forward,
+            size: 22,
+            opacity: 0.6,
+          ),
         ],
       ),
     );
@@ -499,7 +527,7 @@ class _AddFavoriteButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.add_rounded, color: GardenColors.leafDark, size: 20),
+            const GardenIcon(asset: GardenIcons.add, size: 20),
             const SizedBox(width: 8),
             Text(
               'Agregar planta favorita',
@@ -539,14 +567,15 @@ class _AddFavoriteButton extends StatelessWidget {
                       color: GardenColors.creamLight,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.park_rounded,
-                        size: 20, color: GardenColors.leafDark),
+                    child: const GardenIcon(
+                      asset: GardenIcons.plantEco,
+                      size: 20,
+                    ),
                   ),
                   title: Text(plant.name),
                   subtitle: Text(plant.species),
                   trailing: IconButton(
-                    icon: const Icon(Icons.add_rounded,
-                        color: GardenColors.leafDark),
+                    icon: const GardenIcon(asset: GardenIcons.add, size: 22),
                     onPressed: () {
                       ref.read(favoritePlantsProvider.notifier).state = [
                         ...ref.read(favoritePlantsProvider),
@@ -577,18 +606,25 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
   bool _emailNotifications = false;
   bool _careReminders = true;
 
+  Future<void> _openPlayStore() async {
+    final opened = await openPlayStoreListing();
+    if (!mounted) return;
+    if (!opened) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo abrir Google Play Store.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
-    final authSession = ref.watch(authStateProvider).value;
-
     return Scaffold(
       backgroundColor: GardenColors.creamPaper,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: GardenColors.ink),
+          icon: const GardenIcon(asset: GardenIcons.back, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -613,9 +649,9 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
           _SettingsGroup(
             children: [
               _SettingsTile(
-                icon: Icons.person_outline_rounded,
+                iconAsset: GardenIcons.profile,
                 title: 'Información personal',
-                subtitle: 'Nombre, bio, avatar',
+                subtitle: 'Nombre, bio, avatar, contraseña',
                 onTap: () {
                   Navigator.of(context).push(
                     MaterialPageRoute(
@@ -623,20 +659,6 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
                     ),
                   );
                 },
-              ),
-              _SettingsDivider(),
-              _SettingsTile(
-                icon: Icons.mail_outline_rounded,
-                title: 'Correo electrónico',
-                subtitle: authSession?.profile?.email ?? '',
-                onTap: () {},
-              ),
-              _SettingsDivider(),
-              _SettingsTile(
-                icon: Icons.lock_outline_rounded,
-                title: 'Contraseña',
-                subtitle: 'Última actualización hace 2 meses',
-                onTap: () {},
               ),
             ],
           ),
@@ -648,7 +670,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
           _SettingsGroup(
             children: [
               _SettingsToggleTile(
-                icon: Icons.smartphone_outlined,
+                iconAsset: GardenIcons.phone,
                 title: 'Notificaciones push',
                 subtitle: 'Avisos en este dispositivo',
                 value: _pushNotifications,
@@ -656,7 +678,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
               ),
               _SettingsDivider(),
               _SettingsToggleTile(
-                icon: Icons.mail_outline_rounded,
+                iconAsset: GardenIcons.email,
                 title: 'Correo',
                 subtitle: 'Resumen semanal por email',
                 value: _emailNotifications,
@@ -664,11 +686,32 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
               ),
               _SettingsDivider(),
               _SettingsToggleTile(
-                icon: Icons.notifications_none_rounded,
+                iconAsset: GardenIcons.notification,
                 title: 'Recordatorios de cuidado',
                 subtitle: 'Cuando una planta necesita atención',
                 value: _careReminders,
                 onChanged: (v) => setState(() => _careReminders = v),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          // ── SENSORES ────────────────────────────────────────────────────
+          _SettingsSectionHeader(label: 'SENSORES'),
+          _SettingsGroup(
+            children: [
+              _SettingsTile(
+                iconAsset: GardenIcons.logroSensores,
+                title: 'Mis sensores',
+                subtitle: 'Estado, vinculación y configuración WiFi',
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const SensorSettingsScreen(),
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -680,24 +723,29 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
           _SettingsGroup(
             children: [
               _SettingsTile(
-                icon: Icons.shield_outlined,
+                iconAsset: GardenIcons.shield,
                 title: 'Privacidad de datos',
                 subtitle: 'Gestiona cómo usamos tu información',
-                onTap: () {},
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const DataPrivacyScreen(),
+                    ),
+                  );
+                },
               ),
               _SettingsDivider(),
               _SettingsTile(
-                icon: Icons.visibility_outlined,
+                iconAsset: GardenIcons.eyeOpen,
                 title: 'Visibilidad del perfil',
                 subtitle: 'Quién puede ver tu jardín',
-                onTap: () {},
-              ),
-              _SettingsDivider(),
-              _SettingsTile(
-                icon: Icons.security_outlined,
-                title: 'Autenticación en dos pasos',
-                subtitle: 'Añade una capa de seguridad',
-                onTap: () {},
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const ProfileVisibilityScreen(),
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -709,24 +757,36 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
           _SettingsGroup(
             children: [
               _SettingsTile(
-                icon: Icons.help_outline_rounded,
+                iconAsset: GardenIcons.helpBooks,
                 title: 'Centro de ayuda',
                 subtitle: 'Preguntas frecuentes y guías',
-                onTap: () {},
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const HelpCenterScreen(),
+                    ),
+                  );
+                },
               ),
               _SettingsDivider(),
               _SettingsTile(
-                icon: Icons.chat_bubble_outline_rounded,
+                iconAsset: GardenIcons.chat,
                 title: 'Contactar soporte',
                 subtitle: 'Escríbenos, respondemos en 24h',
-                onTap: () {},
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const ContactSupportScreen(),
+                    ),
+                  );
+                },
               ),
               _SettingsDivider(),
               _SettingsTile(
-                icon: Icons.star_outline_rounded,
+                iconAsset: GardenIcons.starOutline,
                 title: 'Calificar la app',
-                subtitle: 'Tu opinión nos ayuda a mejorar',
-                onTap: () {},
+                subtitle: 'Abre Google Play Store para valorarnos',
+                onTap: _openPlayStore,
               ),
             ],
           ),
@@ -817,13 +877,13 @@ class _SettingsDivider extends StatelessWidget {
 }
 
 class _SettingsTile extends StatelessWidget {
-  final IconData icon;
+  final String iconAsset;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
 
   const _SettingsTile({
-    required this.icon,
+    required this.iconAsset,
     required this.title,
     required this.subtitle,
     required this.onTap,
@@ -845,7 +905,7 @@ class _SettingsTile extends StatelessWidget {
                 color: GardenColors.creamLight,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, size: 18, color: GardenColors.ink),
+              child: Center(child: GardenIcon(asset: iconAsset, size: 18)),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -869,8 +929,11 @@ class _SettingsTile extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded,
-                color: GardenColors.inkSoft, size: 20),
+            const GardenIcon(
+              asset: GardenIcons.forward,
+              size: 20,
+              opacity: 0.6,
+            ),
           ],
         ),
       ),
@@ -879,14 +942,14 @@ class _SettingsTile extends StatelessWidget {
 }
 
 class _SettingsToggleTile extends StatelessWidget {
-  final IconData icon;
+  final String iconAsset;
   final String title;
   final String subtitle;
   final bool value;
   final ValueChanged<bool> onChanged;
 
   const _SettingsToggleTile({
-    required this.icon,
+    required this.iconAsset,
     required this.title,
     required this.subtitle,
     required this.value,
@@ -906,7 +969,7 @@ class _SettingsToggleTile extends StatelessWidget {
               color: GardenColors.creamLight,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, size: 18, color: GardenColors.ink),
+            child: Center(child: GardenIcon(asset: iconAsset, size: 18)),
           ),
           const SizedBox(width: 14),
           Expanded(

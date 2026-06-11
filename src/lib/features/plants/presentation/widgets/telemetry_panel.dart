@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../../../../core/theme/garden_icons.dart';
+import '../../../../core/widgets/garden_icon.dart';
 
 class TelemetryData {
   final String label;
@@ -6,7 +8,7 @@ class TelemetryData {
   final double min;
   final double max;
   final String unit;
-  final IconData icon;
+  final String iconAsset;
   final Color color;
 
   TelemetryData({
@@ -15,7 +17,7 @@ class TelemetryData {
     required this.min,
     required this.max,
     required this.unit,
-    required this.icon,
+    required this.iconAsset,
     required this.color,
   });
 
@@ -79,7 +81,7 @@ class _TelemetryPanelState extends State<TelemetryPanel> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.sensors, color: Color(0xFF4A6741)),
+            const GardenIcon(asset: GardenIcons.logroSensores, size: 22),
             const SizedBox(width: 12),
             const Text(
               'Telemetría',
@@ -139,7 +141,7 @@ class _TelemetryPanelState extends State<TelemetryPanel> {
         children: [
           Row(
             children: [
-              Icon(data.icon, size: 20, color: data.color),
+              GardenIcon(asset: data.iconAsset, size: 20),
               const SizedBox(width: 8),
               Flexible(
                 child: Text(
