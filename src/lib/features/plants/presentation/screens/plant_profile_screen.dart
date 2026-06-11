@@ -619,29 +619,21 @@ class _SensorGrid extends StatelessWidget {
               label: 'TIERRA',
               value: '${soilMoisture.toInt()}%',
               iconAsset: GardenIcons.soilHumidity,
-              iconBg: const Color(0xFFE0F0FF),
-              iconColor: const Color(0xFF2563EB),
             ),
             _SensorTile(
               label: 'LUZ',
               value: '${light.toInt()}%',
               iconAsset: GardenIcons.sun,
-              iconBg: const Color(0xFFFFF8E0),
-              iconColor: const Color(0xFFD97706),
             ),
             _SensorTile(
               label: 'TEMP.',
               value: '${temperature.toStringAsFixed(0)}°C',
               iconAsset: GardenIcons.thermostat,
-              iconBg: const Color(0xFFFFEDED),
-              iconColor: const Color(0xFFD94040),
             ),
             _SensorTile(
               label: 'HUMEDAD',
               value: '${humidity.toInt()}%',
               iconAsset: GardenIcons.humidity,
-              iconBg: const Color(0xFFE0F0FF),
-              iconColor: const Color(0xFF2563EB),
             ),
           ],
         ),
@@ -654,15 +646,11 @@ class _SensorTile extends StatelessWidget {
   final String label;
   final String value;
   final String iconAsset;
-  final Color iconBg;
-  final Color iconColor;
 
   const _SensorTile({
     required this.label,
     required this.value,
     required this.iconAsset,
-    required this.iconBg,
-    required this.iconColor,
   });
 
   @override
@@ -676,14 +664,12 @@ class _SensorTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
+          SizedBox(
             width: 40,
             height: 40,
-            decoration: BoxDecoration(
-              color: iconBg,
-              shape: BoxShape.circle,
+            child: Center(
+              child: GardenIcon(asset: iconAsset, size: 24),
             ),
-            child: GardenIcon(asset: iconAsset, size: 20),
           ),
           const SizedBox(width: 12),
           Column(

@@ -699,7 +699,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
           _SettingsGroup(
             children: [
               _SettingsTile(
-                iconAsset: GardenIcons.logroSensores,
+                iconAsset: GardenIcons.signal,
                 title: 'Mis sensores',
                 subtitle: 'Estado, vinculación y configuración WiFi',
                 onTap: () {
@@ -780,7 +780,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
               ),
               _SettingsDivider(),
               _SettingsTile(
-                iconAsset: GardenIcons.starOutline,
+                iconAsset: GardenIcons.starFilled,
                 title: 'Calificar la app',
                 subtitle: 'Abre Google Play Store para valorarnos',
                 onTap: _openPlayStore,
