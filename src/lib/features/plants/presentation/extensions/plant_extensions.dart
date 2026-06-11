@@ -14,7 +14,7 @@ extension PlantMoodX on PlantMood {
         return FontAwesomeIcons.temperatureHigh;
       case PlantMood.stressed:
         return FontAwesomeIcons.triangleExclamation;
-      case PlantMood.perfect:
+      case PlantMood.perfect: 
         return FontAwesomeIcons.solidStar;
     }
   }

@@ -88,7 +88,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
                   Text(
-                    'Crear cuenta',
+                    'Únete a Gossip Garden',
                     textAlign: TextAlign.center,
                     style: GardenTextStyles.display.copyWith(
                       color: GardenColors.leafDark,
@@ -97,7 +97,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen> {
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    'Únete a Gossip Garden',
+                    '¡Entra en el jardín!',
                     textAlign: TextAlign.center,
                     style: GardenTextStyles.body
                         .copyWith(color: GardenColors.inkSoft),
