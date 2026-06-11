@@ -442,7 +442,7 @@ class _UpcomingCareSection extends StatelessWidget {
         Row(
           children: [
             const GardenIcon(
-              asset: GardenIcons.info,
+              asset: GardenIcons.bulb,
               size: 20,
             ),
             const SizedBox(width: 8),

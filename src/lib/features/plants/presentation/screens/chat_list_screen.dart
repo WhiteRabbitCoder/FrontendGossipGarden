@@ -189,12 +189,6 @@ class _ChatCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 8),
-              const GardenIcon(
-                asset: GardenIcons.forward,
-                size: 22,
-                opacity: 0.6,
-              ),
             ],
           ),
         ),

@@ -566,11 +566,6 @@ class _SensorStatusCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const GardenIcon(
-                    asset: GardenIcons.forward,
-                    size: 22,
-                    opacity: 0.6,
-                  ),
                 ],
               ),
             ),
@@ -623,7 +618,7 @@ class _SensorGrid extends StatelessWidget {
             _SensorTile(
               label: 'TIERRA',
               value: '${soilMoisture.toInt()}%',
-              iconAsset: GardenIcons.water,
+              iconAsset: GardenIcons.soilHumidity,
               iconBg: const Color(0xFFE0F0FF),
               iconColor: const Color(0xFF2563EB),
             ),

@@ -10,13 +10,10 @@ import '../../../../core/widgets/garden_icon.dart';
 class GardenPlantCard extends StatelessWidget {
   final Plant plant;
   final VoidCallback? onTap;
-  final bool showChevron;
-
   const GardenPlantCard({
     super.key,
     required this.plant,
     this.onTap,
-    this.showChevron = true,
   });
 
   @override
@@ -157,14 +154,6 @@ class GardenPlantCard extends StatelessWidget {
                   ],
                 ),
               ),
-              if (showChevron && onTap != null) ...[
-                const SizedBox(width: 8),
-                const GardenIcon(
-                  asset: GardenIcons.forward,
-                  size: 22,
-                  opacity: 0.6,
-                ),
-              ],
             ],
           ),
         ),

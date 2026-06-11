@@ -69,7 +69,6 @@ class _GardenViewScreenState extends ConsumerState<GardenViewScreen> {
                       _GardenHeaderAction(
                         asset: GardenIcons.addPlant,
                         tooltip: 'Agregar nueva planta',
-                        backgroundColor: GardenColors.leafDark,
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
@@ -141,13 +140,11 @@ class _GardenHeaderAction extends StatelessWidget {
   final String asset;
   final String tooltip;
   final VoidCallback onTap;
-  final Color backgroundColor;
 
   const _GardenHeaderAction({
     required this.asset,
     required this.tooltip,
     required this.onTap,
-    this.backgroundColor = Colors.white,
   });
 
   @override
@@ -155,23 +152,16 @@ class _GardenHeaderAction extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: backgroundColor,
-        shape: const CircleBorder(),
+        color: Colors.transparent,
         child: InkWell(
           customBorder: const CircleBorder(),
           onTap: onTap,
-          child: Container(
+          child: SizedBox(
             width: 44,
             height: 44,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: backgroundColor == Colors.white
-                    ? GardenColors.creamPaper
-                    : Colors.transparent,
-              ),
+            child: Center(
+              child: GardenIcon(asset: asset, size: 22),
             ),
-            child: GardenIcon(asset: asset, size: 22),
           ),
         ),
       ),
@@ -349,11 +339,6 @@ class _FriendPlantCard extends StatelessWidget {
                     ),
                   ],
                 ),
-              ),
-              const GardenIcon(
-                asset: GardenIcons.forward,
-                size: 22,
-                opacity: 0.6,
               ),
             ],
           ),

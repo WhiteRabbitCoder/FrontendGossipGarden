@@ -489,12 +489,6 @@ class _FavoritePlantRow extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(width: 8),
-          const GardenIcon(
-            asset: GardenIcons.forward,
-            size: 22,
-            opacity: 0.6,
-          ),
         ],
       ),
     );
@@ -931,11 +925,6 @@ class _SettingsTile extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
-            const GardenIcon(
-              asset: GardenIcons.forward,
-              size: 20,
-              opacity: 0.6,
             ),
           ],
         ),

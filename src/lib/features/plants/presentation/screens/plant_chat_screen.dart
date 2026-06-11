@@ -237,7 +237,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                       min: _plant!.comfortZones.soilMoisture.min,
                       max: _plant!.comfortZones.soilMoisture.max,
                       unit: '%',
-                      iconAsset: GardenIcons.water,
+                      iconAsset: GardenIcons.soilHumidity,
                       color: const Color(0xFF4A6741),
                     ),
                     TelemetryData(

@@ -111,13 +111,6 @@ class PlantFeedCard extends StatelessWidget {
                     ],
                   ),
                 ),
-                const SizedBox(width: 8),
-                // ── Chevron ────────────────────────────────────────────────
-                const GardenIcon(
-                  asset: GardenIcons.forward,
-                  size: 22,
-                  opacity: 0.6,
-                ),
               ],
             ),
           ),

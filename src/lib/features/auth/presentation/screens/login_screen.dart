@@ -1,7 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-
 import '../../../../core/theme/garden_colors.dart';
 import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
@@ -221,7 +219,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                         : () => ref
                             .read(authStateProvider.notifier)
                             .signInWithGoogle(),
-                    icon: const FaIcon(FontAwesomeIcons.google, size: 20),
+                    icon: const GardenIcon(asset: GardenIcons.google, size: 20),
                     label: Text(
                       'Google',
                       style: GardenTextStyles.title.copyWith(fontSize: 18),

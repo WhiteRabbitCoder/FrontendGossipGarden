@@ -267,7 +267,6 @@ class _ActionTile extends StatelessWidget {
                 ],
               ),
             ),
-            const GardenIcon(asset: GardenIcons.forward, size: 20, opacity: 0.6),
           ],
         ),
       ),

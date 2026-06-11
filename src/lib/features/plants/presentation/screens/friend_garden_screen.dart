@@ -160,7 +160,6 @@ class FriendGardenScreen extends ConsumerWidget {
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
                   child: GardenPlantCard(
                     plant: plant,
-                    showChevron: false,
                   ),
                 );
               },
