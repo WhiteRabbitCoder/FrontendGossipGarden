@@ -16,14 +16,6 @@ class ChatListScreen extends ConsumerWidget {
     final plantsAsync = ref.watch(plantsProvider);
     final navNotifier = ref.read(navigationProvider.notifier);
 
-    final totalUnread = plantsAsync.maybeWhen(
-      data: (plants) => plants.fold<int>(0, (acc, p) {
-        final msgs = ref.read(chatMessagesProvider(p.id));
-        return acc + (msgs.isNotEmpty && msgs.last.sender == 'plant' ? 1 : 0);
-      }),
-      orElse: () => 0,
-    );
-
     return Scaffold(
       backgroundColor: GardenColors.creamPaper,
       body: CustomScrollView(
@@ -54,46 +46,6 @@ class ChatListScreen extends ConsumerWidget {
                           ),
                         ],
                       ),
-                    ),
-                    Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: BoxDecoration(
-                            color: Colors.white,
-                            shape: BoxShape.circle,
-                            border:
-                                Border.all(color: GardenColors.creamPaper),
-                          ),
-                          child: const Icon(
-                              Icons.notifications_none_rounded,
-                              color: GardenColors.ink,
-                              size: 22),
-                        ),
-                        if (totalUnread > 0)
-                          Positioned(
-                            top: 2,
-                            right: 2,
-                            child: Container(
-                              width: 17,
-                              height: 17,
-                              decoration: const BoxDecoration(
-                                  color: GardenColors.heartRed,
-                                  shape: BoxShape.circle),
-                              child: Center(
-                                child: Text(
-                                  '$totalUnread',
-                                  style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 9,
-                                      fontWeight: FontWeight.w800),
-                                ),
-                              ),
-                            ),
-                          ),
-                      ],
                     ),
                   ],
                 ),

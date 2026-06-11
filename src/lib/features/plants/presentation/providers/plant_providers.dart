@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:math';
+import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -9,6 +10,7 @@ import '../../data/models/plant_enums.dart';
 import '../../data/models/sensors.dart';
 import '../../data/models/comfort_zones.dart';
 import '../../data/models/realtime_sensor_snapshot.dart';
+import '../../data/models/urgent_plant_task.dart';
 
 // ── Demo plants ──────────────────────────────────────────────────────────────
 // TODO(backend): Reemplazar el cuerpo del FutureProvider con:
@@ -101,12 +103,38 @@ const _demoFicus = Plant(
 
 // ── Providers ───────────────────────────────────────────────────────────────
 
-final plantsProvider = FutureProvider<List<Plant>>(
-  (_) async => [_demoMonstera, _demoSuculenta, _demoFicus],
+class PlantsNotifier extends StateNotifier<AsyncValue<List<Plant>>> {
+  PlantsNotifier() : super(const AsyncValue.loading()) {
+    state = const AsyncValue.data([
+      _demoMonstera,
+      _demoSuculenta,
+      _demoFicus,
+    ]);
+  }
+
+  void completeUrgentTask(UrgentPlantTask task) {
+    state.whenData((plants) {
+      final updated = plants
+          .map(
+            (plant) => plant.id == task.plantId
+                ? applyUrgentTaskCompletion(plant, task)
+                : plant,
+          )
+          .toList();
+      state = AsyncValue.data(updated);
+    });
+  }
+}
+
+final plantsProvider =
+    StateNotifierProvider<PlantsNotifier, AsyncValue<List<Plant>>>(
+  (ref) => PlantsNotifier(),
 );
 
 final favoritePlantsProvider =
     StateProvider<List<String>>((ref) => ['1', '2']);
+
+final localAvatarBytesProvider = StateProvider<Uint8List?>((ref) => null);
 
 final wifiSetupDatasourceProvider = Provider<WifiSetupDatasource>(
   (ref) => const WifiSetupDatasource(),

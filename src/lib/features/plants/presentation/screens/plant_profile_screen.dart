@@ -7,6 +7,7 @@ import '../../data/models/plant_enums.dart';
 import '../../data/models/comfort_zones.dart';
 import '../../../../core/theme/garden_colors.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import 'sensor_settings_screen.dart';
 
 class PlantProfileScreen extends ConsumerWidget {
   final String plantId;
@@ -109,6 +110,13 @@ class PlantProfileScreen extends ConsumerWidget {
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
                   child: _PersonalitySection(plant: plant),
+                ),
+                const SizedBox(height: 24),
+
+                // ── Estado del sensor ──────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: _SensorStatusCard(plant: plant),
                 ),
                 const SizedBox(height: 24),
 
@@ -452,6 +460,125 @@ class _PersonalitySection extends StatelessWidget {
                     .toList(),
               ),
             ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Sensor Status Card ────────────────────────────────────────────────────────
+
+class _SensorStatusCard extends StatelessWidget {
+  final Plant plant;
+
+  const _SensorStatusCard({required this.plant});
+
+  void _openSensorSettings(BuildContext context) {
+    Navigator.of(context).push(
+      MaterialPageRoute(
+        builder: (_) => SensorSettingsScreen(initialPlantId: plant.id),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final (label, color, icon, subtitle) = switch (plant.sensorStatus) {
+      SensorStatus.online => (
+          'En línea',
+          GardenColors.okGreen,
+          Icons.sensors_rounded,
+          'Recibiendo datos en tiempo real',
+        ),
+      SensorStatus.degraded => (
+          'Señal débil',
+          GardenColors.golden,
+          Icons.sensors_rounded,
+          'Datos con retraso o señal inestable',
+        ),
+      SensorStatus.offline => (
+          'Sin conexión',
+          GardenColors.heartRed,
+          Icons.sensors_off_rounded,
+          'No hay datos del sensor',
+        ),
+    };
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Estado del sensor',
+          style: GardenTextStyles.title.copyWith(
+            color: GardenColors.ink,
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Material(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          child: InkWell(
+            borderRadius: BorderRadius.circular(16),
+            onTap: () => _openSensorSettings(context),
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: color.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 44,
+                    height: 44,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.12),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(icon, color: color, size: 22),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          label,
+                          style: GardenTextStyles.bodySmall.copyWith(
+                            color: color,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          subtitle,
+                          style: GardenTextStyles.bodySmall.copyWith(
+                            color: GardenColors.inkSoft,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          plant.sensorStatus == SensorStatus.offline
+                              ? 'Toca para reconectar o revisar la falla'
+                              : 'Toca para ver detalles y configuración',
+                          style: GardenTextStyles.label.copyWith(
+                            color: GardenColors.leafDark,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Icon(
+                    Icons.chevron_right_rounded,
+                    color: GardenColors.inkSoft,
+                  ),
+                ],
+              ),
+            ),
           ),
         ),
       ],

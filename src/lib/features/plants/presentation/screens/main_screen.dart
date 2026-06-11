@@ -10,6 +10,7 @@ import 'chat_list_screen.dart';
 import 'garden_view_screen.dart';
 import 'plant_profile_screen.dart';
 import 'plant_chat_screen.dart';
+import 'friend_garden_screen.dart';
 import 'profile_settings_screen.dart';
 
 import '../widgets/animated_bottom_nav.dart';
@@ -80,6 +81,12 @@ class MainScreen extends ConsumerWidget {
     if (nav.showChat) {
       return PlantChatScreen(
         plantId: nav.selectedPlantId,
+        onBack: notifier.handleBack,
+      );
+    }
+    if (nav.selectedFriendId != null) {
+      return FriendGardenScreen(
+        friendId: nav.selectedFriendId!,
         onBack: notifier.handleBack,
       );
     }

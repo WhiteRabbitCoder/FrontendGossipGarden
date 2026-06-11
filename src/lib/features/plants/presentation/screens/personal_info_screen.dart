@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gossip_garden/features/auth/presentation/providers/auth_provider.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/garden_colors.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../providers/plant_providers.dart';
+import '../widgets/profile_avatar.dart';
 
 class PersonalInfoScreen extends ConsumerStatefulWidget {
   const PersonalInfoScreen({super.key});
@@ -16,11 +19,13 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
   final _currentPasswordController = TextEditingController();
   final _newPasswordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
+  final _imagePicker = ImagePicker();
   bool _isLoading = false;
   bool _isUpdatingPassword = false;
   bool _obscureCurrentPassword = true;
   bool _obscureNewPassword = true;
   bool _obscureConfirmPassword = true;
+  String? _localAvatarPath;
 
   @override
   void initState() {
@@ -39,6 +44,20 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     super.dispose();
   }
 
+  Future<void> _pickAvatar() async {
+    final file = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 512,
+      maxHeight: 512,
+      imageQuality: 85,
+    );
+    if (file == null) return;
+
+    final bytes = await file.readAsBytes();
+    ref.read(localAvatarBytesProvider.notifier).state = bytes;
+    setState(() => _localAvatarPath = file.path);
+  }
+
   Future<void> _saveProfile() async {
     final newName = _usernameController.text.trim();
     if (newName.isEmpty) {
@@ -50,7 +69,10 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
 
     setState(() => _isLoading = true);
     try {
-      await ref.read(authStateProvider.notifier).updateProfile(displayName: newName);
+      await ref.read(authStateProvider.notifier).updateProfile(
+            displayName: newName,
+            photoUrl: _localAvatarPath,
+          );
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Información personal actualizada con éxito.')),
@@ -115,6 +137,8 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
   Widget build(BuildContext context) {
     final authSession = ref.watch(authStateProvider).value;
     final email = authSession?.profile?.email ?? 'correo@ejemplo.com';
+    final localBytes = ref.watch(localAvatarBytesProvider);
+    final photoUrl = authSession?.profile?.photoUrl;
 
     return Scaffold(
       backgroundColor: GardenColors.creamPaper,
@@ -148,28 +172,53 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              // Avatar Decorativo
               Center(
                 child: Stack(
                   children: [
-                    Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        color: GardenColors.creamLight,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: GardenColors.leafGreen, width: 3),
-                      ),
-                      child: const Center(
-                        child: Text('🧑‍🌾', style: TextStyle(fontSize: 48)),
+                    ProfileAvatar(
+                      photoUrl: photoUrl,
+                      localBytes: localBytes,
+                      size: 100,
+                      fontSize: 48,
+                    ),
+                    Positioned(
+                      right: 0,
+                      bottom: 0,
+                      child: GestureDetector(
+                        onTap: _pickAvatar,
+                        child: Container(
+                          width: 32,
+                          height: 32,
+                          decoration: BoxDecoration(
+                            color: GardenColors.leafDark,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.white, width: 2),
+                          ),
+                          child: const Icon(
+                            Icons.camera_alt_rounded,
+                            color: Colors.white,
+                            size: 16,
+                          ),
+                        ),
                       ),
                     ),
                   ],
                 ),
               ),
-              const SizedBox(height: 32),
-
-              // Contenedor de Formulario Premium
+              const SizedBox(height: 8),
+              Center(
+                child: TextButton(
+                  onPressed: _pickAvatar,
+                  child: Text(
+                    'Cambiar foto',
+                    style: GardenTextStyles.bodySmall.copyWith(
+                      color: GardenColors.leafDark,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 24),
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -180,7 +229,6 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Campo Nombre de Usuario
                     Text(
                       'NOMBRE DE USUARIO',
                       style: GardenTextStyles.label.copyWith(
@@ -215,8 +263,6 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                       style: GardenTextStyles.body,
                     ),
                     const SizedBox(height: 24),
-
-                    // Campo Correo (Lectura únicamente)
                     Text(
                       'CORREO ELECTRÓNICO',
                       style: GardenTextStyles.label.copyWith(
@@ -251,7 +297,6 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                 ),
               ),
               const SizedBox(height: 24),
-
               Container(
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
@@ -340,8 +385,6 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                 ),
               ),
               const SizedBox(height: 40),
-
-              // Botón Guardar Cambios
               ElevatedButton(
                 onPressed: _isLoading ? null : _saveProfile,
                 style: ElevatedButton.styleFrom(

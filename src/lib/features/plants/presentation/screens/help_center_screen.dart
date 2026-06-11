@@ -12,34 +12,62 @@ class HelpCenterScreen extends StatefulWidget {
 class _HelpCenterScreenState extends State<HelpCenterScreen> {
   static const _faqs = [
     (
-      question: '¿Cómo identifico una planta?',
+      question: '¿Cómo agrego una nueva planta?',
       answer:
-          'Ve a tu jardín, pulsa el botón "+" y selecciona "Identificar planta". '
-          'Toma una foto clara de las hojas y la app te sugerirá la especie.',
+          'Ve a Mi Jardín y pulsa el icono "+" en la parte superior derecha. '
+          'Podrás identificarla con la cámara o buscarla por nombre para añadirla a tu colección.',
     ),
     (
-      question: '¿Cómo conecto el sensor de mi planta?',
+      question: '¿Cómo conecto o reconecto el sensor?',
       answer:
-          'Durante el onboarding, elige la red WiFi de tu hogar e introduce la contraseña. '
-          'El chip se conectará automáticamente a tu red.',
+          'Ve a Perfil → Ajustes → SENSORES → Mis sensores. Allí revisas el estado de cada '
+          'planta, diagnosticas fallas y reconfiguras el WiFi del chip. También puedes entrar '
+          'desde el perfil de una planta, en la sección "Estado del sensor".',
     ),
     (
-      question: '¿Por qué no recibo notificaciones?',
+      question: '¿Cómo funcionan las notificaciones y recordatorios?',
       answer:
-          'Revisa que las notificaciones push estén activadas en Ajustes. '
-          'También comprueba los permisos de la app en la configuración de tu dispositivo.',
+          'En Perfil → Ajustes → NOTIFICACIONES activa avisos push, correo semanal y '
+          'recordatorios de cuidado. En Inicio, la campana muestra una checklist con las '
+          'acciones urgentes por planta; al marcarlas se actualiza el estado en su perfil.',
     ),
     (
-      question: '¿Cómo cambio mi contraseña?',
+      question: '¿Cómo cambio mi contraseña o datos personales?',
       answer:
-          'Ve a Ajustes → Información personal. Allí puedes actualizar tu contraseña '
-          'junto con tu nombre y avatar.',
+          'Ve a Perfil → Ajustes → CUENTA → Información personal. Allí puedes actualizar '
+          'tu nombre, avatar, bio y contraseña.',
+    ),
+    (
+      question: '¿Cómo invito a un amigo jardinero?',
+      answer:
+          'En Mi Jardín pulsa el icono de invitar (persona con +). Comparte tu código o '
+          'enlace de invitación, o únete al jardín de otro amigo introduciendo su código.',
+    ),
+    (
+      question: '¿Quién puede ver mi jardín?',
+      answer:
+          'Ve a Perfil → Ajustes → PRIVACIDAD Y SEGURIDAD → Visibilidad del perfil. '
+          'Puedes elegir si tu jardín es público, visible solo para amigos o privado. '
+          'En Privacidad de datos gestionas el uso de lecturas de sensores y analítica.',
+    ),
+    (
+      question: '¿Dónde veo mis logros?',
+      answer:
+          'En tu Perfil encontrarás la sección "Mis Logros". Toca cualquier logro para ver '
+          'tu progreso, cómo desbloquearlo y qué acciones de la app lo registran.',
     ),
     (
       question: '¿Puedo tener varias plantas en mi jardín?',
       answer:
           'Sí. Puedes agregar tantas plantas como quieras. Cada una tendrá su propio '
-          'perfil, chat y datos de sensores.',
+          'perfil, chat, sensores y estado de salud independiente.',
+    ),
+    (
+      question: '¿Cómo contacto al soporte?',
+      answer:
+          'Ve a Perfil → Ajustes → SOPORTE → Contactar soporte. Escríbenos tu consulta '
+          'y te responderemos en menos de 24 horas. También puedes valorar la app desde '
+          'Calificar la app, que abre Google Play Store.',
     ),
   ];
 
@@ -89,7 +117,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(
-                    '¿No encuentras lo que buscas? Contacta con nuestro equipo de soporte.',
+                    '¿No encuentras lo que buscas? Ve a Ajustes → SOPORTE → Contactar soporte.',
                     style: GardenTextStyles.bodySmall.copyWith(color: GardenColors.ink),
                   ),
                 ),

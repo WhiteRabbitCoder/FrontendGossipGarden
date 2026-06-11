@@ -1,3 +1,5 @@
+import 'dart:typed_data';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/plant_providers.dart';
@@ -9,8 +11,12 @@ import '../../../../core/theme/garden_text_styles.dart';
 import 'personal_info_screen.dart';
 import 'help_center_screen.dart';
 import 'contact_support_screen.dart';
-import 'rate_app_screen.dart';
+import 'data_privacy_screen.dart';
+import 'profile_visibility_screen.dart';
+import 'sensor_settings_screen.dart';
 import '../providers/achievement_providers.dart';
+import '../widgets/profile_avatar.dart';
+import '../../../../core/utils/store_launcher.dart';
 import 'achievement_detail_screen.dart';
 import '../../data/models/achievement.dart';
 
@@ -24,9 +30,7 @@ class ProfileSettingsScreen extends ConsumerWidget {
     final plantsAsync = ref.watch(plantsProvider);
     final favorites = ref.watch(favoritePlantsProvider);
     final authSession = ref.watch(authStateProvider).value;
-
-
-// logica para traer el nombre del usuario 
+    final localAvatarBytes = ref.watch(localAvatarBytesProvider);
 
     final displayName = authSession?.profile?.displayName;
     final userName = (displayName != null && displayName.trim().isNotEmpty)
@@ -50,6 +54,8 @@ class ProfileSettingsScreen extends ConsumerWidget {
                     child: _ProfileHeader(
                       userName: userName,
                       plantCount: plants.length,
+                      photoUrl: authSession?.profile?.photoUrl,
+                      localAvatarBytes: localAvatarBytes,
                       onSettingsTap: () {
                         Navigator.of(context).push(
                           MaterialPageRoute(
@@ -101,11 +107,15 @@ class ProfileSettingsScreen extends ConsumerWidget {
 class _ProfileHeader extends StatelessWidget {
   final String userName;
   final int plantCount;
+  final String? photoUrl;
+  final Uint8List? localAvatarBytes;
   final VoidCallback onSettingsTap;
 
   const _ProfileHeader({
     required this.userName,
     required this.plantCount,
+    this.photoUrl,
+    this.localAvatarBytes,
     required this.onSettingsTap,
   });
 
@@ -114,19 +124,11 @@ class _ProfileHeader extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Avatar
-        Container(
-          width: 68,
-          height: 68,
-          decoration: BoxDecoration(
-            color: GardenColors.creamLight,
-            shape: BoxShape.circle,
-            border: Border.all(color: GardenColors.leafGreen, width: 2),
-          ),
-          child: const Center(
-            // TODO(backend): reemplazar con Image.network(authSession.profile.photoUrl)
-            child: Text('🧑‍🌾', style: TextStyle(fontSize: 32)),
-          ),
+        ProfileAvatar(
+          photoUrl: photoUrl,
+          localBytes: localAvatarBytes,
+          size: 68,
+          fontSize: 32,
         ),
         const SizedBox(width: 16),
         Expanded(
@@ -600,6 +602,16 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
   bool _emailNotifications = false;
   bool _careReminders = true;
 
+  Future<void> _openPlayStore() async {
+    final opened = await openPlayStoreListing();
+    if (!mounted) return;
+    if (!opened) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('No se pudo abrir Google Play Store.')),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -682,6 +694,27 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
 
           const SizedBox(height: 24),
 
+          // ── SENSORES ────────────────────────────────────────────────────
+          _SettingsSectionHeader(label: 'SENSORES'),
+          _SettingsGroup(
+            children: [
+              _SettingsTile(
+                icon: Icons.sensors_rounded,
+                title: 'Mis sensores',
+                subtitle: 'Estado, vinculación y configuración WiFi',
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const SensorSettingsScreen(),
+                    ),
+                  );
+                },
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
           // ── PRIVACIDAD Y SEGURIDAD ───────────────────────────────────────
           _SettingsSectionHeader(label: 'PRIVACIDAD Y SEGURIDAD'),
           _SettingsGroup(
@@ -690,21 +723,26 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
                 icon: Icons.shield_outlined,
                 title: 'Privacidad de datos',
                 subtitle: 'Gestiona cómo usamos tu información',
-                onTap: () {},
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const DataPrivacyScreen(),
+                    ),
+                  );
+                },
               ),
               _SettingsDivider(),
               _SettingsTile(
                 icon: Icons.visibility_outlined,
                 title: 'Visibilidad del perfil',
                 subtitle: 'Quién puede ver tu jardín',
-                onTap: () {},
-              ),
-              _SettingsDivider(),
-              _SettingsTile(
-                icon: Icons.security_outlined,
-                title: 'Autenticación en dos pasos',
-                subtitle: 'Añade una capa de seguridad',
-                onTap: () {},
+                onTap: () {
+                  Navigator.of(context).push(
+                    MaterialPageRoute(
+                      builder: (_) => const ProfileVisibilityScreen(),
+                    ),
+                  );
+                },
               ),
             ],
           ),
@@ -744,14 +782,8 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
               _SettingsTile(
                 icon: Icons.star_outline_rounded,
                 title: 'Calificar la app',
-                subtitle: 'Tu opinión nos ayuda a mejorar',
-                onTap: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const RateAppScreen(),
-                    ),
-                  );
-                },
+                subtitle: 'Abre Google Play Store para valorarnos',
+                onTap: _openPlayStore,
               ),
             ],
           ),
