@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gossip_garden/features/auth/presentation/providers/auth_provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../../../../core/widgets/garden_icon.dart';
 import '../providers/plant_providers.dart';
 import '../widgets/profile_avatar.dart';
 
@@ -146,7 +148,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: GardenColors.ink),
+          icon: const GardenIcon(asset: GardenIcons.back, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -194,9 +196,8 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                             shape: BoxShape.circle,
                             border: Border.all(color: Colors.white, width: 2),
                           ),
-                          child: const Icon(
-                            Icons.camera_alt_rounded,
-                            color: Colors.white,
+                          child: const GardenIcon(
+                            asset: GardenIcons.camera,
                             size: 16,
                           ),
                         ),
@@ -243,7 +244,10 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                       decoration: InputDecoration(
                         hintText: 'Tu apodo de jardinero',
                         hintStyle: GardenTextStyles.body.copyWith(color: GardenColors.inkSoft),
-                        prefixIcon: const Icon(Icons.person_outline_rounded, color: GardenColors.leafGreen),
+                        prefixIcon: const Padding(
+                          padding: EdgeInsets.all(12),
+                          child: GardenIcon(asset: GardenIcons.profile, size: 20),
+                        ),
                         filled: true,
                         fillColor: GardenColors.creamPaper.withOpacity(0.5),
                         border: OutlineInputBorder(
@@ -281,7 +285,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.mail_outline_rounded, color: GardenColors.inkSoft),
+                          const GardenIcon(asset: GardenIcons.email, size: 22, opacity: 0.6),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
@@ -289,7 +293,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
                               style: GardenTextStyles.body.copyWith(color: GardenColors.inkSoft),
                             ),
                           ),
-                          const Icon(Icons.lock_outline_rounded, color: GardenColors.inkSoft, size: 16),
+                          const GardenIcon(asset: GardenIcons.lock, size: 16, opacity: 0.6),
                         ],
                       ),
                     ),
@@ -422,11 +426,15 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     return InputDecoration(
       hintText: hint,
       hintStyle: GardenTextStyles.body.copyWith(color: GardenColors.inkSoft),
-      prefixIcon: const Icon(Icons.lock_outline_rounded, color: GardenColors.leafGreen),
+      prefixIcon: const Padding(
+        padding: EdgeInsets.all(12),
+        child: GardenIcon(asset: GardenIcons.lock, size: 20),
+      ),
       suffixIcon: IconButton(
-        icon: Icon(
-          obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-          color: GardenColors.inkSoft,
+        icon: GardenIcon(
+          asset: obscure ? GardenIcons.eyeClose : GardenIcons.eyeOpen,
+          size: 22,
+          opacity: 0.6,
         ),
         onPressed: onToggle,
       ),

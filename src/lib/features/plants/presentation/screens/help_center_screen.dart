@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../../../../core/widgets/garden_icon.dart';
 
 class HelpCenterScreen extends StatefulWidget {
   const HelpCenterScreen({super.key});
@@ -81,7 +83,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: GardenColors.ink),
+          icon: const GardenIcon(asset: GardenIcons.back, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -113,7 +115,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
             ),
             child: Row(
               children: [
-                const Icon(Icons.lightbulb_outline_rounded, color: GardenColors.leafDark),
+                const GardenIcon(asset: GardenIcons.bulb, size: 22),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(

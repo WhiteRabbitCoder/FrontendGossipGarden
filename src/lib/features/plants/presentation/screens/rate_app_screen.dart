@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../../../../core/widgets/garden_icon.dart';
 
 class RateAppScreen extends StatefulWidget {
   const RateAppScreen({super.key});
@@ -48,7 +50,7 @@ class _RateAppScreenState extends State<RateAppScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: GardenColors.ink),
+          icon: const GardenIcon(asset: GardenIcons.back, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -83,7 +85,7 @@ class _RateAppScreenState extends State<RateAppScreen> {
                 ),
                 child: Column(
                   children: [
-                    const Text('🌱', style: TextStyle(fontSize: 48)),
+                    const GardenIcon(asset: GardenIcons.plantEco, size: 48),
                     const SizedBox(height: 16),
                     Text(
                       '¿Cómo valoras Gossip Garden?',
@@ -108,10 +110,12 @@ class _RateAppScreenState extends State<RateAppScreen> {
                         final isSelected = starIndex <= _rating;
                         return IconButton(
                           onPressed: () => setState(() => _rating = starIndex),
-                          icon: Icon(
-                            isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
-                            color: isSelected ? GardenColors.golden : GardenColors.inkSoft,
+                          icon: GardenIcon(
+                            asset: isSelected
+                                ? GardenIcons.starFilled
+                                : GardenIcons.starOutline,
                             size: 40,
+                            opacity: isSelected ? 1.0 : 0.5,
                           ),
                         );
                       }),

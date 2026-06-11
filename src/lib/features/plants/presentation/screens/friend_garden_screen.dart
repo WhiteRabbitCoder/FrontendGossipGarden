@@ -6,7 +6,9 @@ import '../widgets/garden_plant_card.dart';
 import 'achievement_detail_screen.dart';
 import 'profile_settings_screen.dart';
 import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../../../../core/widgets/garden_icon.dart';
 
 class FriendGardenScreen extends ConsumerWidget {
   final String friendId;
@@ -27,7 +29,7 @@ class FriendGardenScreen extends ConsumerWidget {
         backgroundColor: GardenColors.creamPaper,
         appBar: AppBar(
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back_ios_new_rounded),
+            icon: const GardenIcon(asset: GardenIcons.back, size: 20),
             onPressed: onBack,
           ),
           title: const Text('Jardín del amigo'),
@@ -51,8 +53,7 @@ class FriendGardenScreen extends ConsumerWidget {
                 child: Row(
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.arrow_back_ios_new_rounded,
-                          color: GardenColors.ink),
+                      icon: const GardenIcon(asset: GardenIcons.back, size: 20),
                       onPressed: onBack,
                     ),
                     Expanded(
@@ -118,8 +119,7 @@ class FriendGardenScreen extends ConsumerWidget {
                 ),
                 child: Row(
                   children: [
-                    const Icon(Icons.visibility_outlined,
-                        color: GardenColors.leafDark, size: 22),
+                    const GardenIcon(asset: GardenIcons.eyeOpen, size: 22),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(

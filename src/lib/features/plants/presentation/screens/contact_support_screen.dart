@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gossip_garden/features/auth/presentation/providers/auth_provider.dart';
 import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../../../../core/widgets/garden_icon.dart';
 
 class ContactSupportScreen extends ConsumerStatefulWidget {
   const ContactSupportScreen({super.key});
@@ -58,7 +60,7 @@ class _ContactSupportScreenState extends ConsumerState<ContactSupportScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: GardenColors.ink),
+          icon: const GardenIcon(asset: GardenIcons.back, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -112,7 +114,7 @@ class _ContactSupportScreenState extends ConsumerState<ContactSupportScreen> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.mail_outline_rounded, color: GardenColors.inkSoft),
+                          const GardenIcon(asset: GardenIcons.email, size: 22, opacity: 0.6),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Text(
@@ -137,7 +139,7 @@ class _ContactSupportScreenState extends ConsumerState<ContactSupportScreen> {
                       controller: _subjectController,
                       decoration: _inputDecoration(
                         hint: 'Ej. Problema con el sensor',
-                        icon: Icons.subject_rounded,
+                        iconAsset: GardenIcons.pencil,
                       ),
                       style: GardenTextStyles.body,
                     ),
@@ -156,7 +158,7 @@ class _ContactSupportScreenState extends ConsumerState<ContactSupportScreen> {
                       maxLines: 6,
                       decoration: _inputDecoration(
                         hint: 'Describe tu consulta con el mayor detalle posible...',
-                        icon: Icons.chat_bubble_outline_rounded,
+                        iconAsset: GardenIcons.chat,
                       ),
                       style: GardenTextStyles.body,
                     ),
@@ -193,11 +195,14 @@ class _ContactSupportScreenState extends ConsumerState<ContactSupportScreen> {
     );
   }
 
-  InputDecoration _inputDecoration({required String hint, required IconData icon}) {
+  InputDecoration _inputDecoration({required String hint, required String iconAsset}) {
     return InputDecoration(
       hintText: hint,
       hintStyle: GardenTextStyles.body.copyWith(color: GardenColors.inkSoft),
-      prefixIcon: Icon(icon, color: GardenColors.leafGreen),
+      prefixIcon: Padding(
+        padding: const EdgeInsets.all(12),
+        child: GardenIcon(asset: iconAsset, size: 20),
+      ),
       filled: true,
       fillColor: GardenColors.creamPaper.withOpacity(0.5),
       border: OutlineInputBorder(

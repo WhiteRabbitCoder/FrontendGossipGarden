@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../../../../core/widgets/garden_icon.dart';
 import '../providers/achievement_providers.dart';
 
 // Flujo: método → cámara/búsqueda → resultado identificado → agregar
@@ -50,8 +52,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: GardenColors.ink, size: 20),
+          icon: const GardenIcon(asset: GardenIcons.back, size: 20),
           onPressed: _back,
         ),
         title: Text(
@@ -136,7 +137,7 @@ class _SelectMethodView extends StatelessWidget {
           ),
           const SizedBox(height: 28),
           _MethodCard(
-            icon: Icons.camera_alt_outlined,
+            iconAsset: GardenIcons.camera,
             title: 'Reconocer con cámara',
             subtitle: 'Toma o sube una foto y la identificamos por ti.',
             badge: 'Recomendado',
@@ -144,7 +145,7 @@ class _SelectMethodView extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _MethodCard(
-            icon: Icons.text_fields_rounded,
+            iconAsset: GardenIcons.letters,
             title: 'Buscar por nombre',
             subtitle: 'Si ya sabes qué planta es, búscala en el catálogo.',
             onTap: onSearch,
@@ -156,14 +157,14 @@ class _SelectMethodView extends StatelessWidget {
 }
 
 class _MethodCard extends StatelessWidget {
-  final IconData icon;
+  final String iconAsset;
   final String title;
   final String subtitle;
   final String? badge;
   final VoidCallback onTap;
 
   const _MethodCard({
-    required this.icon,
+    required this.iconAsset,
     required this.title,
     required this.subtitle,
     required this.onTap,
@@ -198,7 +199,7 @@ class _MethodCard extends StatelessWidget {
                 height: 52,
                 decoration: const BoxDecoration(
                     color: GardenColors.creamLight, shape: BoxShape.circle),
-                child: Icon(icon, color: GardenColors.leafDark, size: 24),
+                child: GardenIcon(asset: iconAsset, size: 24),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -285,8 +286,10 @@ class _CameraViewState extends State<_CameraView> {
                   : Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.add_photo_alternate_outlined,
-                            size: 48, color: GardenColors.inkSoft),
+                        const GardenIcon(
+                            asset: GardenIcons.camera,
+                            size: 48,
+                            opacity: 0.6),
                         const SizedBox(height: 10),
                         Text(
                           'Esperando imagen...',
@@ -301,7 +304,7 @@ class _CameraViewState extends State<_CameraView> {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: _scanning ? null : _identify,
-                icon: const Icon(Icons.camera_alt_outlined, size: 18),
+                icon: const GardenIcon(asset: GardenIcons.camera, size: 18),
                 label: const Text('Abrir cámara',
                     style:
                         TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
@@ -391,8 +394,10 @@ class _SearchView extends StatelessWidget {
             onChanged: onQueryChanged,
             style: GardenTextStyles.bodySmall.copyWith(color: GardenColors.ink),
             decoration: InputDecoration(
-              prefixIcon: const Icon(Icons.search_rounded,
-                  color: GardenColors.inkSoft, size: 20),
+              prefixIcon: const Padding(
+                padding: EdgeInsets.all(12),
+                child: GardenIcon(asset: GardenIcons.letters, size: 20),
+              ),
               hintText: 'Busca: monstera, potos, ficus...',
               hintStyle: GardenTextStyles.bodySmall
                   .copyWith(color: GardenColors.inkSoft),
@@ -493,12 +498,12 @@ class _ResultView extends StatelessWidget {
   // Demo hardcoded — TODO(backend): proviene del endpoint de identificación IA
   static const _careItems = [
     (
-      Icons.water_drop_outlined,
+      GardenIcons.water,
       'AGUA',
       'Cada 7 días, deja secar la capa superior'
     ),
-    (Icons.wb_sunny_outlined, 'LUZ', 'Luz indirecta brillante'),
-    (Icons.grass_outlined, 'SUSTRATO', 'Mezcla aireada con perlita'),
+    (GardenIcons.sun, 'LUZ', 'Luz indirecta brillante'),
+    (GardenIcons.soil, 'SUSTRATO', 'Mezcla aireada con perlita'),
   ];
 
   @override
@@ -532,8 +537,8 @@ class _ResultView extends StatelessWidget {
                     color: GardenColors.creamLight,
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Center(
-                    child: Text('🌿', style: TextStyle(fontSize: 32)),
+                    child: const Center(
+                    child: GardenIcon(asset: GardenIcons.plantEco, size: 32),
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -551,8 +556,9 @@ class _ResultView extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.check_circle_rounded,
-                                size: 12, color: GardenColors.leafDark),
+                            const GardenIcon(
+                                asset: GardenIcons.logroDesbloqueado,
+                                size: 12),
                             const SizedBox(width: 4),
                             Text('IDENTIFICADA',
                                 style: GardenTextStyles.label.copyWith(
@@ -639,8 +645,7 @@ class _ResultView extends StatelessWidget {
                             decoration: const BoxDecoration(
                                 color: GardenColors.creamLight,
                                 shape: BoxShape.circle),
-                            child: Icon(item.$1,
-                                size: 18, color: GardenColors.leafDark),
+                            child: GardenIcon(asset: item.$1, size: 18),
                           ),
                           const SizedBox(width: 12),
                           Column(
@@ -718,7 +723,7 @@ class _ResultView extends StatelessWidget {
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: onAdd,
-              icon: const Icon(Icons.park_outlined, size: 18),
+              icon: const GardenIcon(asset: GardenIcons.addPlant, size: 18),
               label: const Text('Agregar a mi jardín',
                   style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
               style: ElevatedButton.styleFrom(
@@ -1039,7 +1044,8 @@ class _MatchesViewState extends State<_MatchesView> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Icons.check_circle_outline_rounded, size: 20),
+                      const GardenIcon(
+                          asset: GardenIcons.logroDesbloqueado, size: 20),
                       const SizedBox(width: 8),
                       Text(
                         'Es la ${currentMatch.name}, confirmar',
@@ -1057,7 +1063,10 @@ class _MatchesViewState extends State<_MatchesView> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Icons.swipe_left_rounded, size: 14, color: GardenColors.inkSoft.withOpacity(0.7)),
+                  GardenIcon(
+                      asset: GardenIcons.forward,
+                      size: 14,
+                      opacity: 0.7),
                   const SizedBox(width: 6),
                   Text(
                     'Desliza para ver más opciones',

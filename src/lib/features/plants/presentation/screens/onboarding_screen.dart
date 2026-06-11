@@ -2,6 +2,8 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gossip_garden/core/theme/garden_colors.dart';
+import 'package:gossip_garden/core/theme/garden_icons.dart';
+import 'package:gossip_garden/core/widgets/garden_icon.dart';
 import 'package:gossip_garden/features/plants/presentation/providers/navigation_provider.dart';
 import 'package:gossip_garden/features/auth/presentation/providers/auth_provider.dart';
 import 'package:gossip_garden/features/plants/presentation/screens/plant_identify_screen.dart';
@@ -337,18 +339,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           ),
         ),
         const SizedBox(height: 40),
-        Row(
+        const Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: const [
-            Icons.water_drop,
-            Icons.wb_sunny,
-            Icons.thermostat,
-          ].map((e) {
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 12),
-              child: Icon(e, size: 32, color: GardenColors.leafDark),
-            );
-          }).toList(),
+          children: [
+            GardenIcon(asset: GardenIcons.water, size: 32),
+            SizedBox(width: 24),
+            GardenIcon(asset: GardenIcons.sun, size: 32),
+            SizedBox(width: 24),
+            GardenIcon(asset: GardenIcons.thermostat, size: 32),
+          ],
         ),
         const SizedBox(height: 32),
         const Text(
@@ -439,8 +438,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           padding: const EdgeInsets.all(4),
           child: Row(
             children: [
-              _sensorToggleOption('Con sensor', Icons.wifi_rounded, true, usesSensor),
-              _sensorToggleOption('Sin sensor', Icons.eco_outlined, false, usesSensor),
+              _sensorToggleOption('Con sensor', GardenIcons.wifi, true, usesSensor),
+              _sensorToggleOption('Sin sensor', GardenIcons.plantEco, false, usesSensor),
             ],
           ),
         ),
@@ -476,7 +475,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   }
 
   Widget _sensorToggleOption(
-      String label, IconData icon, bool isSensor, bool usesSensor) {
+      String label, String iconAsset, bool isSensor, bool usesSensor) {
     final isSelected = isSensor == usesSensor;
     return Expanded(
       child: GestureDetector(
@@ -501,9 +500,11 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(icon,
-                  size: 16,
-                  color: isSelected ? Colors.white : GardenColors.inkSoft),
+              GardenIcon(
+                asset: iconAsset,
+                size: 16,
+                opacity: isSelected ? 1.0 : 0.6,
+              ),
               const SizedBox(width: 6),
               Text(
                 label,
@@ -549,8 +550,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             child: const Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.wifi_rounded,
-                    size: 14, color: GardenColors.leafDark),
+                GardenIcon(asset: GardenIcons.wifi, size: 14),
                 SizedBox(width: 7),
                 Text(
                   'gossip_garden',
@@ -745,7 +745,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             : GardenColors.dustLight;
 
     final Widget circleContent = isDone
-        ? const Icon(Icons.check_rounded, size: 15, color: Colors.white)
+        ? const GardenIcon(asset: GardenIcons.logroDesbloqueado, size: 15)
         : Text(
             '$number',
             style: TextStyle(
@@ -878,8 +878,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                   color: GardenColors.leafDark.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: const Icon(Icons.sensors,
-                    size: 28, color: GardenColors.leafDark),
+                child: const GardenIcon(
+                    asset: GardenIcons.logroSensores, size: 28),
               ),
               const SizedBox(width: 14),
               Expanded(
@@ -954,8 +954,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                 ),
                 child: Column(
                   children: [
-                    Icon(Icons.wifi_find,
-                        size: 40, color: GardenColors.inkSoft),
+                    GardenIcon(
+                        asset: GardenIcons.wifiConnect,
+                        size: 40,
+                        opacity: 0.6),
                     const SizedBox(height: 10),
                     Text('Toca para buscar redes',
                         style: TextStyle(
@@ -1024,7 +1026,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             controller: _ssidController,
             label: 'Nombre de la red',
             hint: 'O escribe el nombre manualmente',
-            icon: Icons.wifi,
+            iconAsset: GardenIcons.wifi,
             obscure: false,
             onChanged: (_) => setState(() => _showPasswordField = true),
           ),
@@ -1036,15 +1038,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               controller: _passwordController,
               label: 'Contraseña',
               hint: '••••••••',
-              icon: Icons.lock_outline,
+              iconAsset: GardenIcons.lock,
               obscure: !_passwordVisible,
               suffixIcon: IconButton(
-                icon: Icon(
-                  _passwordVisible
-                      ? Icons.visibility_off_outlined
-                      : Icons.visibility_outlined,
-                  color: GardenColors.inkSoft,
+                icon: GardenIcon(
+                  asset: _passwordVisible
+                      ? GardenIcons.eyeClose
+                      : GardenIcons.eyeOpen,
                   size: 20,
+                  opacity: 0.6,
                 ),
                 onPressed: () =>
                     setState(() => _passwordVisible = !_passwordVisible),
@@ -1157,7 +1159,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     required TextEditingController controller,
     required String label,
     required String hint,
-    required IconData icon,
+    required String iconAsset,
     required bool obscure,
     Widget? suffixIcon,
     ValueChanged<String>? onChanged,
@@ -1170,7 +1172,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       decoration: InputDecoration(
         labelText: label,
         hintText: hint,
-        prefixIcon: Icon(icon, color: GardenColors.leafDark, size: 20),
+        prefixIcon: Padding(
+          padding: const EdgeInsets.all(12),
+          child: GardenIcon(asset: iconAsset, size: 20),
+        ),
         suffixIcon: suffixIcon,
         labelStyle: const TextStyle(color: GardenColors.leafDark),
         filled: true,
@@ -1195,8 +1200,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Icon(Icons.wifi_lock_rounded,
-            size: 64, color: GardenColors.leafDark),
+        const GardenIcon(asset: GardenIcons.wifiConnect, size: 64),
         const SizedBox(height: 24),
         const Text(
           'Configuración del chip',

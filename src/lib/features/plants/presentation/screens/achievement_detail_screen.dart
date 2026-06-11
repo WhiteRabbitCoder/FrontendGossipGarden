@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../../../../core/widgets/garden_icon.dart';
 import '../../data/models/achievement.dart';
 
 class AchievementDetailScreen extends StatelessWidget {
@@ -19,7 +21,7 @@ class AchievementDetailScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: GardenColors.ink),
+          icon: const GardenIcon(asset: GardenIcons.back, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -53,7 +55,11 @@ class AchievementDetailScreen extends StatelessWidget {
             ),
             child: Column(
               children: [
-                Text(def.icon, style: const TextStyle(fontSize: 56)),
+                GardenIcon(
+                  asset: GardenIcons.achievementAsset(def.id),
+                  size: 56,
+                  opacity: progress.unlocked ? 1.0 : 0.5,
+                ),
                 const SizedBox(height: 12),
                 Text(
                   def.description,
@@ -106,8 +112,10 @@ class AchievementDetailScreen extends StatelessWidget {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(Icons.emoji_events_rounded,
-                            color: GardenColors.leafDark, size: 18),
+                        const GardenIcon(
+                          asset: GardenIcons.logroTrofeo,
+                          size: 18,
+                        ),
                         const SizedBox(width: 6),
                         Text(
                           '¡Logro conseguido!',
@@ -126,13 +134,13 @@ class AchievementDetailScreen extends StatelessWidget {
           const SizedBox(height: 20),
           _InfoCard(
             title: 'Cómo se desbloquea',
-            icon: Icons.flag_outlined,
+            iconAsset: GardenIcons.logroExplorador,
             body: def.howToEarn,
           ),
           const SizedBox(height: 12),
           _InfoCard(
             title: 'Cómo se registra el avance',
-            icon: Icons.track_changes_outlined,
+            iconAsset: GardenIcons.info,
             body: def.trackingSource,
           ),
         ],
@@ -143,12 +151,12 @@ class AchievementDetailScreen extends StatelessWidget {
 
 class _InfoCard extends StatelessWidget {
   final String title;
-  final IconData icon;
+  final String iconAsset;
   final String body;
 
   const _InfoCard({
     required this.title,
-    required this.icon,
+    required this.iconAsset,
     required this.body,
   });
 
@@ -166,7 +174,7 @@ class _InfoCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(icon, size: 18, color: GardenColors.leafDark),
+              GardenIcon(asset: iconAsset, size: 18),
               const SizedBox(width: 8),
               Text(
                 title,

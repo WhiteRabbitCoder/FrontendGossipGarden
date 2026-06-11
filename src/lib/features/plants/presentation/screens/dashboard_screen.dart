@@ -9,7 +9,9 @@ import '../widgets/urgent_tasks_sheet.dart';
 import '../../data/models/plant.dart';
 import '../../data/models/plant_enums.dart';
 import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../../../../core/widgets/garden_icon.dart';
 import 'package:gossip_garden/features/auth/presentation/providers/auth_provider.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -191,13 +193,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                     child: Row(
                       children: [
                         _ViewModeToggle(
-                          icon: Icons.grid_view_rounded,
+                          asset: GardenIcons.viewGrid,
                           tooltip: 'Vista en cuadrícula',
                           isSelected: !_isListView,
                           onTap: () => setState(() => _isListView = false),
                         ),
                         _ViewModeToggle(
-                          icon: Icons.format_list_bulleted_rounded,
+                          asset: GardenIcons.viewList,
                           tooltip: 'Vista en lista',
                           isSelected: _isListView,
                           onTap: () => setState(() => _isListView = true),
@@ -258,13 +260,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
 // ── View mode toggle ──────────────────────────────────────────────────────────
 
 class _ViewModeToggle extends StatelessWidget {
-  final IconData icon;
+  final String asset;
   final String tooltip;
   final bool isSelected;
   final VoidCallback onTap;
 
   const _ViewModeToggle({
-    required this.icon,
+    required this.asset,
     required this.tooltip,
     required this.isSelected,
     required this.onTap,
@@ -282,10 +284,10 @@ class _ViewModeToggle extends StatelessWidget {
           onTap: onTap,
           child: Padding(
             padding: const EdgeInsets.all(8),
-            child: Icon(
-              icon,
+            child: GardenIcon(
+              asset: asset,
               size: 20,
-              color: isSelected ? GardenColors.leafDark : GardenColors.inkSoft,
+              opacity: isSelected ? 1.0 : 0.45,
             ),
           ),
         ),
@@ -319,9 +321,8 @@ class _NotificationBell extends StatelessWidget {
             shape: BoxShape.circle,
             border: Border.all(color: GardenColors.creamPaper),
           ),
-          child: const Icon(
-            Icons.notifications_none_rounded,
-            color: GardenColors.ink,
+          child: const GardenIcon(
+            asset: GardenIcons.notification,
             size: 22,
           ),
         ),
@@ -380,8 +381,11 @@ class _SensorAlertRow extends StatelessWidget {
       ),
       child: Row(
         children: [
-          const Icon(Icons.wifi_off_rounded,
-              size: 18, color: GardenColors.inkSoft),
+          const GardenIcon(
+            asset: GardenIcons.sensorOffline,
+            size: 18,
+            opacity: 0.7,
+          ),
           const SizedBox(width: 12),
           Expanded(
             child: RichText(
@@ -435,8 +439,10 @@ class _UpcomingCareSection extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Icon(Icons.info_outline_rounded,
-                color: GardenColors.golden, size: 20),
+            const GardenIcon(
+              asset: GardenIcons.info,
+              size: 20,
+            ),
             const SizedBox(width: 8),
             Text(
               'Próximos Cuidados',

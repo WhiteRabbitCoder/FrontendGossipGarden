@@ -4,7 +4,9 @@ import '../providers/plant_providers.dart';
 import '../providers/navigation_provider.dart';
 import '../providers/achievement_providers.dart';
 import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../../../../core/widgets/garden_icon.dart';
 import '../widgets/garden_plant_card.dart';
 import 'invite_friend_screen.dart';
 import 'plant_identify_screen.dart';
@@ -65,10 +67,9 @@ class _GardenViewScreenState extends ConsumerState<GardenViewScreen> {
                         ),
                       ),
                       _GardenHeaderAction(
-                        icon: Icons.add_rounded,
+                        asset: GardenIcons.addPlant,
                         tooltip: 'Agregar nueva planta',
                         backgroundColor: GardenColors.leafDark,
-                        iconColor: Colors.white,
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
@@ -79,7 +80,7 @@ class _GardenViewScreenState extends ConsumerState<GardenViewScreen> {
                       ),
                       const SizedBox(width: 10),
                       _GardenHeaderAction(
-                        icon: Icons.person_add_alt_1_rounded,
+                        asset: GardenIcons.friendAdd,
                         tooltip: 'Invitar amigo jardinero',
                         onTap: () {
                           Navigator.of(context).push(
@@ -137,18 +138,16 @@ class _GardenViewScreenState extends ConsumerState<GardenViewScreen> {
 // ── Header action icon ────────────────────────────────────────────────────────
 
 class _GardenHeaderAction extends StatelessWidget {
-  final IconData icon;
+  final String asset;
   final String tooltip;
   final VoidCallback onTap;
   final Color backgroundColor;
-  final Color iconColor;
 
   const _GardenHeaderAction({
-    required this.icon,
+    required this.asset,
     required this.tooltip,
     required this.onTap,
     this.backgroundColor = Colors.white,
-    this.iconColor = GardenColors.ink,
   });
 
   @override
@@ -172,7 +171,7 @@ class _GardenHeaderAction extends StatelessWidget {
                     : Colors.transparent,
               ),
             ),
-            child: Icon(icon, color: iconColor, size: 22),
+            child: GardenIcon(asset: asset, size: 22),
           ),
         ),
       ),
@@ -207,8 +206,11 @@ class _FriendPlantsSection extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Icon(Icons.people_outline_rounded,
-                size: 20, color: GardenColors.inkSoft),
+            const GardenIcon(
+              asset: GardenIcons.friendPlants,
+              size: 20,
+              opacity: 0.7,
+            ),
             const SizedBox(width: 8),
             Text(
               'Plantas de amigos',
@@ -274,9 +276,8 @@ class _FriendPlantCard extends StatelessWidget {
                   color: GardenColors.creamLight,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.eco_rounded,
-                  color: GardenColors.leafDark,
+                child: const GardenIcon(
+                  asset: GardenIcons.plantEco,
                   size: 24,
                 ),
               ),
@@ -348,10 +349,10 @@ class _FriendPlantCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const Icon(
-                Icons.chevron_right_rounded,
-                color: GardenColors.inkSoft,
+              const GardenIcon(
+                asset: GardenIcons.forward,
                 size: 22,
+                opacity: 0.6,
               ),
             ],
           ),

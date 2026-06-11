@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../../../../core/widgets/garden_icon.dart';
 import '../../data/models/plant.dart';
 import '../../data/models/plant_enums.dart';
 import '../providers/achievement_providers.dart';
@@ -106,7 +108,7 @@ class _SensorSettingsScreenState extends ConsumerState<SensorSettingsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: GardenColors.ink),
+          icon: const GardenIcon(asset: GardenIcons.back, size: 20),
           onPressed: () {
             if (phase == SensorSetupPhase.overview) {
               Navigator.pop(context);
@@ -223,7 +225,7 @@ class _SensorSettingsScreenState extends ConsumerState<SensorSettingsScreen> {
         const SizedBox(height: 24),
         ElevatedButton.icon(
           onPressed: _startConfiguration,
-          icon: const Icon(Icons.sensors_rounded, size: 20),
+          icon: const GardenIcon(asset: GardenIcons.logroSensores, size: 20),
           label: const Text('Configurar o reconectar sensor'),
           style: ElevatedButton.styleFrom(
             backgroundColor: GardenColors.leafDark,
@@ -252,7 +254,7 @@ class _SensorSettingsScreenState extends ConsumerState<SensorSettingsScreen> {
             ),
             child: Column(
               children: [
-                const Icon(Icons.sensors_rounded, size: 48, color: GardenColors.leafDark),
+                const GardenIcon(asset: GardenIcons.logroSensores, size: 48),
                 const SizedBox(height: 16),
                 Text(
                   'Prepara tu sensor',
@@ -345,14 +347,15 @@ class _SensorSettingsScreenState extends ConsumerState<SensorSettingsScreen> {
                 ),
                 child: Row(
                   children: [
-                    Icon(
-                      Icons.wifi_rounded,
-                      color: selected ? GardenColors.leafDark : GardenColors.inkSoft,
+                    GardenIcon(
+                      asset: GardenIcons.wifi,
+                      size: 22,
+                      opacity: selected ? 1.0 : 0.6,
                     ),
                     const SizedBox(width: 12),
                     Expanded(child: Text(network.ssid, style: GardenTextStyles.bodySmall)),
                     if (network.secured)
-                      const Icon(Icons.lock_outline_rounded, size: 16, color: GardenColors.inkSoft),
+                      const GardenIcon(asset: GardenIcons.lock, size: 16, opacity: 0.6),
                   ],
                 ),
               ),
@@ -362,17 +365,18 @@ class _SensorSettingsScreenState extends ConsumerState<SensorSettingsScreen> {
         const SizedBox(height: 12),
         TextField(
           controller: _ssidController,
-          decoration: _inputDecoration('Nombre de la red', Icons.wifi_rounded),
+          decoration: _inputDecoration('Nombre de la red', GardenIcons.wifi),
         ),
         const SizedBox(height: 12),
         TextField(
           controller: _passwordController,
           obscureText: !_passwordVisible,
-          decoration: _inputDecoration('Contraseña WiFi', Icons.lock_outline_rounded).copyWith(
+          decoration: _inputDecoration('Contraseña WiFi', GardenIcons.lock).copyWith(
             suffixIcon: IconButton(
-              icon: Icon(
-                _passwordVisible ? Icons.visibility_off_outlined : Icons.visibility_outlined,
-                color: GardenColors.inkSoft,
+              icon: GardenIcon(
+                asset: _passwordVisible ? GardenIcons.eyeClose : GardenIcons.eyeOpen,
+                size: 22,
+                opacity: 0.6,
               ),
               onPressed: () => setState(() => _passwordVisible = !_passwordVisible),
             ),
@@ -419,7 +423,7 @@ class _SensorSettingsScreenState extends ConsumerState<SensorSettingsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.check_circle_rounded, size: 64, color: GardenColors.leafDark),
+          const GardenIcon(asset: GardenIcons.logroDesbloqueado, size: 64),
           const SizedBox(height: 16),
           Text(
             'Sensor vinculado',
@@ -457,7 +461,7 @@ class _SensorSettingsScreenState extends ConsumerState<SensorSettingsScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          const Icon(Icons.error_outline_rounded, size: 64, color: GardenColors.heartRed),
+          const GardenIcon(asset: GardenIcons.info, size: 64),
           const SizedBox(height: 16),
           Text(
             'No se pudo conectar',
@@ -491,10 +495,13 @@ class _SensorSettingsScreenState extends ConsumerState<SensorSettingsScreen> {
     );
   }
 
-  InputDecoration _inputDecoration(String hint, IconData icon) {
+  InputDecoration _inputDecoration(String hint, String iconAsset) {
     return InputDecoration(
       hintText: hint,
-      prefixIcon: Icon(icon, color: GardenColors.leafGreen),
+      prefixIcon: Padding(
+        padding: const EdgeInsets.all(12),
+        child: GardenIcon(asset: iconAsset, size: 20),
+      ),
       filled: true,
       fillColor: Colors.white,
       border: OutlineInputBorder(
@@ -533,9 +540,10 @@ class _StatusCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              Icon(
-                isLinked ? Icons.sensors_rounded : Icons.sensors_off_rounded,
-                color: isLinked ? GardenColors.leafDark : GardenColors.inkSoft,
+              GardenIcon(
+                asset: isLinked ? GardenIcons.logroSensores : GardenIcons.sensorOffline,
+                size: 22,
+                opacity: isLinked ? 1.0 : 0.6,
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -594,24 +602,24 @@ class _InfoRow extends StatelessWidget {
   }
 }
 
-(String, Color, IconData, String) sensorStatusStyle(SensorStatus status) {
+(String, Color, String, String) sensorStatusStyle(SensorStatus status) {
   return switch (status) {
     SensorStatus.online => (
         'En línea',
         GardenColors.okGreen,
-        Icons.wifi_rounded,
+        GardenIcons.wifi,
         'El sensor envía datos con normalidad.',
       ),
     SensorStatus.degraded => (
         'Señal débil',
         GardenColors.golden,
-        Icons.wifi_2_bar_rounded,
+        GardenIcons.signal,
         'Las lecturas llegan con retraso o la señal WiFi es inestable.',
       ),
     SensorStatus.offline => (
         'Sin conexión',
         GardenColors.heartRed,
-        Icons.wifi_off_rounded,
+        GardenIcons.sensorOffline,
         'No recibimos datos del sensor. Puede estar apagado o desvinculado.',
       ),
   };
@@ -666,7 +674,7 @@ class _PlantSensorIssueCard extends StatelessWidget {
                   color: color.withValues(alpha: 0.12),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, color: color, size: 22),
+                child: GardenIcon(asset: icon, size: 22),
               ),
               const SizedBox(width: 12),
               Expanded(
@@ -728,7 +736,7 @@ class _PlantSensorIssueCard extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton.icon(
                 onPressed: onReconnect,
-                icon: const Icon(Icons.settings_input_antenna_rounded, size: 20),
+                icon: const GardenIcon(asset: GardenIcons.wifiConnect, size: 20),
                 label: const Text('Reconectar sensor'),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: GardenColors.leafDark,
@@ -782,7 +790,10 @@ class _PlantSensorTile extends StatelessWidget {
               color: GardenColors.creamLight,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.park_rounded, color: GardenColors.leafDark),
+            child: GardenIcon(
+              asset: GardenIcons.plantAssetForSpecies(plant.species),
+              size: 22,
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -803,7 +814,7 @@ class _PlantSensorTile extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    Icon(icon, size: 14, color: color),
+                    GardenIcon(asset: icon, size: 14),
                     const SizedBox(width: 4),
                     Text(
                       label,
@@ -819,7 +830,7 @@ class _PlantSensorTile extends StatelessWidget {
           ),
           IconButton(
             onPressed: onConfigure,
-            icon: const Icon(Icons.settings_input_antenna_rounded, color: GardenColors.leafDark),
+            icon: const GardenIcon(asset: GardenIcons.wifiConnect, size: 22),
             tooltip: 'Configurar sensor',
           ),
         ],

@@ -2,18 +2,9 @@ import 'package:flutter/material.dart';
 import '../../data/models/plant.dart';
 import '../../data/models/plant_enums.dart';
 import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
-
-IconData _plantSpeciesIcon(String species) {
-  final lower = species.toLowerCase();
-  if (lower.contains('echeveria') || lower.contains('suculenta')) {
-    return Icons.local_florist_outlined;
-  }
-  if (lower.contains('ficus')) {
-    return Icons.park_outlined;
-  }
-  return Icons.eco_outlined;
-}
+import '../../../../core/widgets/garden_icon.dart';
 
 class PlantFeedCard extends StatelessWidget {
   final Plant plant;
@@ -69,16 +60,14 @@ class PlantFeedCard extends StatelessWidget {
                             child: Image.network(
                               plant.image,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Icon(
-                                _plantSpeciesIcon(plant.species),
-                                color: GardenColors.leafDark,
+                              errorBuilder: (_, __, ___) => GardenIcon(
+                                asset: GardenIcons.plantAssetForSpecies(plant.species),
                                 size: 26,
                               ),
                             ),
                           )
-                        : Icon(
-                            _plantSpeciesIcon(plant.species),
-                            color: GardenColors.leafDark,
+                        : GardenIcon(
+                            asset: GardenIcons.plantAssetForSpecies(plant.species),
                             size: 26,
                           ),
                   ),
@@ -124,10 +113,10 @@ class PlantFeedCard extends StatelessWidget {
                 ),
                 const SizedBox(width: 8),
                 // ── Chevron ────────────────────────────────────────────────
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  color: GardenColors.inkSoft,
+                const GardenIcon(
+                  asset: GardenIcons.forward,
                   size: 22,
+                  opacity: 0.6,
                 ),
               ],
             ),
@@ -189,16 +178,14 @@ class PlantFeedGridCard extends StatelessWidget {
                             child: Image.network(
                               plant.image,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Icon(
-                                _plantSpeciesIcon(plant.species),
-                                color: GardenColors.leafDark,
+                              errorBuilder: (_, __, ___) => GardenIcon(
+                                asset: GardenIcons.plantAssetForSpecies(plant.species),
                                 size: 28,
                               ),
                             ),
                           )
-                        : Icon(
-                            _plantSpeciesIcon(plant.species),
-                            color: GardenColors.leafDark,
+                        : GardenIcon(
+                            asset: GardenIcons.plantAssetForSpecies(plant.species),
                             size: 28,
                           ),
                   ),

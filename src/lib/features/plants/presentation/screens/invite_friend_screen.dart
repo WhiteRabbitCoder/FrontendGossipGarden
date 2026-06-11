@@ -4,7 +4,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gossip_garden/features/auth/presentation/providers/auth_provider.dart';
 
 import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../../../../core/widgets/garden_icon.dart';
 
 class InviteFriendScreen extends ConsumerStatefulWidget {
   const InviteFriendScreen({super.key});
@@ -87,7 +89,7 @@ class _InviteFriendScreenState extends ConsumerState<InviteFriendScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: GardenColors.ink),
+          icon: const GardenIcon(asset: GardenIcons.back, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -118,7 +120,7 @@ class _InviteFriendScreenState extends ConsumerState<InviteFriendScreen> {
             ),
             child: Column(
               children: [
-                const Icon(Icons.people_alt_rounded, color: Colors.white, size: 48),
+                const GardenIcon(asset: GardenIcons.friendPlants, size: 48),
                 const SizedBox(height: 16),
                 Text(
                   'Haz crecer la comunidad verde',
@@ -187,7 +189,7 @@ class _InviteFriendScreenState extends ConsumerState<InviteFriendScreen> {
                         _demoInviteCode,
                         'Código copiado al portapapeles.',
                       ),
-                      icon: const Icon(Icons.copy_rounded, color: GardenColors.leafDark),
+                      icon: const GardenIcon(asset: GardenIcons.pencil, size: 22),
                       tooltip: 'Copiar código',
                     ),
                   ],
@@ -217,7 +219,7 @@ class _InviteFriendScreenState extends ConsumerState<InviteFriendScreen> {
                           inviteLink,
                           'Enlace copiado al portapapeles.',
                         ),
-                        icon: const Icon(Icons.link_rounded, size: 18),
+                        icon: const GardenIcon(asset: GardenIcons.wifiConnect, size: 18),
                         label: const Text('Copiar enlace'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: GardenColors.leafDark,
@@ -236,7 +238,7 @@ class _InviteFriendScreenState extends ConsumerState<InviteFriendScreen> {
                           inviteMessage,
                           'Mensaje copiado. Pégalo en WhatsApp o donde quieras.',
                         ),
-                        icon: const Icon(Icons.share_rounded, size: 18),
+                        icon: const GardenIcon(asset: GardenIcons.share, size: 18),
                         label: const Text('Compartir'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: GardenColors.leafDark,
@@ -287,9 +289,9 @@ class _InviteFriendScreenState extends ConsumerState<InviteFriendScreen> {
                   textCapitalization: TextCapitalization.characters,
                   decoration: InputDecoration(
                     hintText: 'Ej. GARDEN-7K2M',
-                    prefixIcon: const Icon(
-                      Icons.vpn_key_outlined,
-                      color: GardenColors.leafGreen,
+                    prefixIcon: const Padding(
+                      padding: EdgeInsets.only(left: 12, right: 8),
+                      child: GardenIcon(asset: GardenIcons.lock, size: 20),
                     ),
                     filled: true,
                     fillColor: GardenColors.creamPaper,
@@ -339,7 +341,7 @@ class _InviteFriendScreenState extends ConsumerState<InviteFriendScreen> {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.info_outline_rounded, color: GardenColors.leafDark, size: 20),
+                const GardenIcon(asset: GardenIcons.info, size: 20),
                 const SizedBox(width: 12),
                 Expanded(
                   child: Text(

@@ -6,7 +6,9 @@ import '../providers/navigation_provider.dart';
 import '../../data/models/plant.dart';
 import '../../data/models/plant_enums.dart';
 import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../../../../core/widgets/garden_icon.dart';
 
 class ChatListScreen extends ConsumerWidget {
   const ChatListScreen({super.key});
@@ -127,8 +129,10 @@ class _ChatCard extends StatelessWidget {
                     decoration: const BoxDecoration(
                         color: GardenColors.creamLight,
                         shape: BoxShape.circle),
-                    child: const Icon(Icons.park_rounded,
-                        color: GardenColors.leafDark, size: 26),
+                    child: GardenIcon(
+                      asset: GardenIcons.plantAssetForSpecies(plant.species),
+                      size: 26,
+                    ),
                   ),
                   if (unreadCount > 0)
                     Positioned(
@@ -186,8 +190,11 @@ class _ChatCard extends StatelessWidget {
                 ),
               ),
               const SizedBox(width: 8),
-              const Icon(Icons.chevron_right_rounded,
-                  color: GardenColors.inkSoft, size: 22),
+              const GardenIcon(
+                asset: GardenIcons.forward,
+                size: 22,
+                opacity: 0.6,
+              ),
             ],
           ),
         ),

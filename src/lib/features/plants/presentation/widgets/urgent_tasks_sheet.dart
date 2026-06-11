@@ -5,7 +5,9 @@ import '../../data/models/urgent_plant_task.dart';
 import '../providers/plant_providers.dart';
 import '../providers/urgent_tasks_provider.dart';
 import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../../../../core/widgets/garden_icon.dart';
 
 void showUrgentTasksSheet(BuildContext context) {
   showModalBottomSheet<void>(
@@ -72,9 +74,8 @@ class _UrgentTasksSheetState extends ConsumerState<UrgentTasksSheet> {
                       shape: BoxShape.circle,
                       border: Border.all(color: GardenColors.creamPaper),
                     ),
-                    child: const Icon(
-                      Icons.notifications_active_outlined,
-                      color: GardenColors.leafDark,
+                    child: const GardenIcon(
+                      asset: GardenIcons.notification,
                       size: 22,
                     ),
                   ),
@@ -151,7 +152,7 @@ class _EmptyState extends StatelessWidget {
       ),
       child: Column(
         children: [
-          const Icon(Icons.eco_outlined, color: GardenColors.leafDark, size: 40),
+          const GardenIcon(asset: GardenIcons.plantEco, size: 40),
           const SizedBox(height: 12),
           Text(
             '¡Todo al día!',
@@ -219,7 +220,7 @@ class _TaskTile extends StatelessWidget {
                   color: GardenColors.creamLight,
                   shape: BoxShape.circle,
                 ),
-                child: Icon(task.icon, color: GardenColors.leafDark, size: 18),
+                child: GardenIcon(asset: task.iconAsset, size: 18),
               ),
               const SizedBox(width: 10),
               Expanded(

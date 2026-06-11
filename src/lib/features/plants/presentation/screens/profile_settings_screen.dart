@@ -7,7 +7,9 @@ import '../../data/models/plant.dart';
 import '../../data/models/plant_enums.dart';
 import 'package:gossip_garden/features/auth/presentation/providers/auth_provider.dart';
 import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../../../../core/widgets/garden_icon.dart';
 import 'personal_info_screen.dart';
 import 'help_center_screen.dart';
 import 'contact_support_screen.dart';
@@ -163,7 +165,7 @@ class _ProfileHeader extends StatelessWidget {
         ),
         const SizedBox(width: 8),
         _IconCircleButton(
-          icon: Icons.settings_outlined,
+          asset: GardenIcons.settings,
           onTap: onSettingsTap,
         ),
       ],
@@ -172,9 +174,9 @@ class _ProfileHeader extends StatelessWidget {
 }
 
 class _IconCircleButton extends StatelessWidget {
-  final IconData icon;
+  final String asset;
   final VoidCallback onTap;
-  const _IconCircleButton({required this.icon, required this.onTap});
+  const _IconCircleButton({required this.asset, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -188,7 +190,7 @@ class _IconCircleButton extends StatelessWidget {
           shape: BoxShape.circle,
           border: Border.all(color: GardenColors.creamPaper),
         ),
-        child: Icon(icon, size: 18, color: GardenColors.ink),
+        child: Center(child: GardenIcon(asset: asset, size: 18)),
       ),
     );
   }
@@ -301,22 +303,18 @@ class AchievementCard extends StatelessWidget {
           children: [
             Align(
               alignment: Alignment.centerRight,
-              child: Icon(
-                progress.unlocked
-                    ? Icons.check_circle_rounded
-                    : Icons.info_outline_rounded,
+              child: GardenIcon(
+                asset: progress.unlocked
+                    ? GardenIcons.logroDesbloqueado
+                    : GardenIcons.info,
                 size: 14,
-                color: progress.unlocked
-                    ? GardenColors.leafDark
-                    : GardenColors.inkSoft,
+                opacity: progress.unlocked ? 1.0 : 0.6,
               ),
             ),
-            Text(
-              def.icon,
-              style: TextStyle(
-                fontSize: 26,
-                color: progress.unlocked ? null : Colors.black.withOpacity(0.45),
-              ),
+            GardenIcon(
+              asset: GardenIcons.achievementAsset(def.id),
+              size: 30,
+              opacity: progress.unlocked ? 1.0 : 0.45,
             ),
             const SizedBox(height: 2),
             Text(
@@ -440,8 +438,10 @@ class _FavoritePlantRow extends StatelessWidget {
               color: GardenColors.creamLight,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.park_rounded,
-                color: GardenColors.leafDark, size: 26),
+            child: const GardenIcon(
+              asset: GardenIcons.plantEco,
+              size: 26,
+            ),
           ),
           const SizedBox(width: 14),
           Expanded(
@@ -488,8 +488,11 @@ class _FavoritePlantRow extends StatelessWidget {
             ],
           ),
           const SizedBox(width: 8),
-          const Icon(Icons.chevron_right_rounded,
-              color: GardenColors.inkSoft, size: 22),
+          const GardenIcon(
+            asset: GardenIcons.forward,
+            size: 22,
+            opacity: 0.6,
+          ),
         ],
       ),
     );
@@ -524,7 +527,7 @@ class _AddFavoriteButton extends StatelessWidget {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.add_rounded, color: GardenColors.leafDark, size: 20),
+            const GardenIcon(asset: GardenIcons.add, size: 20),
             const SizedBox(width: 8),
             Text(
               'Agregar planta favorita',
@@ -564,14 +567,15 @@ class _AddFavoriteButton extends StatelessWidget {
                       color: GardenColors.creamLight,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.park_rounded,
-                        size: 20, color: GardenColors.leafDark),
+                    child: const GardenIcon(
+                      asset: GardenIcons.plantEco,
+                      size: 20,
+                    ),
                   ),
                   title: Text(plant.name),
                   subtitle: Text(plant.species),
                   trailing: IconButton(
-                    icon: const Icon(Icons.add_rounded,
-                        color: GardenColors.leafDark),
+                    icon: const GardenIcon(asset: GardenIcons.add, size: 22),
                     onPressed: () {
                       ref.read(favoritePlantsProvider.notifier).state = [
                         ...ref.read(favoritePlantsProvider),
@@ -620,8 +624,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded,
-              color: GardenColors.ink),
+          icon: const GardenIcon(asset: GardenIcons.back, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -646,7 +649,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
           _SettingsGroup(
             children: [
               _SettingsTile(
-                icon: Icons.person_outline_rounded,
+                iconAsset: GardenIcons.profile,
                 title: 'Información personal',
                 subtitle: 'Nombre, bio, avatar, contraseña',
                 onTap: () {
@@ -667,7 +670,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
           _SettingsGroup(
             children: [
               _SettingsToggleTile(
-                icon: Icons.smartphone_outlined,
+                iconAsset: GardenIcons.phone,
                 title: 'Notificaciones push',
                 subtitle: 'Avisos en este dispositivo',
                 value: _pushNotifications,
@@ -675,7 +678,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
               ),
               _SettingsDivider(),
               _SettingsToggleTile(
-                icon: Icons.mail_outline_rounded,
+                iconAsset: GardenIcons.email,
                 title: 'Correo',
                 subtitle: 'Resumen semanal por email',
                 value: _emailNotifications,
@@ -683,7 +686,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
               ),
               _SettingsDivider(),
               _SettingsToggleTile(
-                icon: Icons.notifications_none_rounded,
+                iconAsset: GardenIcons.notification,
                 title: 'Recordatorios de cuidado',
                 subtitle: 'Cuando una planta necesita atención',
                 value: _careReminders,
@@ -699,7 +702,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
           _SettingsGroup(
             children: [
               _SettingsTile(
-                icon: Icons.sensors_rounded,
+                iconAsset: GardenIcons.logroSensores,
                 title: 'Mis sensores',
                 subtitle: 'Estado, vinculación y configuración WiFi',
                 onTap: () {
@@ -720,7 +723,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
           _SettingsGroup(
             children: [
               _SettingsTile(
-                icon: Icons.shield_outlined,
+                iconAsset: GardenIcons.shield,
                 title: 'Privacidad de datos',
                 subtitle: 'Gestiona cómo usamos tu información',
                 onTap: () {
@@ -733,7 +736,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
               ),
               _SettingsDivider(),
               _SettingsTile(
-                icon: Icons.visibility_outlined,
+                iconAsset: GardenIcons.eyeOpen,
                 title: 'Visibilidad del perfil',
                 subtitle: 'Quién puede ver tu jardín',
                 onTap: () {
@@ -754,7 +757,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
           _SettingsGroup(
             children: [
               _SettingsTile(
-                icon: Icons.help_outline_rounded,
+                iconAsset: GardenIcons.helpBooks,
                 title: 'Centro de ayuda',
                 subtitle: 'Preguntas frecuentes y guías',
                 onTap: () {
@@ -767,7 +770,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
               ),
               _SettingsDivider(),
               _SettingsTile(
-                icon: Icons.chat_bubble_outline_rounded,
+                iconAsset: GardenIcons.chat,
                 title: 'Contactar soporte',
                 subtitle: 'Escríbenos, respondemos en 24h',
                 onTap: () {
@@ -780,7 +783,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
               ),
               _SettingsDivider(),
               _SettingsTile(
-                icon: Icons.star_outline_rounded,
+                iconAsset: GardenIcons.starOutline,
                 title: 'Calificar la app',
                 subtitle: 'Abre Google Play Store para valorarnos',
                 onTap: _openPlayStore,
@@ -874,13 +877,13 @@ class _SettingsDivider extends StatelessWidget {
 }
 
 class _SettingsTile extends StatelessWidget {
-  final IconData icon;
+  final String iconAsset;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
 
   const _SettingsTile({
-    required this.icon,
+    required this.iconAsset,
     required this.title,
     required this.subtitle,
     required this.onTap,
@@ -902,7 +905,7 @@ class _SettingsTile extends StatelessWidget {
                 color: GardenColors.creamLight,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, size: 18, color: GardenColors.ink),
+              child: Center(child: GardenIcon(asset: iconAsset, size: 18)),
             ),
             const SizedBox(width: 14),
             Expanded(
@@ -926,8 +929,11 @@ class _SettingsTile extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded,
-                color: GardenColors.inkSoft, size: 20),
+            const GardenIcon(
+              asset: GardenIcons.forward,
+              size: 20,
+              opacity: 0.6,
+            ),
           ],
         ),
       ),
@@ -936,14 +942,14 @@ class _SettingsTile extends StatelessWidget {
 }
 
 class _SettingsToggleTile extends StatelessWidget {
-  final IconData icon;
+  final String iconAsset;
   final String title;
   final String subtitle;
   final bool value;
   final ValueChanged<bool> onChanged;
 
   const _SettingsToggleTile({
-    required this.icon,
+    required this.iconAsset,
     required this.title,
     required this.subtitle,
     required this.value,
@@ -963,7 +969,7 @@ class _SettingsToggleTile extends StatelessWidget {
               color: GardenColors.creamLight,
               borderRadius: BorderRadius.circular(10),
             ),
-            child: Icon(icon, size: 18, color: GardenColors.ink),
+            child: Center(child: GardenIcon(asset: iconAsset, size: 18)),
           ),
           const SizedBox(width: 14),
           Expanded(

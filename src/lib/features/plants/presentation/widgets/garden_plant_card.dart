@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 import '../../data/models/plant.dart';
 import '../../data/models/plant_enums.dart';
 import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../../../../core/widgets/garden_icon.dart';
 
 class GardenPlantCard extends StatelessWidget {
   final Plant plant;
@@ -50,16 +52,14 @@ class GardenPlantCard extends StatelessWidget {
                             child: Image.network(
                               plant.image,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => Icon(
-                                _getPlantIcon(plant.species),
-                                color: GardenColors.leafDark,
+                              errorBuilder: (_, __, ___) => GardenIcon(
+                                asset: GardenIcons.plantAssetForSpecies(plant.species),
                                 size: 26,
                               ),
                             ),
                           )
-                        : Icon(
-                            _getPlantIcon(plant.species),
-                            color: GardenColors.leafDark,
+                        : GardenIcon(
+                            asset: GardenIcons.plantAssetForSpecies(plant.species),
                             size: 26,
                           ),
                   ),
@@ -78,14 +78,12 @@ class GardenPlantCard extends StatelessWidget {
                         ),
                       ),
                       child: Center(
-                        child: Icon(
-                          isOnline
-                              ? Icons.wifi_rounded
-                              : Icons.wifi_off_rounded,
+                        child: GardenIcon(
+                          asset: isOnline
+                              ? GardenIcons.wifi
+                              : GardenIcons.sensorOffline,
                           size: 10,
-                          color: isOnline
-                              ? GardenColors.leafDark
-                              : GardenColors.inkSoft,
+                          opacity: isOnline ? 1.0 : 0.6,
                         ),
                       ),
                     ),
@@ -161,10 +159,10 @@ class GardenPlantCard extends StatelessWidget {
               ),
               if (showChevron && onTap != null) ...[
                 const SizedBox(width: 8),
-                const Icon(
-                  Icons.chevron_right_rounded,
-                  color: GardenColors.inkSoft,
+                const GardenIcon(
+                  asset: GardenIcons.forward,
                   size: 22,
+                  opacity: 0.6,
                 ),
               ],
             ],
@@ -185,19 +183,6 @@ class GardenPlantCard extends StatelessWidget {
     return const Color(0xFFF6E8E8);
   }
 
-  static IconData _getPlantIcon(String species) {
-    final lower = species.toLowerCase();
-    if (lower.contains('echeveria') || lower.contains('suculenta')) {
-      return Icons.local_florist_outlined;
-    }
-    if (lower.contains('ficus') || lower.contains('monstera')) {
-      return Icons.park_outlined;
-    }
-    if (lower.contains('sansevieria')) {
-      return Icons.grass_outlined;
-    }
-    return Icons.eco_outlined;
-  }
 }
 
 class GardenMoodBadge extends StatelessWidget {

@@ -1,5 +1,4 @@
-import 'package:flutter/material.dart';
-
+import '../../../../core/theme/garden_icons.dart';
 import 'plant.dart';
 import 'plant_enums.dart';
 
@@ -13,7 +12,7 @@ class UrgentPlantTask {
   final String description;
   final UrgentTaskKind kind;
   final ActionUrgency urgency;
-  final IconData icon;
+  final String iconAsset;
 
   const UrgentPlantTask({
     required this.id,
@@ -23,7 +22,7 @@ class UrgentPlantTask {
     required this.description,
     required this.kind,
     required this.urgency,
-    required this.icon,
+    required this.iconAsset,
   });
 }
 
@@ -43,7 +42,7 @@ List<UrgentPlantTask> deriveUrgentTasks(Plant plant) {
           description: insight,
           kind: UrgentTaskKind.water,
           urgency: ActionUrgency.today,
-          icon: Icons.water_drop_outlined,
+          iconAsset: GardenIcons.water,
         ),
       );
     case PlantMood.stressed:
@@ -59,9 +58,7 @@ List<UrgentPlantTask> deriveUrgentTasks(Plant plant) {
           description: insight,
           kind: UrgentTaskKind.light,
           urgency: ActionUrgency.today,
-          icon: needsLight
-              ? Icons.wb_sunny_outlined
-              : Icons.spa_outlined,
+          iconAsset: needsLight ? GardenIcons.sun : GardenIcons.potSun,
         ),
       );
     case PlantMood.cold:
@@ -74,7 +71,7 @@ List<UrgentPlantTask> deriveUrgentTasks(Plant plant) {
           description: insight,
           kind: UrgentTaskKind.temperature,
           urgency: ActionUrgency.today,
-          icon: Icons.thermostat_outlined,
+          iconAsset: GardenIcons.potCold,
         ),
       );
     case PlantMood.hot:
@@ -87,7 +84,7 @@ List<UrgentPlantTask> deriveUrgentTasks(Plant plant) {
           description: insight,
           kind: UrgentTaskKind.temperature,
           urgency: ActionUrgency.today,
-          icon: Icons.ac_unit_outlined,
+          iconAsset: GardenIcons.thermostat,
         ),
       );
     case PlantMood.happy:
@@ -105,7 +102,7 @@ List<UrgentPlantTask> deriveUrgentTasks(Plant plant) {
         description: 'El sensor está desconectado y no recibe datos.',
         kind: UrgentTaskKind.sensor,
         urgency: ActionUrgency.today,
-        icon: Icons.sensors_off_outlined,
+        iconAsset: GardenIcons.sensorOffline,
       ),
     );
   }

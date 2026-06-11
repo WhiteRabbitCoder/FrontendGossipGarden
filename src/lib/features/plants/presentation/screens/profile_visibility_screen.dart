@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../../../../core/widgets/garden_icon.dart';
 
 enum ProfileVisibility { public, friends, private }
 
@@ -24,7 +26,7 @@ class _ProfileVisibilityScreenState extends State<ProfileVisibilityScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: GardenColors.ink),
+          icon: const GardenIcon(asset: GardenIcons.back, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -57,7 +59,7 @@ class _ProfileVisibilityScreenState extends State<ProfileVisibilityScreen> {
           ),
           const SizedBox(height: 12),
           _VisibilityOption(
-            icon: Icons.public_rounded,
+            iconAsset: GardenIcons.eyeOpen,
             title: 'Público',
             subtitle: 'Cualquier usuario puede ver tu jardín',
             selected: _visibility == ProfileVisibility.public,
@@ -65,7 +67,7 @@ class _ProfileVisibilityScreenState extends State<ProfileVisibilityScreen> {
           ),
           const SizedBox(height: 12),
           _VisibilityOption(
-            icon: Icons.people_outline_rounded,
+            iconAsset: GardenIcons.friendPlants,
             title: 'Solo amigos',
             subtitle: 'Únicamente tus contactos del jardín',
             selected: _visibility == ProfileVisibility.friends,
@@ -73,7 +75,7 @@ class _ProfileVisibilityScreenState extends State<ProfileVisibilityScreen> {
           ),
           const SizedBox(height: 12),
           _VisibilityOption(
-            icon: Icons.lock_outline_rounded,
+            iconAsset: GardenIcons.lock,
             title: 'Privado',
             subtitle: 'Solo tú puedes ver tu jardín',
             selected: _visibility == ProfileVisibility.private,
@@ -129,14 +131,14 @@ class _ProfileVisibilityScreenState extends State<ProfileVisibilityScreen> {
 }
 
 class _VisibilityOption extends StatelessWidget {
-  final IconData icon;
+  final String iconAsset;
   final String title;
   final String subtitle;
   final bool selected;
   final VoidCallback onTap;
 
   const _VisibilityOption({
-    required this.icon,
+    required this.iconAsset,
     required this.title,
     required this.subtitle,
     required this.selected,
@@ -167,7 +169,7 @@ class _VisibilityOption extends StatelessWidget {
                 color: GardenColors.creamLight,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Icon(icon, size: 20, color: GardenColors.ink),
+              child: Center(child: GardenIcon(asset: iconAsset, size: 20)),
             ),
             const SizedBox(width: 14),
             Expanded(

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../../../../core/widgets/garden_icon.dart';
 
 class DataPrivacyScreen extends StatefulWidget {
   const DataPrivacyScreen({super.key});
@@ -22,7 +24,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: GardenColors.ink),
+          icon: const GardenIcon(asset: GardenIcons.back, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Column(
@@ -46,7 +48,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
         padding: const EdgeInsets.fromLTRB(20, 12, 20, 40),
         children: [
           _InfoCard(
-            icon: Icons.shield_outlined,
+            iconAsset: GardenIcons.shield,
             body:
                 'Gossip Garden usa tus datos para cuidar tus plantas, personalizar consejos '
                 'y mejorar la app. Nunca vendemos tu información a terceros.',
@@ -92,7 +94,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
           ),
           const SizedBox(height: 12),
           _ActionTile(
-            icon: Icons.download_outlined,
+            iconAsset: GardenIcons.share,
             title: 'Descargar mis datos',
             subtitle: 'Recibe una copia de tu información',
             onTap: () {
@@ -105,7 +107,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
           ),
           const SizedBox(height: 12),
           _ActionTile(
-            icon: Icons.delete_outline_rounded,
+            iconAsset: GardenIcons.info,
             title: 'Solicitar eliminación de datos',
             subtitle: 'Borra tu cuenta y toda tu información',
             onTap: () {
@@ -123,10 +125,10 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
 }
 
 class _InfoCard extends StatelessWidget {
-  final IconData icon;
+  final String iconAsset;
   final String body;
 
-  const _InfoCard({required this.icon, required this.body});
+  const _InfoCard({required this.iconAsset, required this.body});
 
   @override
   Widget build(BuildContext context) {
@@ -140,7 +142,7 @@ class _InfoCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(icon, color: GardenColors.leafDark, size: 22),
+          GardenIcon(asset: iconAsset, size: 22),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -214,13 +216,13 @@ class _ToggleCard extends StatelessWidget {
 }
 
 class _ActionTile extends StatelessWidget {
-  final IconData icon;
+  final String iconAsset;
   final String title;
   final String subtitle;
   final VoidCallback onTap;
 
   const _ActionTile({
-    required this.icon,
+    required this.iconAsset,
     required this.title,
     required this.subtitle,
     required this.onTap,
@@ -240,7 +242,7 @@ class _ActionTile extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Icon(icon, color: GardenColors.ink, size: 20),
+            GardenIcon(asset: iconAsset, size: 20),
             const SizedBox(width: 14),
             Expanded(
               child: Column(
@@ -263,7 +265,7 @@ class _ActionTile extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.chevron_right_rounded, color: GardenColors.inkSoft, size: 20),
+            const GardenIcon(asset: GardenIcons.forward, size: 20, opacity: 0.6),
           ],
         ),
       ),

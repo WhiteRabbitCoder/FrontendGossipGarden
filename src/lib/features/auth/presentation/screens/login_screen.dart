@@ -3,7 +3,9 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 
 import '../../../../core/theme/garden_colors.dart';
+import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../../../../core/widgets/garden_icon.dart';
 import '../providers/auth_provider.dart';
 import 'register_screen.dart';
 
@@ -59,7 +61,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                 children: [
                   // Logo Orgánico Crayola
                   Image.asset(
-                    'images/new_logo.png',
+                    GardenIcons.logoWithText,
                     height: 200,
                     fit: BoxFit.contain,
                   ),
@@ -100,8 +102,10 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       hintText: 'Correo electrónico',
                       hintStyle: GardenTextStyles.body
                           .copyWith(color: GardenColors.inkSoft),
-                      prefixIcon: const Icon(Icons.email_outlined,
-                          color: GardenColors.leafGreen),
+                      prefixIcon: const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: GardenIcon(asset: GardenIcons.email, size: 22),
+                      ),
                       filled: true,
                       fillColor: Colors.white,
                       border: OutlineInputBorder(
@@ -122,14 +126,17 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                       hintText: 'Contraseña',
                       hintStyle: GardenTextStyles.body
                           .copyWith(color: GardenColors.inkSoft),
-                      prefixIcon: const Icon(Icons.lock_outline,
-                          color: GardenColors.leafGreen),
+                      prefixIcon: const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: GardenIcon(asset: GardenIcons.lock, size: 22),
+                      ),
                       suffixIcon: IconButton(
-                        icon: Icon(
-                          _obscurePassword
-                              ? Icons.visibility_off_outlined
-                              : Icons.visibility_outlined,
-                          color: GardenColors.inkSoft,
+                        icon: GardenIcon(
+                          asset: _obscurePassword
+                              ? GardenIcons.eyeClose
+                              : GardenIcons.eyeOpen,
+                          size: 22,
+                          opacity: 0.6,
                         ),
                         onPressed: () => setState(
                             () => _obscurePassword = !_obscurePassword),
