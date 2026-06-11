@@ -20,6 +20,7 @@ class AchievementProgressStorage {
       }
     } catch (_) {}
 
+    // HARDCODE(demo): primer arranque con stats inventados en tmp local.
     final seed = AchievementStats.demoSeed;
     await save(seed);
     return seed;

@@ -1,5 +1,8 @@
 import '../models/realtime_sensor_snapshot.dart';
 
+// HARDCODE(demo): umbrales y cooldown definidos en cliente sobre stream simulado.
+// TODO(backend): calibrar reglas con datos reales del sensor o eventos del backend.
+
 /// Umbral mínimo de subida de humedad de suelo (%) para considerar un riego.
 const kSoilMoistureWateringDelta = 5.0;
 

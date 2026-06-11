@@ -10,6 +10,8 @@ import '../providers/achievement_providers.dart';
 import '../providers/plant_providers.dart';
 import '../providers/sensor_setup_providers.dart';
 
+// HARDCODE(demo): escaneo WiFi, vinculación y redes son simulados (delay + lista fija).
+// TODO(backend): integrar flujo real del chip IoT y estado de sensor por planta.
 class SensorSettingsScreen extends ConsumerStatefulWidget {
   final String? initialPlantId;
 
@@ -58,6 +60,7 @@ class _SensorSettingsScreenState extends ConsumerState<SensorSettingsScreen> {
     await Future.delayed(const Duration(seconds: 2));
     if (!mounted) return;
 
+    // HARDCODE(demo): redes WiFi de ejemplo.
     ref.read(sensorWifiNetworksProvider.notifier).state = const [
       WifiNetworkOption(ssid: 'GossipGarden_Home', signal: 4, secured: true),
       WifiNetworkOption(ssid: 'CasaDeAngelo_5G', signal: 3, secured: true),
@@ -638,6 +641,7 @@ class _PlantSensorIssueCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final (label, color, icon, description) =
         sensorStatusStyle(plant.sensorStatus);
+    // HARDCODE(demo): consejos de diagnóstico estáticos por estado de sensor.
     final tips = switch (plant.sensorStatus) {
       SensorStatus.offline => const [
           'Verifica que el sensor esté encendido y con batería.',

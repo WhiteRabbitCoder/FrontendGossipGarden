@@ -9,6 +9,8 @@ import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
 import '../../../../core/widgets/garden_icon.dart';
 
+// HARDCODE(demo): tareas derivadas de plantas locales; marcar check actualiza estado en memoria.
+// TODO(backend): PATCH tarea completada y sincronizar con backend.
 void showUrgentTasksSheet(BuildContext context) {
   showModalBottomSheet<void>(
     context: context,

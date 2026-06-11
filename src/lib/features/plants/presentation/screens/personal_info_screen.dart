@@ -94,6 +94,8 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     }
   }
 
+  // HARDCODE(demo): cambio de contraseña simulado; no valida la actual ni llama a Firebase/API.
+  // TODO(backend): auth.updatePassword o endpoint de cambio de contraseña.
   Future<void> _updatePassword() async {
     final current = _currentPasswordController.text;
     final newPassword = _newPasswordController.text;

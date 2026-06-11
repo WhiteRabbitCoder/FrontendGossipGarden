@@ -72,6 +72,12 @@ class AnimatedBottomNav extends StatelessWidget {
                                 ? GardenColors.leafDark
                                 : Colors.transparent,
                             shape: BoxShape.circle,
+                            border: isActive
+                                ? Border.all(
+                                    color: GardenColors.leafGreen,
+                                    width: 2,
+                                  )
+                                : null,
                           ),
                           child: AnimatedScale(
                             scale: isActive ? 1.15 : 1.0,
@@ -80,7 +86,7 @@ class AnimatedBottomNav extends StatelessWidget {
                             child: GardenIcon(
                               asset: tab.$2,
                               size: 26,
-                              opacity: isActive ? 1.0 : 0.55,
+                              color: isActive ? GardenColors.creamLight : null,
                             ),
                           ),
                         ),
@@ -90,7 +96,7 @@ class AnimatedBottomNav extends StatelessWidget {
                             tab.$3,
                             style: GardenTextStyles.label.copyWith(
                               fontSize: 12,
-                              color: GardenColors.leafDark,
+                              color: GardenColors.ink,
                               fontWeight: FontWeight.w800,
                             ),
                           ),

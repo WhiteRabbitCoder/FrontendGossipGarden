@@ -12,6 +12,8 @@ class DataPrivacyScreen extends StatefulWidget {
 }
 
 class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
+  // HARDCODE(demo): preferencias y acciones (descarga/borrado) solo en UI local.
+  // TODO(backend): GET/PATCH /users/me/privacy y cola de solicitudes GDPR.
   bool _shareSensorData = true;
   bool _usageAnalytics = true;
   bool _personalizedTips = true;

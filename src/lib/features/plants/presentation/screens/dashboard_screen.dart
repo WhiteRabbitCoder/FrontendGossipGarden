@@ -14,6 +14,8 @@ import '../../../../core/theme/garden_text_styles.dart';
 import '../../../../core/widgets/garden_icon.dart';
 import 'package:gossip_garden/features/auth/presentation/providers/auth_provider.dart';
 
+// HARDCODE(demo): banner, campana y cuidados se alimentan de plantsProvider (plantas locales).
+// TODO(backend): conectar dashboard a API de inicio con resumen y alertas reales.
 class DashboardScreen extends ConsumerStatefulWidget {
   final Function(String) onSelectPlant;
   final Function(String) onOpenChat;

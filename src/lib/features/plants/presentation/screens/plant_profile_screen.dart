@@ -11,6 +11,8 @@ import '../../../../core/theme/garden_text_styles.dart';
 import '../../../../core/widgets/garden_icon.dart';
 import 'sensor_settings_screen.dart';
 
+// HARDCODE(demo): dueño, personalidad, cuidados y "Sobre la planta" por ID fijo ('1'..'3').
+// TODO(backend): GET /plants/{id} con especie, dueño y guía de cuidados.
 class PlantProfileScreen extends ConsumerWidget {
   final String plantId;
   final VoidCallback onBack;
@@ -373,7 +375,7 @@ class _PersonalitySection extends StatelessWidget {
   final Plant plant;
   const _PersonalitySection({required this.plant});
 
-  // Demo hardcoded — TODO(backend): traer rasgos desde plant_species endpoint
+  // HARDCODE(demo): rasgos por ID de planta. TODO(backend): plant_species endpoint.
   static const _personalityTraits = {
     PlantPersonality.dramatic: (
       description: 'Te avisará con suspiros si algo no le gusta.',
@@ -723,7 +725,7 @@ class _AboutSection extends StatelessWidget {
   final Plant plant;
   const _AboutSection({required this.plant});
 
-  // Demo hardcoded — TODO(backend): traer desde plant_species / plants endpoints
+  // HARDCODE(demo): origen, edad y ubicación por ID. TODO(backend): plants / plant_species.
   static const _plantAbout = {
     '1': (
       origin: 'Bosques tropicales del sur de México',
@@ -830,7 +832,7 @@ class _CareSection extends StatelessWidget {
   final Plant plant;
   const _CareSection({required this.plant});
 
-  // Demo hardcoded — TODO(backend): traer desde plant_species endpoint
+  // HARDCODE(demo): guía de cuidados por ID. TODO(backend): plant_species endpoint.
   static const _careItems = {
     '1': [
       (GardenIcons.water, 'RIEGO', 'Cada 7 días, 250ml'),
@@ -852,6 +854,7 @@ class _CareSection extends StatelessWidget {
     ],
   };
 
+  // HARDCODE(demo): tips de cuidado por ID. TODO(backend): consejos desde backend/IA.
   static const _tips = {
     '1': 'Limpia sus hojas con un paño húmedo cada 2 semanas para que respire mejor.',
     '2': 'Evita el exceso de agua — es mejor poco y bien drenado.',

@@ -37,4 +37,5 @@ final sensorWifiScanningProvider = StateProvider<bool>((ref) => false);
 /// Planta seleccionada para vincular o reconfigurar el sensor.
 final sensorSelectedPlantIdProvider = StateProvider<String?>((ref) => null);
 
+// HARDCODE(demo): estado de vinculación solo en memoria. TODO(backend): persistir por planta/dispositivo.
 final sensorIsLinkedProvider = StateProvider<bool>((ref) => false);

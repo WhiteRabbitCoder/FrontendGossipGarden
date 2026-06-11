@@ -111,7 +111,7 @@ class _GardenViewScreenState extends ConsumerState<GardenViewScreen> {
             ),
 
             // ── Plantas de amigos ────────────────────────────────────────────
-            // TODO(backend): conectar endpoint de amigos cuando esté disponible
+            // HARDCODE(demo): sección alimentada por _FriendPlantsSection. TODO(backend): API amigos.
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
@@ -180,7 +180,8 @@ class _GardenHeaderAction extends StatelessWidget {
 }
 
 // ── Friend Plants Section ─────────────────────────────────────────────────────
-// TODO(backend): reemplazar datos demo con endpoint de amigos cuando esté disponible
+// HARDCODE(demo): tarjetas de amigos y citas inventadas (_friendPlants).
+// TODO(backend): reemplazar con GET /api/v1/friends y plantas destacadas por amigo.
 
 class _FriendPlantsSection extends StatelessWidget {
   final void Function(String friendId) onOpenFriendGarden;

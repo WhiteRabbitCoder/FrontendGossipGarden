@@ -6,6 +6,8 @@ import '../../data/models/achievement.dart';
 import '../../data/models/realtime_sensor_snapshot.dart';
 import 'plant_providers.dart';
 
+// HARDCODE(demo): progreso en JSON temporal + detección de riego sobre stream simulado.
+// TODO(backend): sincronizar stats con backend y sensores reales.
 final achievementStorageProvider =
     Provider<AchievementProgressStorage>((_) => AchievementProgressStorage());
 

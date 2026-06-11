@@ -23,6 +23,8 @@ import 'achievement_detail_screen.dart';
 import '../../data/models/achievement.dart';
 
 // ── Pantalla de perfil ────────────────────────────────────────────────────────────
+// HARDCODE(demo): favoritas en memoria (favoritePlantsProvider) y logros con stats locales.
+// TODO(backend): sincronizar favoritas, bio y preferencias con perfil de usuario.
 
 class ProfileSettingsScreen extends ConsumerWidget {
   const ProfileSettingsScreen({super.key});
@@ -602,6 +604,7 @@ class _SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
+  // HARDCODE(demo): toggles solo en memoria de la sesión. TODO(backend): PATCH /users/me/preferences.
   bool _pushNotifications = true;
   bool _emailNotifications = false;
   bool _careReminders = true;

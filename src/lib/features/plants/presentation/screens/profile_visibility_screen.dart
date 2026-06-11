@@ -14,6 +14,8 @@ class ProfileVisibilityScreen extends StatefulWidget {
 }
 
 class _ProfileVisibilityScreenState extends State<ProfileVisibilityScreen> {
+  // HARDCODE(demo): visibilidad guardada solo en memoria de la pantalla.
+  // TODO(backend): GET/PATCH /users/me/visibility (público, amigos, privado).
   ProfileVisibility _visibility = ProfileVisibility.friends;
   bool _showPlantHealth = true;
   bool _showAchievements = true;
