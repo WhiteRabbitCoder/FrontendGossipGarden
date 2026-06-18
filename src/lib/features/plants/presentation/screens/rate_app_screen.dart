@@ -22,6 +22,8 @@ class _RateAppScreenState extends State<RateAppScreen> {
     super.dispose();
   }
 
+  // HARDCODE(demo): valoración simulada; no se envía a analytics ni Play Store in-app review.
+  // TODO(backend): POST /feedback o integrar In-App Review de la tienda.
   Future<void> _submitRating() async {
     if (_rating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(

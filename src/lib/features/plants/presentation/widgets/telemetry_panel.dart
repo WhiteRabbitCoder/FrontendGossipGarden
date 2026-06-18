@@ -81,7 +81,7 @@ class _TelemetryPanelState extends State<TelemetryPanel> {
         ),
         child: Row(
           children: [
-            const GardenIcon(asset: GardenIcons.logroSensores, size: 22),
+            const GardenIcon(asset: GardenIcons.telemetry2, size: 22),
             const SizedBox(width: 12),
             const Text(
               'Telemetría',

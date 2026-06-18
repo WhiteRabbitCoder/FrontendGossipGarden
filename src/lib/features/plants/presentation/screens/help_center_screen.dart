@@ -12,6 +12,7 @@ class HelpCenterScreen extends StatefulWidget {
 }
 
 class _HelpCenterScreenState extends State<HelpCenterScreen> {
+  // HARDCODE(demo): FAQs estáticas en código. TODO(backend): GET /support/faqs o CMS.
   static const _faqs = [
     (
       question: '¿Cómo agrego una nueva planta?',

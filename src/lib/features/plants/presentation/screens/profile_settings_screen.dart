@@ -23,6 +23,8 @@ import 'achievement_detail_screen.dart';
 import '../../data/models/achievement.dart';
 
 // ── Pantalla de perfil ────────────────────────────────────────────────────────────
+// HARDCODE(demo): favoritas en memoria (favoritePlantsProvider) y logros con stats locales.
+// TODO(backend): sincronizar favoritas, bio y preferencias con perfil de usuario.
 
 class ProfileSettingsScreen extends ConsumerWidget {
   const ProfileSettingsScreen({super.key});
@@ -487,12 +489,6 @@ class _FavoritePlantRow extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(width: 8),
-          const GardenIcon(
-            asset: GardenIcons.forward,
-            size: 22,
-            opacity: 0.6,
-          ),
         ],
       ),
     );
@@ -602,6 +598,7 @@ class _SettingsScreen extends ConsumerStatefulWidget {
 }
 
 class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
+  // HARDCODE(demo): toggles solo en memoria de la sesión. TODO(backend): PATCH /users/me/preferences.
   bool _pushNotifications = true;
   bool _emailNotifications = false;
   bool _careReminders = true;
@@ -702,7 +699,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
           _SettingsGroup(
             children: [
               _SettingsTile(
-                iconAsset: GardenIcons.logroSensores,
+                iconAsset: GardenIcons.signal,
                 title: 'Mis sensores',
                 subtitle: 'Estado, vinculación y configuración WiFi',
                 onTap: () {
@@ -783,7 +780,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
               ),
               _SettingsDivider(),
               _SettingsTile(
-                iconAsset: GardenIcons.starOutline,
+                iconAsset: GardenIcons.starFilled,
                 title: 'Calificar la app',
                 subtitle: 'Abre Google Play Store para valorarnos',
                 onTap: _openPlayStore,
@@ -928,11 +925,6 @@ class _SettingsTile extends StatelessWidget {
                   ),
                 ],
               ),
-            ),
-            const GardenIcon(
-              asset: GardenIcons.forward,
-              size: 20,
-              opacity: 0.6,
             ),
           ],
         ),

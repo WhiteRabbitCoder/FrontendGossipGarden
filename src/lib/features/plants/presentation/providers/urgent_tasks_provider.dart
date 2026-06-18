@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/urgent_plant_task.dart';
 import 'plant_providers.dart';
 
+// HARDCODE(demo): agrega sobre plantsProvider (plantas locales). TODO(backend): endpoint de tareas urgentes.
 final urgentTasksProvider = Provider<List<UrgentPlantTask>>((ref) {
   final plantsAsync = ref.watch(plantsProvider);
   return plantsAsync.maybeWhen(

@@ -19,8 +19,8 @@ class _InviteFriendScreenState extends ConsumerState<InviteFriendScreen> {
   final _joinCodeController = TextEditingController();
   bool _isJoining = false;
 
-
-
+  // HARDCODE(demo): código, URL y unión simulada (delay + validación local).
+  // TODO(backend): GET /invites/mine, POST /invites/join y deep links reales.
   static const _demoInviteCode = 'GARDEN-7K2M';
   static const _inviteBaseUrl = 'https://gossipgarden.app/invite';
 
@@ -122,7 +122,17 @@ class _InviteFriendScreenState extends ConsumerState<InviteFriendScreen> {
             ),
             child: Column(
               children: [
-                const GardenIcon(asset: GardenIcons.friendPlants, size: 48),
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: GardenColors.creamLight,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child: GardenIcon(asset: GardenIcons.friendPlants, size: 40),
+                  ),
+                ),
                 const SizedBox(height: 16),
                 Text(
                   'Haz crecer la comunidad verde',

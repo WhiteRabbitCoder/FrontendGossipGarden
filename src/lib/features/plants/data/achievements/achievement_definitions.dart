@@ -1,5 +1,7 @@
 import '../models/achievement.dart';
 
+// HARDCODE(demo): definiciones y metas fijas en cliente.
+// TODO(backend): catálogo de logros y umbrales desde API; icon en UI usa GardenIcons.
 const kAchievementDefinitions = <AchievementDefinition>[
   AchievementDefinition(
     id: 'rey_lluvia',

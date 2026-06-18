@@ -105,6 +105,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     ref.read(navigationProvider.notifier).changeTab(TabId.dashboard);
   }
 
+  // HARDCODE(demo): conexión WiFi del onboarding simulada (delay + regla de contraseña).
+  // TODO(backend): mismo flujo real que SensorSettingsScreen / chip IoT.
   void _startWifiConnection() async {
     final ssid = _ssidController.text.trim();
     final password = _passwordController.text;
@@ -136,6 +138,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   }
 
   void _showWifiForm() {
+    // HARDCODE(demo): redes WiFi de ejemplo en onboarding.
     ref.read(wifiNetworksProvider.notifier).state = const [
       _WifiNetwork(ssid: 'GossipGarden_Home', signal: 4, secured: true),
       _WifiNetwork(ssid: 'CasaDeAngelo_5G', signal: 3, secured: true),

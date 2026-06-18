@@ -13,6 +13,7 @@ import '../../data/models/realtime_sensor_snapshot.dart';
 import '../../data/models/urgent_plant_task.dart';
 
 // ── Demo plants ──────────────────────────────────────────────────────────────
+// HARDCODE(demo): tres plantas locales con sensores y moods inventados.
 // TODO(backend): Reemplazar el cuerpo del FutureProvider con:
 //   PlantApiDatasource().getPlants()
 // cuando el backend esté disponible. Los modelos Plant ya están mapeados al contrato.
@@ -112,6 +113,7 @@ class PlantsNotifier extends StateNotifier<AsyncValue<List<Plant>>> {
     ]);
   }
 
+  // HARDCODE(demo): actualiza mood/health en memoria al marcar checklist. TODO(backend): PATCH planta.
   void completeUrgentTask(UrgentPlantTask task) {
     state.whenData((plants) {
       final updated = plants
@@ -131,6 +133,7 @@ final plantsProvider =
   (ref) => PlantsNotifier(),
 );
 
+// HARDCODE(demo): IDs iniciales de favoritas. TODO(backend): persistir en perfil de usuario.
 final favoritePlantsProvider =
     StateProvider<List<String>>((ref) => ['1', '2']);
 
@@ -140,6 +143,7 @@ final wifiSetupDatasourceProvider = Provider<WifiSetupDatasource>(
   (ref) => const WifiSetupDatasource(),
 );
 
+// HARDCODE(demo): lecturas aleatorias simuladas cada 5 s. TODO(backend): stream MQTT/WebSocket del sensor.
 final plantRealtimeSensorProvider =
     StreamProvider.family<RealtimeSensorSnapshot, String>((ref, plantId) {
   final rng = Random();
