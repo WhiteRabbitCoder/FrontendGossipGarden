@@ -147,20 +147,35 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
             child: ConstrainedBox(
               constraints: const BoxConstraints(maxWidth: 400),
-              child: FadeTransition(
-                opacity: _fadeAnim,
-                child: SlideTransition(
-                  position: _slideAnim,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Text(
-                        'Crear cuenta',
-                        textAlign: TextAlign.center,
-                        style: GardenTextStyles.display.copyWith(
-                          color: GardenColors.leafDark,
-                          fontSize: 36,
-                        ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Únete a Gossip Garden',
+                    textAlign: TextAlign.center,
+                    style: GardenTextStyles.display.copyWith(
+                      color: GardenColors.leafDark,
+                      fontSize: 36,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    '¡Entra en el jardín!',
+                    textAlign: TextAlign.center,
+                    style: GardenTextStyles.body
+                        .copyWith(color: GardenColors.inkSoft),
+                  ),
+                  const SizedBox(height: 40),
+                  TextField(
+                    controller: _usernameController,
+                    keyboardType: TextInputType.text,
+                    decoration: InputDecoration(
+                      hintText: 'Nombre de usuario',
+                      hintStyle: GardenTextStyles.body
+                          .copyWith(color: GardenColors.inkSoft),
+                      prefixIcon: const Padding(
+                        padding: EdgeInsets.all(12),
+                        child: GardenIcon(asset: GardenIcons.profile, size: 22),
                       ),
                       const SizedBox(height: 8),
                       Text(
