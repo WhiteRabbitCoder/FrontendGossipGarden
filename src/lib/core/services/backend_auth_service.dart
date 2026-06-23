@@ -1,46 +1,61 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-import 'package:gossip_garden/core/config/app_config.dart';
+import 'package:dio/dio.dart';
+import 'package:gossip_garden/core/services/api_client.dart';
+import 'package:gossip_garden/core/services/token_storage.dart';
+import 'package:gossip_garden/features/auth/data/auth_dto.dart';
 
 class BackendAuthService {
-  BackendAuthService({http.Client? httpClient})
-      : _httpClient = httpClient ?? http.Client();
+  final ApiClient _apiClient;
+  final TokenStorage _tokenStorage;
 
-  final http.Client _httpClient;
+  BackendAuthService({ApiClient? apiClient, TokenStorage? tokenStorage})
+      : _apiClient = apiClient ?? ApiClient(),
+        _tokenStorage = tokenStorage ?? TokenStorage();
 
-  /// Llama a POST /api/v1/auth/login y devuelve el JWT de Supabase, o null si falla.
-  Future<String?> login(String email, String password) async {
-    final uri = Uri.parse('${AppConfig.backendBaseUrl}/api/v1/auth/login');
-    final response = await _httpClient.post(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'password': password}),
-    );
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      return data['access_token'] as String?;
-    } else {
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final message = data['detail'] as String? ?? 'Error desconocido';
+  Future<TokenResponse?> login(UserLogin loginData) async {
+    try {
+      final response = await _apiClient.dio.post(
+        '/auth/login',
+        data: loginData.toJson(),
+      );
+      
+      final tokenResponse = TokenResponse.fromJson(response.data);
+      await _tokenStorage.saveToken(tokenResponse.accessToken);
+      return tokenResponse;
+    } on DioException catch (e) {
+      final message = e.response?.data?['detail'] ?? 'Error desconocido';
       throw Exception(message);
     }
   }
 
-  /// Llama a POST /api/v1/auth/register y devuelve el user_id, o null si falla.
-  Future<String?> register(String email, String password, String username) async {
-    final uri = Uri.parse('${AppConfig.backendBaseUrl}/api/v1/auth/register');
-    final response = await _httpClient.post(
-      uri,
-      headers: {'Content-Type': 'application/json'},
-      body: jsonEncode({'email': email, 'password': password, 'username': username}),
-    );
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      return data['user_id'] as String?;
-    } else {
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      final message = data['detail'] as String? ?? 'Error desconocido';
+  Future<String?> register(UserRegister registerData) async {
+    try {
+      final response = await _apiClient.dio.post(
+        '/auth/register',
+        data: registerData.toJson(),
+      );
+      
+      return response.data['user_id'] as String?;
+    } on DioException catch (e) {
+      final message = e.response?.data?['detail'] ?? 'Error desconocido';
       throw Exception(message);
     }
+  }
+
+  Future<GoogleUrlResponse?> getGoogleAuthUrl() async {
+    try {
+      final response = await _apiClient.dio.get('/auth/google-url');
+      return GoogleUrlResponse.fromJson(response.data);
+    } on DioException catch (e) {
+      final message = e.response?.data?['detail'] ?? 'Error desconocido';
+      throw Exception(message);
+    }
+  }
+
+  Future<void> logout() async {
+    await _tokenStorage.deleteToken();
+  }
+  
+  Future<String?> getStoredToken() async {
+    return await _tokenStorage.getToken();
   }
 }

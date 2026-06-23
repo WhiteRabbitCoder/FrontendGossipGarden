@@ -13,6 +13,7 @@ import 'package:gossip_garden/core/services/backend_auth_service.dart';
 
 import '../../data/auth_service.dart';
 import '../../data/user_profile.dart';
+import '../../data/auth_dto.dart';
 
 class AuthSession {
   final UserProfile? profile;
@@ -62,7 +63,15 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
             ),
           ),
         ) {
+    _initBackendToken();
     _bindFirebaseAuth();
+  }
+
+  Future<void> _initBackendToken() async {
+    final token = await _backendAuth.getStoredToken();
+    if (token != null) {
+      _ref.read(backendTokenProvider.notifier).state = token;
+    }
   }
 
   final AuthService _authService;
@@ -170,7 +179,11 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
         }
       }
       // Intentar registrar en backend también
-      final userId = await _backendAuth.register(email, password, name);
+      final userId = await _backendAuth.register(UserRegister(
+        email: email, 
+        password: password, 
+        name: name,
+      ));
       if (userId == null) {
         throw Exception('Error al registrar en el backend.');
       }
@@ -207,8 +220,8 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
       }
 
       // Siempre intentar obtener JWT del backend
-      final token = await _backendAuth.login(email, password);
-      _ref.read(backendTokenProvider.notifier).state = token;
+      final tokenResponse = await _backendAuth.login(UserLogin(email: email, password: password));
+      _ref.read(backendTokenProvider.notifier).state = tokenResponse?.accessToken;
 
       // Si no hay Firebase, creamos la sesión local basada en el éxito del backend
       if (!FirebaseEnvironment.isConfigured) {
@@ -238,6 +251,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
 
   Future<void> signOut() async {
     _ref.read(backendTokenProvider.notifier).state = null;
+    await _backendAuth.logout();
 
     if (FirebaseEnvironment.isConfigured) {
       await _authService.signOut();
