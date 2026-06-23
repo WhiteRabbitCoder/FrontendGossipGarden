@@ -237,7 +237,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                       min: _plant!.comfortZones.soilMoisture.min,
                       max: _plant!.comfortZones.soilMoisture.max,
                       unit: '%',
-                      iconAsset: GardenIcons.water,
+                      iconAsset: GardenIcons.soilHumidity,
                       color: const Color(0xFF4A6741),
                     ),
                     TelemetryData(
@@ -305,10 +305,16 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                         decoration: BoxDecoration(
                           color: _waitingForPlant
                               ? Colors.grey.shade300
-                              : const Color(0xFF4A6741),
+                              : GardenColors.ink,
                           borderRadius: BorderRadius.circular(24),
                         ),
-                        child: const GardenIcon(asset: GardenIcons.forward, size: 22),
+                        child: GardenIcon(
+                          asset: GardenIcons.forward,
+                          size: 22,
+                          color: _waitingForPlant
+                              ? GardenColors.inkSoft
+                              : GardenColors.creamLight,
+                        ),
                       ),
                     ),
                   ],

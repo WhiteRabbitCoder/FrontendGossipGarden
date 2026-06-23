@@ -69,7 +69,6 @@ class _GardenViewScreenState extends ConsumerState<GardenViewScreen> {
                       _GardenHeaderAction(
                         asset: GardenIcons.addPlant,
                         tooltip: 'Agregar nueva planta',
-                        backgroundColor: GardenColors.leafDark,
                         onTap: () {
                           Navigator.of(context).push(
                             MaterialPageRoute(
@@ -111,7 +110,7 @@ class _GardenViewScreenState extends ConsumerState<GardenViewScreen> {
             ),
 
             // ── Plantas de amigos ────────────────────────────────────────────
-            // TODO(backend): conectar endpoint de amigos cuando esté disponible
+            // HARDCODE(demo): sección alimentada por _FriendPlantsSection. TODO(backend): API amigos.
             SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 28, 20, 0),
@@ -141,13 +140,11 @@ class _GardenHeaderAction extends StatelessWidget {
   final String asset;
   final String tooltip;
   final VoidCallback onTap;
-  final Color backgroundColor;
 
   const _GardenHeaderAction({
     required this.asset,
     required this.tooltip,
     required this.onTap,
-    this.backgroundColor = Colors.white,
   });
 
   @override
@@ -155,23 +152,16 @@ class _GardenHeaderAction extends StatelessWidget {
     return Tooltip(
       message: tooltip,
       child: Material(
-        color: backgroundColor,
-        shape: const CircleBorder(),
+        color: Colors.transparent,
         child: InkWell(
           customBorder: const CircleBorder(),
           onTap: onTap,
-          child: Container(
+          child: SizedBox(
             width: 44,
             height: 44,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              border: Border.all(
-                color: backgroundColor == Colors.white
-                    ? GardenColors.creamPaper
-                    : Colors.transparent,
-              ),
+            child: Center(
+              child: GardenIcon(asset: asset, size: 22),
             ),
-            child: GardenIcon(asset: asset, size: 22),
           ),
         ),
       ),
@@ -180,7 +170,8 @@ class _GardenHeaderAction extends StatelessWidget {
 }
 
 // ── Friend Plants Section ─────────────────────────────────────────────────────
-// TODO(backend): reemplazar datos demo con endpoint de amigos cuando esté disponible
+// HARDCODE(demo): tarjetas de amigos y citas inventadas (_friendPlants).
+// TODO(backend): reemplazar con GET /api/v1/friends y plantas destacadas por amigo.
 
 class _FriendPlantsSection extends StatelessWidget {
   final void Function(String friendId) onOpenFriendGarden;
@@ -348,11 +339,6 @@ class _FriendPlantCard extends StatelessWidget {
                     ),
                   ],
                 ),
-              ),
-              const GardenIcon(
-                asset: GardenIcons.forward,
-                size: 22,
-                opacity: 0.6,
               ),
             ],
           ),

@@ -145,6 +145,7 @@ class AchievementStats {
     );
   }
 
+  // HARDCODE(demo): progreso inicial si no hay archivo local guardado.
   static const demoSeed = AchievementStats(
     wateringsCount: 4,
     identificationsCount: 12,

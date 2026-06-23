@@ -4,6 +4,7 @@ class GardenIcon extends StatelessWidget {
   final String asset;
   final double size;
   final double? opacity;
+  final Color? color;
   final BoxFit fit;
 
   const GardenIcon({
@@ -11,6 +12,7 @@ class GardenIcon extends StatelessWidget {
     required this.asset,
     this.size = 24,
     this.opacity,
+    this.color,
     this.fit = BoxFit.contain,
   });
 
@@ -24,9 +26,16 @@ class GardenIcon extends StatelessWidget {
       errorBuilder: (_, __, ___) => Icon(
         Icons.image_not_supported_outlined,
         size: size,
-        color: Colors.grey,
+        color: color ?? Colors.grey,
       ),
     );
+
+    if (color != null) {
+      image = ColorFiltered(
+        colorFilter: ColorFilter.mode(color!, BlendMode.srcIn),
+        child: image,
+      );
+    }
 
     if (opacity != null) {
       image = Opacity(opacity: opacity!, child: image);

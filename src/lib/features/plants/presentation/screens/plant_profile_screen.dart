@@ -11,6 +11,8 @@ import '../../../../core/theme/garden_text_styles.dart';
 import '../../../../core/widgets/garden_icon.dart';
 import 'sensor_settings_screen.dart';
 
+// HARDCODE(demo): dueño, personalidad, cuidados y "Sobre la planta" por ID fijo ('1'..'3').
+// TODO(backend): GET /plants/{id} con especie, dueño y guía de cuidados.
 class PlantProfileScreen extends ConsumerWidget {
   final String plantId;
   final VoidCallback onBack;
@@ -373,7 +375,7 @@ class _PersonalitySection extends StatelessWidget {
   final Plant plant;
   const _PersonalitySection({required this.plant});
 
-  // Demo hardcoded — TODO(backend): traer rasgos desde plant_species endpoint
+  // HARDCODE(demo): rasgos por ID de planta. TODO(backend): plant_species endpoint.
   static const _personalityTraits = {
     PlantPersonality.dramatic: (
       description: 'Te avisará con suspiros si algo no le gusta.',
@@ -564,11 +566,6 @@ class _SensorStatusCard extends StatelessWidget {
                       ],
                     ),
                   ),
-                  const GardenIcon(
-                    asset: GardenIcons.forward,
-                    size: 22,
-                    opacity: 0.6,
-                  ),
                 ],
               ),
             ),
@@ -621,30 +618,22 @@ class _SensorGrid extends StatelessWidget {
             _SensorTile(
               label: 'TIERRA',
               value: '${soilMoisture.toInt()}%',
-              iconAsset: GardenIcons.water,
-              iconBg: const Color(0xFFE0F0FF),
-              iconColor: const Color(0xFF2563EB),
+              iconAsset: GardenIcons.soilHumidity,
             ),
             _SensorTile(
               label: 'LUZ',
               value: '${light.toInt()}%',
               iconAsset: GardenIcons.sun,
-              iconBg: const Color(0xFFFFF8E0),
-              iconColor: const Color(0xFFD97706),
             ),
             _SensorTile(
               label: 'TEMP.',
               value: '${temperature.toStringAsFixed(0)}°C',
               iconAsset: GardenIcons.thermostat,
-              iconBg: const Color(0xFFFFEDED),
-              iconColor: const Color(0xFFD94040),
             ),
             _SensorTile(
               label: 'HUMEDAD',
               value: '${humidity.toInt()}%',
               iconAsset: GardenIcons.humidity,
-              iconBg: const Color(0xFFE0F0FF),
-              iconColor: const Color(0xFF2563EB),
             ),
           ],
         ),
@@ -657,15 +646,11 @@ class _SensorTile extends StatelessWidget {
   final String label;
   final String value;
   final String iconAsset;
-  final Color iconBg;
-  final Color iconColor;
 
   const _SensorTile({
     required this.label,
     required this.value,
     required this.iconAsset,
-    required this.iconBg,
-    required this.iconColor,
   });
 
   @override
@@ -679,14 +664,12 @@ class _SensorTile extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Container(
+          SizedBox(
             width: 40,
             height: 40,
-            decoration: BoxDecoration(
-              color: iconBg,
-              shape: BoxShape.circle,
+            child: Center(
+              child: GardenIcon(asset: iconAsset, size: 24),
             ),
-            child: GardenIcon(asset: iconAsset, size: 20),
           ),
           const SizedBox(width: 12),
           Column(
@@ -723,7 +706,7 @@ class _AboutSection extends StatelessWidget {
   final Plant plant;
   const _AboutSection({required this.plant});
 
-  // Demo hardcoded — TODO(backend): traer desde plant_species / plants endpoints
+  // HARDCODE(demo): origen, edad y ubicación por ID. TODO(backend): plants / plant_species.
   static const _plantAbout = {
     '1': (
       origin: 'Bosques tropicales del sur de México',
@@ -830,7 +813,7 @@ class _CareSection extends StatelessWidget {
   final Plant plant;
   const _CareSection({required this.plant});
 
-  // Demo hardcoded — TODO(backend): traer desde plant_species endpoint
+  // HARDCODE(demo): guía de cuidados por ID. TODO(backend): plant_species endpoint.
   static const _careItems = {
     '1': [
       (GardenIcons.water, 'RIEGO', 'Cada 7 días, 250ml'),
@@ -852,6 +835,7 @@ class _CareSection extends StatelessWidget {
     ],
   };
 
+  // HARDCODE(demo): tips de cuidado por ID. TODO(backend): consejos desde backend/IA.
   static const _tips = {
     '1': 'Limpia sus hojas con un paño húmedo cada 2 semanas para que respire mejor.',
     '2': 'Evita el exceso de agua — es mejor poco y bien drenado.',

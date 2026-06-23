@@ -5,6 +5,8 @@ import '../../../../core/theme/garden_text_styles.dart';
 import '../../../../core/widgets/garden_icon.dart';
 import '../../data/models/achievement.dart';
 
+// HARDCODE(demo): muestra progreso calculado en cliente (achievement_providers).
+// TODO(backend): GET /achievements/{id}/progress del usuario autenticado.
 class AchievementDetailScreen extends StatelessWidget {
   final AchievementProgress progress;
 

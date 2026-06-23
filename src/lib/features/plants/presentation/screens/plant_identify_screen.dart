@@ -9,6 +9,8 @@ import '../providers/achievement_providers.dart';
 // Flujo: método → cámara/búsqueda → resultado identificado → agregar
 enum _IdentifyMode { select, camera, matches, search, result }
 
+// HARDCODE(demo): cámara, catálogo, matches y resultado sin API de identificación.
+// TODO(backend): POST /plants/identify (imagen/texto) y POST /plants al confirmar.
 class PlantIdentifyScreen extends ConsumerStatefulWidget {
   final VoidCallback? onBack;
   final VoidCallback? onCompleted;
@@ -258,6 +260,7 @@ class _CameraView extends StatefulWidget {
 class _CameraViewState extends State<_CameraView> {
   bool _scanning = false;
 
+  // HARDCODE(demo): simula análisis de imagen sin cámara ni IA.
   Future<void> _identify() async {
     setState(() => _scanning = true);
     await Future.delayed(const Duration(milliseconds: 1800));
@@ -341,7 +344,7 @@ class _SearchView extends StatelessWidget {
     required this.onSelectPlant,
   });
 
-  //hardcoded — TODO(backend): conectar endpoint de catálogo de plantas
+  // HARDCODE(demo): catálogo local para búsqueda. TODO(backend): GET /plant-species.
   static const _catalog = [
     (
       emoji: '🌿',
@@ -495,7 +498,7 @@ class _ResultView extends StatelessWidget {
   final VoidCallback onAdd;
   const _ResultView({required this.onAdd});
 
-  // Demo hardcoded — TODO(backend): proviene del endpoint de identificación IA
+  // HARDCODE(demo): cuidados del resultado fijo (Monstera). TODO(backend): identificación IA.
   static const _careItems = [
     (
       GardenIcons.water,
@@ -756,6 +759,7 @@ class _MatchesViewState extends State<_MatchesView> {
   int _currentIndex = 0;
   final PageController _pageController = PageController(viewportFraction: 0.82);
 
+  // HARDCODE(demo): candidatos de identificación por cámara. TODO(backend): respuesta IA real.
   static const _matches = [
     (
       name: 'Monstera',

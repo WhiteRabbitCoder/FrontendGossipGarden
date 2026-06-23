@@ -35,7 +35,10 @@ class GardenIcons {
   static const wifi = '$_base/Icons_wifi.png';
   static const signal = '$_base/Icons_senal.png';
   static const wifiConnect = '$_base/Icons_add_wifi_connect.png';
-  static const sensorOffline = '$_base/Icons_add_battery_low.png';
+  static const wrongConexion = '$_base/Icons_wrong_conexion.png';
+  static const sensorOffline = wrongConexion;
+  static const telemetry2 = '$_base/Icons_telemetry_2.png';
+  static const soilHumidity = '$_base/Icons_humedad_suelo.png';
 
   // Cuidados de planta
   static const water = '$_base/Icons_water_drop.png';
@@ -53,6 +56,7 @@ class GardenIcons {
   static const friendPlants = '$_base/Icons_friend_plants.png';
 
   // Formularios / auth
+  static const google = '$_base/Icons_google.png';
   static const email = '$_base/Icons.email_email_outlined.png';
   static const lock = '$_base/Icons_lock.png';
   static const eyeOpen = '$_base/Icons_visibility_outlined_eye_open.png';
@@ -88,7 +92,8 @@ class GardenIcons {
   static const logroRacha = '$_base/Icons_logro_racha.png';
   static const logroExplorador = '$_base/Icons_logro_Logros.png';
   static const logroFavorita = '$_base/Icons_logro_Planta_favorita.png';
-  static const logroDesbloqueado = '$_base/Icons_logro_Logro_desbloqueado.png';
+  static const logroTrofeo2 = '$_base/Icons_logro_Trofeo_2.png';
+  static const logroDesbloqueado = logroTrofeo2;
 
   static String plantAssetForSpecies(String species) {
     final lower = species.toLowerCase();

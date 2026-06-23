@@ -26,6 +26,8 @@ class UrgentPlantTask {
   });
 }
 
+// HARDCODE(demo): deriva tareas del mood/insights de plantas demo locales.
+// TODO(backend): usar acciones urgentes del backend o reglas por especie.
 List<UrgentPlantTask> deriveUrgentTasks(Plant plant) {
   final tasks = <UrgentPlantTask>[];
   final insight =

@@ -19,6 +19,8 @@ class _InviteFriendScreenState extends ConsumerState<InviteFriendScreen> {
   final _joinCodeController = TextEditingController();
   bool _isJoining = false;
 
+  // HARDCODE(demo): código, URL y unión simulada (delay + validación local).
+  // TODO(backend): GET /invites/mine, POST /invites/join y deep links reales.
   static const _demoInviteCode = 'GARDEN-7K2M';
   static const _inviteBaseUrl = 'https://gossipgarden.app/invite';
 
@@ -104,7 +106,8 @@ class _InviteFriendScreenState extends ConsumerState<InviteFriendScreen> {
             ),
             Text(
               'Comparte tu jardín o únete con un código',
-              style: GardenTextStyles.label.copyWith(color: GardenColors.inkSoft),
+              style:
+                  GardenTextStyles.label.copyWith(color: GardenColors.inkSoft),
             ),
           ],
         ),
@@ -120,7 +123,18 @@ class _InviteFriendScreenState extends ConsumerState<InviteFriendScreen> {
             ),
             child: Column(
               children: [
-                const GardenIcon(asset: GardenIcons.friendPlants, size: 48),
+                Container(
+                  width: 72,
+                  height: 72,
+                  decoration: BoxDecoration(
+                    color: GardenColors.creamLight,
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Center(
+                    child:
+                        GardenIcon(asset: GardenIcons.friendPlants, size: 40),
+                  ),
+                ),
                 const SizedBox(height: 16),
                 Text(
                   'Haz crecer la comunidad verde',
@@ -189,7 +203,8 @@ class _InviteFriendScreenState extends ConsumerState<InviteFriendScreen> {
                         _demoInviteCode,
                         'Código copiado al portapapeles.',
                       ),
-                      icon: const GardenIcon(asset: GardenIcons.pencil, size: 22),
+                      icon:
+                          const GardenIcon(asset: GardenIcons.pencil, size: 22),
                       tooltip: 'Copiar código',
                     ),
                   ],
@@ -219,7 +234,8 @@ class _InviteFriendScreenState extends ConsumerState<InviteFriendScreen> {
                           inviteLink,
                           'Enlace copiado al portapapeles.',
                         ),
-                        icon: const GardenIcon(asset: GardenIcons.wifiConnect, size: 18),
+                        icon: const GardenIcon(
+                            asset: GardenIcons.wifiConnect, size: 18),
                         label: const Text('Copiar enlace'),
                         style: OutlinedButton.styleFrom(
                           foregroundColor: GardenColors.leafDark,
@@ -238,7 +254,8 @@ class _InviteFriendScreenState extends ConsumerState<InviteFriendScreen> {
                           inviteMessage,
                           'Mensaje copiado. Pégalo en WhatsApp o donde quieras.',
                         ),
-                        icon: const GardenIcon(asset: GardenIcons.share, size: 18),
+                        icon: const GardenIcon(
+                            asset: GardenIcons.share, size: 18),
                         label: const Text('Compartir'),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: GardenColors.leafDark,
@@ -336,7 +353,8 @@ class _InviteFriendScreenState extends ConsumerState<InviteFriendScreen> {
             decoration: BoxDecoration(
               color: const Color(0xFFF1F8F5),
               borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: GardenColors.leafGreen.withValues(alpha: 0.4)),
+              border: Border.all(
+                  color: GardenColors.leafGreen.withValues(alpha: 0.4)),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,

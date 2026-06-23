@@ -8,6 +8,7 @@ import '../../data/models/plant.dart';
 import '../../data/models/plant_enums.dart';
 import '../../data/models/sensors.dart';
 
+// HARDCODE(demo): jardín de Mateo con plantas y logros inventados.
 // TODO(backend): reemplazar con GET /api/v1/friends/{id}/garden
 
 const _mateoPotos = Plant(

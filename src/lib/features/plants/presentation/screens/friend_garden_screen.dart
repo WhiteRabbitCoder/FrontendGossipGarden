@@ -10,6 +10,7 @@ import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
 import '../../../../core/widgets/garden_icon.dart';
 
+// HARDCODE(demo): consume friendGardenProvider (datos de Mateo). TODO(backend): jardín por friendId real.
 class FriendGardenScreen extends ConsumerWidget {
   final String friendId;
   final VoidCallback onBack;
@@ -159,7 +160,6 @@ class FriendGardenScreen extends ConsumerWidget {
                   padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
                   child: GardenPlantCard(
                     plant: plant,
-                    showChevron: false,
                   ),
                 );
               },

@@ -25,6 +25,8 @@ class _ContactSupportScreenState extends ConsumerState<ContactSupportScreen> {
     super.dispose();
   }
 
+  // HARDCODE(demo): envío simulado con delay; no llama al backend.
+  // TODO(backend): POST /support/tickets con asunto, mensaje y email del usuario.
   Future<void> _sendMessage() async {
     final subject = _subjectController.text.trim();
     final message = _messageController.text.trim();
