@@ -10,10 +10,15 @@ class FirebaseBootstrap {
       return;
     }
 
-    if (Firebase.apps.isNotEmpty) {
-      return;
+    try {
+      if (Firebase.apps.isEmpty) {
+        await Firebase.initializeApp(options: FirebaseEnvironment.options);
+      }
+    } catch (e) {
+      // Si Firebase ya fue inicializado nativamente o en otro lado, ignoramos el error de duplicado.
+      if (!e.toString().contains('duplicate-app')) {
+        rethrow;
+      }
     }
-
-    await Firebase.initializeApp(options: FirebaseEnvironment.options);
   }
 }

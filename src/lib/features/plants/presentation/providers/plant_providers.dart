@@ -140,7 +140,7 @@ final favoritePlantsProvider =
 final localAvatarBytesProvider = StateProvider<Uint8List?>((ref) => null);
 
 final wifiSetupDatasourceProvider = Provider<WifiSetupDatasource>(
-  (ref) => const WifiSetupDatasource(),
+  (ref) => WifiSetupDatasource(),
 );
 
 // HARDCODE(demo): lecturas aleatorias simuladas cada 5 s. TODO(backend): stream MQTT/WebSocket del sensor.

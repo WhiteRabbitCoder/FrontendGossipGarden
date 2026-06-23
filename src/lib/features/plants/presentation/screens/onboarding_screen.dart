@@ -58,15 +58,16 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     with TickerProviderStateMixin {
   late AnimationController _floatController;
-  late AnimationController _iconController;
+  late AnimationController _staggerController;
   late Animation<double> _floatAnimation;
-  late Animation<double> _iconAnimation;
+  // Animaciones escalonadas para los 3 íconos del paso wow
+  late List<Animation<double>> _iconFadeAnims;
+  late List<Animation<Offset>> _iconSlideAnims;
 
   final TextEditingController _ssidController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _passwordVisible = false;
   bool _showPasswordField = false;
-  // linea borrada
 
   @override
   void initState() {
@@ -81,20 +82,42 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       CurvedAnimation(parent: _floatController, curve: Curves.easeInOut),
     );
 
-    _iconController = AnimationController(
-      duration: const Duration(milliseconds: 800),
+    // Stagger: 3 íconos aparecen con 120ms de delay entre cada uno
+    _staggerController = AnimationController(
+      duration: const Duration(milliseconds: 900),
       vsync: this,
-    )..repeat(reverse: true);
+    )..forward();
 
-    _iconAnimation = Tween<double>(begin: 0.8, end: 1.2).animate(
-      CurvedAnimation(parent: _iconController, curve: Curves.easeInOut),
-    );
+    _iconFadeAnims = List.generate(3, (i) {
+      final start = i * 0.25;
+      final end = start + 0.55;
+      return Tween<double>(begin: 0.0, end: 1.0).animate(
+        CurvedAnimation(
+          parent: _staggerController,
+          curve: Interval(start, end.clamp(0, 1), curve: Curves.easeOut),
+        ),
+      );
+    });
+
+    _iconSlideAnims = List.generate(3, (i) {
+      final start = i * 0.25;
+      final end = start + 0.55;
+      return Tween<Offset>(
+        begin: const Offset(0, 0.4),
+        end: Offset.zero,
+      ).animate(
+        CurvedAnimation(
+          parent: _staggerController,
+          curve: Interval(start, end.clamp(0, 1), curve: Curves.easeOut),
+        ),
+      );
+    });
   }
 
   @override
   void dispose() {
     _floatController.dispose();
-    _iconController.dispose();
+    _staggerController.dispose();
     _ssidController.dispose();
     _passwordController.dispose();
     super.dispose();
@@ -103,6 +126,56 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   void _skipToApp() {
     ref.read(authStateProvider.notifier).completeOnboarding();
     ref.read(navigationProvider.notifier).changeTab(TabId.dashboard);
+  }
+
+  void _goBack() {
+    final step = ref.read(onboardingStepProvider);
+
+    // Dentro del paso connect, manejar las sub-fases del WiFi antes de salir del paso
+    if (step == OnboardingStep.connect) {
+      final phase = ref.read(wifiSetupPhaseProvider);
+      switch (phase) {
+        case _WifiPhase.verifying:
+        case _WifiPhase.error:
+          ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.instruction;
+          return;
+        case _WifiPhase.scanning:
+          ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.instruction;
+          return;
+        case _WifiPhase.form:
+          ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.scanning;
+          return;
+        case _WifiPhase.connected:
+          // Ya conectado — volver al paso anterior del onboarding
+          break;
+        case _WifiPhase.connecting:
+          // No permitir volver mientras se está conectando
+          return;
+        case _WifiPhase.instruction:
+          // Salir del paso connect hacia choosePath
+          break;
+      }
+    }
+
+    // Navegar al paso anterior en el flujo principal
+    switch (step) {
+      case OnboardingStep.wow:
+        return; // Ya estamos al inicio
+      case OnboardingStep.choosePath:
+        ref.read(onboardingStepProvider.notifier).state = OnboardingStep.wow;
+      case OnboardingStep.connect:
+        ref.read(onboardingStepProvider.notifier).state = OnboardingStep.choosePath;
+        _startPairing(); // Resetear estado WiFi
+      case OnboardingStep.identify:
+        // Si usa sensor, volver a connect; si no, volver a choosePath
+        final usesSensor = ref.read(usesSensorProvider);
+        ref.read(onboardingStepProvider.notifier).state =
+            usesSensor ? OnboardingStep.connect : OnboardingStep.choosePath;
+      case OnboardingStep.firstInsight:
+        ref.read(onboardingStepProvider.notifier).state = OnboardingStep.identify;
+      case OnboardingStep.config:
+        ref.read(onboardingStepProvider.notifier).state = OnboardingStep.firstInsight;
+    }
   }
 
   // HARDCODE(demo): conexión WiFi del onboarding simulada (delay + regla de contraseña).
@@ -127,14 +200,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
       ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.connected;
       ref.read(achievementStatsProvider.notifier).recordSensorSetup();
     }
-  }
-
-  void _showWifiConnected() {
-    ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.connected;
-  }
-
-  void _showWifiScanning() {
-    ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.scanning;
   }
 
   void _showWifiForm() {
@@ -189,9 +254,14 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   @override
   Widget build(BuildContext context) {
     final step = ref.watch(onboardingStepProvider);
+    final wifiPhase = ref.watch(wifiSetupPhaseProvider);
     final navNotifier = ref.read(navigationProvider.notifier);
     final isFirstStep = step == OnboardingStep.wow;
     final isLastStep = step == OnboardingStep.config;
+
+    // Ocultar back si estamos conectando (operación en curso)
+    final isConnecting = step == OnboardingStep.connect &&
+        wifiPhase == _WifiPhase.connecting;
 
     return Scaffold(
       backgroundColor: GardenColors.creamPaper,
@@ -226,6 +296,26 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               ),
             ),
 
+            // ── Botón Regresar ───────────────────────────────────────────
+            if (!isFirstStep && !isConnecting)
+              Positioned(
+                top: 8,
+                left: 8,
+                child: IconButton(
+                  onPressed: _goBack,
+                  style: IconButton.styleFrom(
+                    foregroundColor: GardenColors.inkSoft,
+                    backgroundColor: Colors.white.withValues(alpha: 0.7),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    padding: const EdgeInsets.all(10),
+                  ),
+                  icon: const Icon(Icons.arrow_back_ios_new_rounded, size: 18),
+                  tooltip: 'Regresar',
+                ),
+              ),
+
             // ── Botón Skip ──────────────────────────────────────────────
             if (!isFirstStep && !isLastStep)
               Positioned(
@@ -257,21 +347,37 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
 
   Widget _buildProgress(OnboardingStep step) {
     final index = OnboardingStep.values.indexOf(step);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(
-        OnboardingStep.values.length,
-        (i) => AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          margin: const EdgeInsets.symmetric(horizontal: 4),
-          width: i == index ? 24 : 8,
-          height: 8,
-          decoration: BoxDecoration(
-            color: i <= index ? GardenColors.leafDark : GardenColors.dustLight,
-            borderRadius: BorderRadius.circular(20),
+    final total = OnboardingStep.values.length;
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(
+            total,
+            (i) => AnimatedContainer(
+              duration: const Duration(milliseconds: 300),
+              margin: const EdgeInsets.symmetric(horizontal: 4),
+              width: i == index ? 32 : 10,
+              height: 10,
+              decoration: BoxDecoration(
+                color:
+                    i <= index ? GardenColors.leafDark : GardenColors.dustLight,
+                borderRadius: BorderRadius.circular(20),
+              ),
+            ),
           ),
         ),
-      ),
+        const SizedBox(height: 8),
+        Text(
+          'Paso ${index + 1} de $total',
+          style: const TextStyle(
+            fontSize: 11,
+            color: GardenColors.inkSoft,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 
@@ -310,6 +416,12 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   // ── Paso 1: Wow ─────────────────────────────────────────────────────────
 
   Widget _buildWowStep() {
+    final icons = [
+      GardenIcons.water,
+      GardenIcons.sun,
+      GardenIcons.thermostat,
+    ];
+
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -326,7 +438,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               borderRadius: BorderRadius.circular(32),
               boxShadow: [
                 BoxShadow(
-                  color: GardenColors.leafDark.withOpacity(0.15),
+                  color: GardenColors.leafDark.withValues(alpha: 0.15),
                   blurRadius: 20,
                   offset: const Offset(0, 10),
                 )
@@ -342,15 +454,22 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           ),
         ),
         const SizedBox(height: 40),
-        const Row(
+
+        // Íconos con animación staggered
+        Row(
           mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            GardenIcon(asset: GardenIcons.water, size: 32),
-            SizedBox(width: 24),
-            GardenIcon(asset: GardenIcons.sun, size: 32),
-            SizedBox(width: 24),
-            GardenIcon(asset: GardenIcons.thermostat, size: 32),
-          ],
+          children: List.generate(icons.length, (i) {
+            return Padding(
+              padding: EdgeInsets.only(left: i == 0 ? 0 : 24),
+              child: FadeTransition(
+                opacity: _iconFadeAnims[i],
+                child: SlideTransition(
+                  position: _iconSlideAnims[i],
+                  child: GardenIcon(asset: icons[i], size: 32),
+                ),
+              ),
+            );
+          }),
         ),
         const SizedBox(height: 32),
         const Text(
@@ -363,6 +482,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
         ),
         const SizedBox(height: 48),
         _primaryButton('Quiero escucharlas', () {
+          // Reiniciar stagger para verlo de nuevo si el usuario regresa
+          _staggerController
+            ..reset()
+            ..forward();
           ref.read(onboardingStepProvider.notifier).state =
               OnboardingStep.choosePath;
         }),
@@ -493,7 +616,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             boxShadow: isSelected
                 ? [
                     BoxShadow(
-                      color: GardenColors.leafDark.withOpacity(0.25),
+                      color: GardenColors.leafDark.withValues(alpha: 0.25),
                       blurRadius: 8,
                       offset: const Offset(0, 3),
                     )
@@ -620,7 +743,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                       color: GardenColors.sageLight,
                       borderRadius: BorderRadius.circular(12),
                       border: Border.all(
-                          color: GardenColors.leafDark.withOpacity(0.3),
+                          color: GardenColors.leafDark.withValues(alpha: 0.3),
                           width: 1),
                     ),
                     child: const Column(
@@ -701,7 +824,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                           borderRadius: BorderRadius.circular(8),
                           boxShadow: [
                             BoxShadow(
-                              color: GardenColors.potOrange.withOpacity(0.35),
+                              color: GardenColors.potOrange.withValues(alpha: 0.35),
                               blurRadius: 6,
                               offset: const Offset(0, 2),
                             )
@@ -776,7 +899,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                 boxShadow: isActive
                     ? [
                         BoxShadow(
-                          color: GardenColors.leafDark.withOpacity(0.3),
+                          color: GardenColors.leafDark.withValues(alpha: 0.3),
                           blurRadius: 8,
                           offset: const Offset(0, 3),
                         )
@@ -792,8 +915,8 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                 height: lineHeight,
                 decoration: BoxDecoration(
                   color: isDone
-                      ? GardenColors.leafGreen.withOpacity(0.5)
-                      : GardenColors.sage.withOpacity(0.6),
+                      ? GardenColors.leafGreen.withValues(alpha: 0.5)
+                      : GardenColors.sage.withValues(alpha: 0.6),
                   borderRadius: BorderRadius.circular(1),
                 ),
               ),
@@ -878,7 +1001,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: GardenColors.leafDark.withOpacity(0.1),
+                  color: GardenColors.leafDark.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: const GardenIcon(
@@ -949,7 +1072,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                   border: Border.all(color: GardenColors.dustLight, width: 1.2),
                   boxShadow: [
                     BoxShadow(
-                      color: GardenColors.ink.withOpacity(0.05),
+                      color: GardenColors.ink.withValues(alpha: 0.05),
                       blurRadius: 14,
                       offset: const Offset(0, 6),
                     ),
@@ -977,10 +1100,10 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                 color: Colors.white,
                 borderRadius: BorderRadius.circular(18),
                 border: Border.all(
-                    color: GardenColors.leafDark.withOpacity(0.3), width: 1.2),
+                    color: GardenColors.leafDark.withValues(alpha: 0.3), width: 1.2),
                 boxShadow: [
                   BoxShadow(
-                    color: GardenColors.ink.withOpacity(0.05),
+                    color: GardenColors.ink.withValues(alpha: 0.05),
                     blurRadius: 14,
                     offset: const Offset(0, 6),
                   ),
@@ -1006,7 +1129,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
                 border: Border.all(color: GardenColors.dustLight, width: 1.2),
                 boxShadow: [
                   BoxShadow(
-                    color: GardenColors.ink.withOpacity(0.05),
+                    color: GardenColors.ink.withValues(alpha: 0.05),
                     blurRadius: 14,
                     offset: const Offset(0, 6),
                   )
@@ -1102,7 +1225,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
         duration: const Duration(milliseconds: 200),
         decoration: BoxDecoration(
           color: isSelected
-              ? GardenColors.leafDark.withOpacity(0.06)
+              ? GardenColors.leafDark.withValues(alpha: 0.06)
               : Colors.transparent,
           borderRadius: BorderRadius.vertical(
             top: Radius.circular(isSelected ? 18 : 0),
@@ -1265,7 +1388,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             height: 140,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: GardenColors.leafDark.withOpacity(0.08),
+              color: GardenColors.leafDark.withValues(alpha: 0.08),
             ),
             child: const Icon(Icons.wifi_find_rounded,
                 size: 64, color: GardenColors.leafDark),
@@ -1308,7 +1431,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               height: 140,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: GardenColors.potOrange.withOpacity(0.12),
+                color: GardenColors.potOrange.withValues(alpha: 0.12),
               ),
               child: const Icon(Icons.cloud_upload_rounded,
                   size: 64, color: GardenColors.potOrange),
@@ -1342,7 +1465,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             height: 140,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: GardenColors.leafGreen.withOpacity(0.12),
+              color: GardenColors.leafGreen.withValues(alpha: 0.12),
             ),
             child: const Icon(Icons.check_circle_outline_rounded,
                 size: 64, color: GardenColors.leafGreen),
@@ -1381,7 +1504,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
             height: 140,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: GardenColors.heartRed.withOpacity(0.12),
+              color: GardenColors.heartRed.withValues(alpha: 0.12),
             ),
             child: const Icon(Icons.error_outline_rounded,
                 size: 64, color: GardenColors.heartRed),
@@ -1425,23 +1548,18 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   // ── Paso 5: Primer insight ──────────────────────────────────────────────
 
   Widget _buildFirstInsightStep() {
-    return Column(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _card(
-          child: const Text(
-            'Hola. Soy Monducuru, una Opuntia monacantha. Mi tierra está al 31% — exactamente como me gusta. No me eches agua todavía.',
-            style: TextStyle(fontSize: 15, height: 1.5),
-          ),
-        ),
-        const SizedBox(height: 48),
-        _primaryButton('Continuar', () {
-          ref.read(onboardingStepProvider.notifier).state =
-              OnboardingStep.config;
-        })
-      ],
+    final session = ref.watch(authStateProvider).value;
+    final userName = session?.profile?.displayName?.split(' ').first ?? 'tú';
+
+    return _FirstInsightTutorialWidget(
+      userName: userName,
+      onContinue: () {
+        ref.read(onboardingStepProvider.notifier).state =
+            OnboardingStep.config;
+      },
     );
   }
+
 
   // ── Paso 6: Configuración notificaciones ────────────────────────────────
 
@@ -1451,14 +1569,48 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        const Text('Notificaciones',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w600)),
-        const SizedBox(height: 32),
-        _radioOption('important', 'Solo importantes', selected),
+        const GardenIcon(asset: GardenIcons.notification, size: 48),
         const SizedBox(height: 16),
-        _radioOption('all', 'Todas', selected),
-        const SizedBox(height: 48),
-        _primaryButton('A escucharlas', () {
+        const Text(
+          'Notificaciones',
+          style: TextStyle(fontSize: 24, fontWeight: FontWeight.w700,
+              color: GardenColors.ink),
+        ),
+        const SizedBox(height: 6),
+        const Text(
+          '¿Cuándo quieres que tus plantas te hablen?',
+          textAlign: TextAlign.center,
+          style: TextStyle(fontSize: 14, color: GardenColors.inkSoft),
+        ),
+        const SizedBox(height: 28),
+        _radioOptionRich(
+          value: 'important',
+          selected: selected,
+          icon: Icons.notifications_active_rounded,
+          iconColor: GardenColors.leafDark,
+          title: 'Solo importantes',
+          subtitle: 'Alertas de riego urgente y enfermedades',
+        ),
+        const SizedBox(height: 12),
+        _radioOptionRich(
+          value: 'all',
+          selected: selected,
+          icon: Icons.campaign_rounded,
+          iconColor: GardenColors.potOrange,
+          title: 'Todas',
+          subtitle: 'Actualizaciones diarias de cada planta',
+        ),
+        const SizedBox(height: 12),
+        _radioOptionRich(
+          value: 'muted',
+          selected: selected,
+          icon: Icons.notifications_off_rounded,
+          iconColor: GardenColors.inkSoft,
+          title: 'Silenciado',
+          subtitle: 'Puedes activarlas en ajustes cuando quieras',
+        ),
+        const SizedBox(height: 40),
+        _primaryButton('A escucharlas 🌿', () {
           ref.read(authStateProvider.notifier).completeOnboarding();
           nav.changeTab(TabId.dashboard);
         }),
@@ -1468,22 +1620,86 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
 
   // ── Widgets helpers ─────────────────────────────────────────────────────
 
-  Widget _radioOption(String value, String label, String selected) {
+
+  Widget _radioOptionRich({
+    required String value,
+    required String selected,
+    required IconData icon,
+    required Color iconColor,
+    required String title,
+    required String subtitle,
+  }) {
+    final isSelected = selected == value;
     return GestureDetector(
-      onTap: () {
-        ref.read(notificationPreferenceProvider.notifier).state = value;
-      },
-      child: _card(
+      onTap: () =>
+          ref.read(notificationPreferenceProvider.notifier).state = value,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+        decoration: BoxDecoration(
+          color: isSelected
+              ? GardenColors.sageLight
+              : Colors.white,
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: isSelected
+                ? GardenColors.leafDark.withValues(alpha: 0.5)
+                : GardenColors.dustLight,
+            width: isSelected ? 1.8 : 1.2,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: GardenColors.ink.withValues(alpha: 0.04),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
         child: Row(
           children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: iconColor.withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, size: 22, color: iconColor),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: isSelected
+                          ? GardenColors.ink
+                          : GardenColors.charcoal,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(
+                        fontSize: 12, color: GardenColors.inkSoft),
+                  ),
+                ],
+              ),
+            ),
             Icon(
-              selected == value
+              isSelected
                   ? Icons.radio_button_checked
                   : Icons.radio_button_off,
-              color: GardenColors.leafDark,
+              color: isSelected
+                  ? GardenColors.leafDark
+                  : GardenColors.dustLight,
+              size: 22,
             ),
-            const SizedBox(width: 12),
-            Text(label),
           ],
         ),
       ),
@@ -1505,7 +1721,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
           elevation: enabled ? 2 : 0,
-          shadowColor: GardenColors.ink.withOpacity(0.18),
+          shadowColor: GardenColors.ink.withValues(alpha: 0.18),
         ),
         child: Text(text,
             style: TextStyle(
@@ -1526,7 +1742,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
         border: Border.all(color: GardenColors.dustLight, width: 1.2),
         boxShadow: [
           BoxShadow(
-            color: GardenColors.ink.withOpacity(0.06),
+            color: GardenColors.ink.withValues(alpha: 0.06),
             blurRadius: 22,
             offset: const Offset(0, 10),
           )
@@ -1536,3 +1752,1212 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     );
   }
 }
+
+// ── Widget de Tutorial del Primer Insight (Paso 5) ──────────────────────────
+
+class _FirstInsightTutorialWidget extends ConsumerStatefulWidget {
+  final String userName;
+  final VoidCallback onContinue;
+
+  const _FirstInsightTutorialWidget({
+    required this.userName,
+    required this.onContinue,
+  });
+
+  @override
+  ConsumerState<_FirstInsightTutorialWidget> createState() =>
+      _FirstInsightTutorialWidgetState();
+}
+
+class _FirstInsightTutorialWidgetState
+    extends ConsumerState<_FirstInsightTutorialWidget>
+    with TickerProviderStateMixin {
+  late AnimationController _pulseController;
+  late AnimationController _entranceController;
+
+  @override
+  void initState() {
+    super.initState();
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+
+    _entranceController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1400),
+    )..forward();
+  }
+
+  @override
+  void dispose() {
+    _pulseController.dispose();
+    _entranceController.dispose();
+    super.dispose();
+  }
+
+  Widget _buildSensorCard({
+    required String label,
+    required String value,
+    required String iconAsset,
+    required Color themeColor,
+    required String gossipText,
+    required String tipTitle,
+    required String tipText,
+    required IconData tipIcon,
+    required double progressPercent,
+  }) {
+    // Escoger la animación correspondiente según el tipo de sensor
+    Widget iconWidget = GardenIcon(
+      asset: iconAsset,
+      size: 22,
+      color: themeColor,
+    );
+
+    if (iconAsset == GardenIcons.sun) {
+      iconWidget = _SpinningIcon(child: iconWidget);
+    } else if (iconAsset == GardenIcons.water) {
+      iconWidget = _BouncingIcon(child: iconWidget);
+    } else if (iconAsset == GardenIcons.thermostat) {
+      iconWidget = _PulsingIcon(child: iconWidget);
+    }
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 16),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            Colors.white,
+            themeColor.withValues(alpha: 0.04),
+          ],
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: themeColor.withValues(alpha: 0.18), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: GardenColors.ink.withValues(alpha: 0.04),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+            child: Row(
+              children: [
+                Container(
+                  width: 44,
+                  height: 44,
+                  decoration: BoxDecoration(
+                    color: themeColor.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Center(child: iconWidget),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            label,
+                            style: const TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: GardenColors.ink,
+                            ),
+                          ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                value,
+                                style: TextStyle(
+                                  fontSize: 15,
+                                  fontWeight: FontWeight.w800,
+                                  color: themeColor,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              _LivePulseBadge(color: themeColor),
+                            ],
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(4),
+                        child: Container(
+                          height: 8,
+                          width: double.infinity,
+                          color: themeColor.withValues(alpha: 0.1),
+                          child: TweenAnimationBuilder<double>(
+                            tween: Tween<double>(begin: 0, end: progressPercent),
+                            duration: const Duration(milliseconds: 1400),
+                            curve: Curves.easeOutBack,
+                            builder: (context, val, _) {
+                              return FractionallySizedBox(
+                                alignment: Alignment.centerLeft,
+                                widthFactor: val,
+                                child: Container(
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(
+                                      colors: [
+                                        themeColor.withValues(alpha: 0.5),
+                                        themeColor,
+                                      ],
+                                    ),
+                                    borderRadius: BorderRadius.circular(4),
+                                    boxShadow: [
+                                      BoxShadow(
+                                        color: themeColor.withValues(alpha: 0.4),
+                                        blurRadius: 4,
+                                        spreadRadius: 0.5,
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              );
+                            },
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          
+          // Gossip section styled as a Speech Bubble
+          Padding(
+            padding: const EdgeInsets.fromLTRB(20, 0, 20, 12),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Padding(
+                  padding: const EdgeInsets.only(left: 20),
+                  child: CustomPaint(
+                    size: const Size(12, 6),
+                    painter: _BubbleTailPainter(color: GardenColors.creamLight),
+                  ),
+                ),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  decoration: BoxDecoration(
+                    color: GardenColors.creamLight,
+                    borderRadius: const BorderRadius.only(
+                      topLeft: Radius.zero,
+                      topRight: Radius.circular(16),
+                      bottomLeft: Radius.circular(16),
+                      bottomRight: Radius.circular(16),
+                    ),
+                    border: Border.all(
+                      color: GardenColors.dustLight,
+                      width: 1.0,
+                    ),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Chisme en vivo 💬',
+                        style: TextStyle(
+                          fontSize: 10,
+                          fontWeight: FontWeight.w700,
+                          color: themeColor,
+                        ),
+                      ),
+                      const SizedBox(height: 6),
+                      _TypewriterText(
+                        text: gossipText,
+                        duration: const Duration(milliseconds: 800),
+                        style: const TextStyle(
+                          fontSize: 13.5,
+                          height: 1.45,
+                          color: GardenColors.charcoal,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Icon(tipIcon, size: 18, color: themeColor),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        tipTitle,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.w700,
+                          color: GardenColors.ink,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        tipText,
+                        style: const TextStyle(
+                          fontSize: 11.5,
+                          color: GardenColors.inkSoft,
+                          height: 1.4,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAppBasics() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Padding(
+          padding: EdgeInsets.only(top: 16, bottom: 12),
+          child: Row(
+            children: [
+              Icon(Icons.menu_book_rounded, color: GardenColors.leafDark, size: 20),
+              SizedBox(width: 8),
+              Text(
+                'Básicos de la App',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: GardenColors.ink,
+                ),
+              ),
+            ],
+          ),
+        ),
+        _InteractiveBasicItem(
+          icon: GardenIcons.plantChat,
+          iconBg: GardenColors.sageLight,
+          iconColor: GardenColors.leafDark,
+          title: 'El Traductor de Plantas',
+          description: 'No más números aburridos. Tus plantas te dirán cómo se sienten a través de chismes ingeniosos en su propio canal de chat.',
+        ),
+        const SizedBox(height: 12),
+        _InteractiveBasicItem(
+          icon: GardenIcons.chat,
+          iconBg: GardenColors.creamLight,
+          iconColor: GardenColors.golden,
+          title: 'Chat Botánico con IA',
+          description: 'Pregúntale a nuestra IA botánica cualquier duda sobre plagas, abonos, poda o consejos personalizados para mantener tu jardín radiante.',
+        ),
+        const SizedBox(height: 12),
+        _InteractiveBasicItem(
+          icon: GardenIcons.friendPlants,
+          iconBg: GardenColors.sageLight,
+          iconColor: GardenColors.leafDark,
+          title: 'Jardín de Amigos',
+          description: 'Conéctate con otros entusiastas de las plantas. Visita sus jardines virtuales, presume tus especies y comparte logros botánicos.',
+        ),
+        const SizedBox(height: 12),
+        _InteractiveBasicItem(
+          icon: GardenIcons.calendarAlt,
+          iconBg: GardenColors.creamPaper,
+          iconColor: GardenColors.potOrange,
+          title: 'Gráficos de Salud e Historial',
+          description: 'Revisa de forma interactiva la evolución histórica de humedad, luz y temperatura para entender mejor los ciclos de tu planta.',
+        ),
+        const SizedBox(height: 12),
+        _InteractiveBasicItem(
+          icon: GardenIcons.notification,
+          iconBg: GardenColors.creamLight,
+          iconColor: GardenColors.heartRed,
+          title: 'Alertas justo cuando importan',
+          description: 'Recibe notificaciones automáticas y personalizadas únicamente cuando los sensores detecten que tu planta corre algún peligro.',
+        ),
+      ],
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      children: [
+        const Positioned.fill(
+          child: IgnorePointer(
+            child: _FloatingLeavesBackground(),
+          ),
+        ),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            // 1. Logo y Título (Staggered 1)
+            _AnimatedEntrance(
+              controller: _entranceController,
+              interval: const Interval(0.0, 0.35, curve: Curves.easeOutBack),
+              child: Column(
+                children: [
+                  Center(
+                    child: AnimatedBuilder(
+                      animation: _pulseController,
+                      builder: (context, child) {
+                        return Transform.scale(
+                          scale: 1.0 + (_pulseController.value * 0.04),
+                          child: child,
+                        );
+                      },
+                      child: Container(
+                        width: 80,
+                        height: 80,
+                        decoration: BoxDecoration(
+                          color: GardenColors.sageLight,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: GardenColors.leafDark.withValues(alpha: 0.1),
+                              blurRadius: 12,
+                              spreadRadius: 2,
+                            ),
+                          ],
+                        ),
+                        child: Center(
+                          child: Image.asset(
+                            'images/logo_no_text.png',
+                            width: 46,
+                            height: 46,
+                            fit: BoxFit.contain,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  RichText(
+                    textAlign: TextAlign.center,
+                    text: TextSpan(
+                      style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.w700,
+                          color: GardenColors.ink,
+                          height: 1.3),
+                      children: [
+                        const TextSpan(text: '¡Hola '),
+                        TextSpan(
+                          text: widget.userName,
+                          style: const TextStyle(color: GardenColors.leafDark),
+                        ),
+                        const TextSpan(text: '! Tu planta tiene algo que decirte 🌵'),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Desliza hacia abajo para conocer cómo interactúan los sensores y los básicos del cuidado.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: GardenColors.inkSoft,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 24),
+            
+            // Card 1: Humedad (Staggered 2)
+            _AnimatedEntrance(
+              controller: _entranceController,
+              interval: const Interval(0.25, 0.55, curve: Curves.easeOutCubic),
+              child: _BouncingCard(
+                onTap: () {},
+                child: _buildSensorCard(
+                  label: 'Humedad del suelo',
+                  value: '31%',
+                  iconAsset: GardenIcons.water,
+                  themeColor: GardenColors.waterBlue,
+                  gossipText: 'Mi tierra está al 31% — exactamente como me gusta. No me eches agua todavía, espera 3 días más.',
+                  tipTitle: '¿Cómo funciona la Humedad?',
+                  tipText: 'El sensor mide el agua en la raíz. Las suculentas y cactus odian el exceso de agua; riega solo cuando el chisme te lo pida.',
+                  tipIcon: Icons.water_drop_outlined,
+                  progressPercent: 0.31,
+                ),
+              ),
+            ),
+            
+            // Card 2: Temperatura (Staggered 3)
+            _AnimatedEntrance(
+              controller: _entranceController,
+              interval: const Interval(0.35, 0.65, curve: Curves.easeOutCubic),
+              child: _BouncingCard(
+                onTap: () {},
+                child: _buildSensorCard(
+                  label: 'Temperatura',
+                  value: '22°C',
+                  iconAsset: GardenIcons.thermostat,
+                  themeColor: GardenColors.potOrange,
+                  gossipText: 'Hace unos templados 22°C aquí. ¡Clima ideal para mis espinas! Mantenme lejos de corrientes de viento frío.',
+                  tipTitle: '¿Cómo funciona la Temperatura?',
+                  tipText: 'Las temperaturas extremas estresan la planta. Te notificaremos si el ambiente baja de 12°C o supera los 35°C.',
+                  tipIcon: Icons.thermostat_rounded,
+                  progressPercent: 0.55,
+                ),
+              ),
+            ),
+            
+            // Card 3: Luz (Staggered 4)
+            _AnimatedEntrance(
+              controller: _entranceController,
+              interval: const Interval(0.45, 0.75, curve: Curves.easeOutCubic),
+              child: _BouncingCard(
+                onTap: () {},
+                child: _buildSensorCard(
+                  label: 'Luz ambiente',
+                  value: 'Alta',
+                  iconAsset: GardenIcons.sun,
+                  themeColor: GardenColors.golden,
+                  gossipText: 'La luz solar es Alta. ¡Perfecto para hacer mi fotosíntesis y crecer con fuerza en esta maceta!',
+                  tipTitle: '¿Cómo funciona la Luz?',
+                  tipText: 'Mide la radiación solar. Los cactus necesitan luz Alta directa, mientras que las plantas tropicales prefieren luz indirecta.',
+                  tipIcon: Icons.wb_sunny_outlined,
+                  progressPercent: 0.85,
+                ),
+              ),
+            ),
+
+            const SizedBox(height: 16),
+            
+            // Bouncing down indicator (Staggered 5)
+            _AnimatedEntrance(
+              controller: _entranceController,
+              interval: const Interval(0.55, 0.8, curve: Curves.easeOutCubic),
+              child: Center(
+                child: AnimatedBuilder(
+                  animation: _pulseController,
+                  builder: (context, child) {
+                    return Opacity(
+                      opacity: 0.5 + (_pulseController.value * 0.5),
+                      child: child,
+                    );
+                  },
+                  child: const Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Icon(
+                        Icons.arrow_downward_rounded,
+                        size: 16,
+                        color: GardenColors.leafDark,
+                      ),
+                      SizedBox(width: 6),
+                      Text(
+                        'Desliza para ver más básicos de la app',
+                        style: TextStyle(
+                          fontSize: 11,
+                          fontWeight: FontWeight.w600,
+                          color: GardenColors.inkSoft,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+
+            // Básicos Section (Staggered 6)
+            _AnimatedEntrance(
+              controller: _entranceController,
+              interval: const Interval(0.65, 0.95, curve: Curves.easeOutCubic),
+              child: _buildAppBasics(),
+            ),
+            const SizedBox(height: 32),
+            
+            // Continuar Button (Staggered 7)
+            _AnimatedEntrance(
+              controller: _entranceController,
+              interval: const Interval(0.85, 1.0, curve: Curves.easeOutCubic),
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: widget.onContinue,
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: GardenColors.leafDark,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                    elevation: 2,
+                    shadowColor: GardenColors.ink.withValues(alpha: 0.18),
+                  ),
+                  child: const Text('Continuar',
+                      style: TextStyle(
+                          fontWeight: FontWeight.w600,
+                          fontSize: 16,
+                          color: Colors.white)),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+// ── WIDGETS ANIMADOS COMPLEMENTARIOS ──────────────────────────────────────────
+
+/// Animación de entrada staggered (desvanecimiento y deslizamiento hacia arriba).
+class _AnimatedEntrance extends StatelessWidget {
+  final AnimationController controller;
+  final Interval interval;
+  final Widget child;
+
+  const _AnimatedEntrance({
+    required this.controller,
+    required this.interval,
+    required this.child,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (context, child) {
+        final animValue = CurvedAnimation(
+          parent: controller,
+          curve: interval,
+        ).value;
+
+        return Opacity(
+          opacity: animValue,
+          child: Transform.translate(
+            offset: Offset(0, 32 * (1.0 - animValue)),
+            child: child,
+          ),
+        );
+      },
+      child: child,
+    );
+  }
+}
+
+/// Efecto táctil de rebote (escala hacia abajo al presionar y vuelve a su tamaño normal).
+class _BouncingCard extends StatefulWidget {
+  final Widget child;
+  final VoidCallback? onTap;
+
+  const _BouncingCard({required this.child, this.onTap});
+
+  @override
+  State<_BouncingCard> createState() => _BouncingCardState();
+}
+
+class _BouncingCardState extends State<_BouncingCard>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+      lowerBound: 0.96,
+      upperBound: 1.0,
+      value: 1.0,
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTapDown: (_) => _controller.reverse(),
+      onTapUp: (_) {
+        _controller.forward();
+        widget.onTap?.call();
+      },
+      onTapCancel: () => _controller.forward(),
+      child: ScaleTransition(
+        scale: _controller,
+        child: widget.child,
+      ),
+    );
+  }
+}
+
+/// Icono giratorio continuo (para el sol de radiación).
+class _SpinningIcon extends StatefulWidget {
+  final Widget child;
+  const _SpinningIcon({required this.child});
+
+  @override
+  State<_SpinningIcon> createState() => _SpinningIconState();
+}
+
+class _SpinningIconState extends State<_SpinningIcon>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 16),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return RotationTransition(
+      turns: _controller,
+      child: widget.child,
+    );
+  }
+}
+
+/// Icono flotante (arriba y abajo continuamente, para la gota de agua de la humedad).
+class _BouncingIcon extends StatefulWidget {
+  final Widget child;
+  const _BouncingIcon({required this.child});
+
+  @override
+  State<_BouncingIcon> createState() => _BouncingIconState();
+}
+
+class _BouncingIconState extends State<_BouncingIcon>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SlideTransition(
+      position: Tween<Offset>(
+        begin: Offset.zero,
+        end: const Offset(0, -0.06),
+      ).animate(CurvedAnimation(parent: _controller, curve: Curves.easeInOut)),
+      child: widget.child,
+    );
+  }
+}
+
+/// Icono de pulso en escala (para el termómetro).
+class _PulsingIcon extends StatefulWidget {
+  final Widget child;
+  const _PulsingIcon({required this.child});
+
+  @override
+  State<_PulsingIcon> createState() => _PulsingIconState();
+}
+
+class _PulsingIconState extends State<_PulsingIcon>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 2),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return ScaleTransition(
+      scale: Tween<double>(begin: 0.94, end: 1.06).animate(
+        CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+      ),
+      child: widget.child,
+    );
+  }
+}
+
+// ── WIDGETS ANIMADOS ADICIONALES ─────────────────────────────────────────────
+
+/// Pintor para dibujar la cola de diálogo de la burbuja de chat.
+class _BubbleTailPainter extends CustomPainter {
+  final Color color;
+  const _BubbleTailPainter({required this.color});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = color
+      ..style = PaintingStyle.fill;
+
+    final path = Path()
+      ..moveTo(0, size.height)
+      ..lineTo(size.width / 2, 0)
+      ..lineTo(size.width, size.height)
+      ..close();
+
+    canvas.drawPath(path, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+}
+
+/// Indicador circular parpadeante "En vivo".
+class _LivePulseBadge extends StatefulWidget {
+  final Color color;
+  const _LivePulseBadge({required this.color});
+
+  @override
+  State<_LivePulseBadge> createState() => _LivePulseBadgeState();
+}
+
+class _LivePulseBadgeState extends State<_LivePulseBadge>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat(reverse: true);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        AnimatedBuilder(
+          animation: _controller,
+          builder: (context, child) {
+            return Container(
+              width: 8,
+              height: 8,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: widget.color,
+                boxShadow: [
+                  BoxShadow(
+                    color: widget.color.withValues(alpha: 0.5 * _controller.value),
+                    blurRadius: 6,
+                    spreadRadius: 3 * _controller.value,
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+        const SizedBox(width: 5),
+        Text(
+          'En vivo',
+          style: TextStyle(
+            fontSize: 9,
+            fontWeight: FontWeight.w700,
+            color: GardenColors.inkSoft.withValues(alpha: 0.8),
+            letterSpacing: 0.5,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+/// Revelación del texto de chisme progresivamente estilo máquina de escribir.
+class _TypewriterText extends StatefulWidget {
+  final String text;
+  final TextStyle style;
+  final Duration duration;
+
+  const _TypewriterText({
+    required this.text,
+    required this.style,
+    this.duration = const Duration(milliseconds: 800),
+  });
+
+  @override
+  State<_TypewriterText> createState() => _TypewriterTextState();
+}
+
+class _TypewriterTextState extends State<_TypewriterText>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<int> _characterCount;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: widget.duration,
+    );
+    _characterCount = StepTween(begin: 0, end: widget.text.length).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeIn),
+    );
+    // Demora un poco el inicio para que combine con el staggered fade-in de las cards
+    Future.delayed(const Duration(milliseconds: 400), () {
+      if (mounted) _controller.forward();
+    });
+  }
+
+  @override
+  void didUpdateWidget(_TypewriterText oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.text != widget.text) {
+      _controller.reset();
+      _characterCount = StepTween(begin: 0, end: widget.text.length).animate(
+        CurvedAnimation(parent: _controller, curve: Curves.easeIn),
+      );
+      _controller.forward();
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _characterCount,
+      builder: (context, child) {
+        final textToShow = widget.text.substring(0, _characterCount.value);
+        return Text(
+          textToShow,
+          style: widget.style,
+        );
+      },
+    );
+  }
+}
+
+/// Ítem básico interactivo con efecto de escala al tacto y rotación del icono.
+class _InteractiveBasicItem extends StatefulWidget {
+  final String icon;
+  final Color iconBg;
+  final Color iconColor;
+  final String title;
+  final String description;
+
+  const _InteractiveBasicItem({
+    required this.icon,
+    required this.iconBg,
+    required this.iconColor,
+    required this.title,
+    required this.description,
+  });
+
+  @override
+  State<_InteractiveBasicItem> createState() => _InteractiveBasicItemState();
+}
+
+class _InteractiveBasicItemState extends State<_InteractiveBasicItem>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+  late Animation<double> _iconAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 300),
+    );
+    _scaleAnimation = Tween<double>(begin: 1.0, end: 0.96).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.easeInOut),
+    );
+    _iconAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _controller, curve: Curves.elasticOut),
+    );
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _handleTap() {
+    if (!_controller.isAnimating) {
+      _controller.forward().then((_) => _controller.reverse());
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _handleTap,
+      child: AnimatedBuilder(
+        animation: _controller,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _scaleAnimation.value,
+            child: Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Colors.white,
+                    widget.iconBg.withValues(alpha: 0.18),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: _controller.isAnimating
+                      ? widget.iconColor.withValues(alpha: 0.5)
+                      : widget.iconColor.withValues(alpha: 0.14),
+                  width: 1.2,
+                ),
+                boxShadow: [
+                  BoxShadow(
+                    color: _controller.isAnimating
+                        ? widget.iconColor.withValues(alpha: 0.15)
+                        : widget.iconColor.withValues(alpha: 0.03),
+                    blurRadius: _controller.isAnimating ? 14 : 8,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
+              ),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Transform.rotate(
+                    angle: _iconAnimation.value * 0.15 * 3.14159,
+                    child: Container(
+                      width: 44,
+                      height: 44,
+                      decoration: BoxDecoration(
+                        color: widget.iconBg,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: widget.iconColor.withValues(alpha: 0.15),
+                          width: 1,
+                        ),
+                      ),
+                      child: Center(
+                        child: GardenIcon(
+                          asset: widget.icon,
+                          size: 22,
+                          color: widget.iconColor,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 14),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          widget.title,
+                          style: const TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                            color: GardenColors.ink,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          widget.description,
+                          style: const TextStyle(
+                            fontSize: 12,
+                            color: GardenColors.inkSoft,
+                            height: 1.45,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Icon(
+                    Icons.arrow_forward_ios_rounded,
+                    size: 12,
+                    color: widget.iconColor.withValues(alpha: 0.4),
+                  ),
+                ],
+              ),
+            ),
+          );
+        },
+      ),
+    );
+  }
+}
+
+// ── FONDO DE HOJAS FLOTANTES ─────────────────────────────────────────────────
+
+class _LeafParticle {
+  double x;
+  double y;
+  double speed;
+  double size;
+  double rotation;
+  double rotationSpeed;
+
+  _LeafParticle({
+    required this.x,
+    required this.y,
+    required this.speed,
+    required this.size,
+    required this.rotation,
+    required this.rotationSpeed,
+  });
+}
+
+class _FloatingLeavesBackground extends StatefulWidget {
+  const _FloatingLeavesBackground();
+
+  @override
+  State<_FloatingLeavesBackground> createState() => _FloatingLeavesBackgroundState();
+}
+
+class _FloatingLeavesBackgroundState extends State<_FloatingLeavesBackground>
+    with SingleTickerProviderStateMixin {
+  late AnimationController _controller;
+  final List<_LeafParticle> _particles = [];
+  final int _particleCount = 6;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 10),
+    )..repeat();
+
+    // Distribuir partículas a lo largo del espacio de pantalla
+    for (int i = 0; i < _particleCount; i++) {
+      _particles.add(_LeafParticle(
+        x: (i * 0.18 + 0.1),
+        y: (0.1 + i * 0.15),
+        speed: 0.02 + (i % 3) * 0.015,
+        size: 8.0 + (i % 4) * 4.0,
+        rotation: (i * 45) * 3.14159 / 180,
+        rotationSpeed: 0.1 + (i % 2) * 0.2,
+      ));
+    }
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _updateParticles() {
+    for (var p in _particles) {
+      p.y += p.speed * 0.01;
+      p.rotation += p.rotationSpeed * 0.01;
+      p.x += 0.002 * (p.speed > 0.03 ? 1 : -1);
+
+      if (p.y > 1.1) {
+        p.y = -0.1;
+        p.x = 0.1 + (DateTime.now().microsecond % 80) / 100.0;
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: _controller,
+      builder: (context, child) {
+        _updateParticles();
+        return CustomPaint(
+          painter: _LeavesPainter(particles: _particles),
+          child: const SizedBox.expand(),
+        );
+      },
+    );
+  }
+}
+
+class _LeavesPainter extends CustomPainter {
+  final List<_LeafParticle> particles;
+  const _LeavesPainter({required this.particles});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final paint = Paint()
+      ..color = GardenColors.sage.withValues(alpha: 0.12)
+      ..style = PaintingStyle.fill;
+
+    for (var p in particles) {
+      canvas.save();
+      canvas.translate(p.x * size.width, p.y * size.height);
+      canvas.rotate(p.rotation);
+
+      final path = Path();
+      path.moveTo(0, -p.size);
+      path.quadraticBezierTo(p.size * 0.6, 0, 0, p.size);
+      path.quadraticBezierTo(-p.size * 0.6, 0, 0, -p.size);
+      path.close();
+
+      canvas.drawPath(path, paint);
+      canvas.restore();
+    }
+  }
+
+  @override
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+}
+
