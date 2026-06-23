@@ -99,7 +99,8 @@ class _ChatCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final messages = ref.read(chatMessagesProvider(plant.id));
+    final messagesAsync = ref.watch(chatMessagesProvider(plant.id));
+    final messages = messagesAsync.value ?? [];
     final hasUnread = messages.isNotEmpty && messages.last.sender == 'plant';
     final lastMessage =
         messages.isNotEmpty ? messages.last.content : 'Sin mensajes recientes';

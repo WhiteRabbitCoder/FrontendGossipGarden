@@ -9,6 +9,7 @@ import 'package:gossip_garden/core/services/backend_chat_service.dart';
 import '../../data/repositories/chat_repository.dart';
 import '../../data/repositories/chat_repository_firestore.dart';
 import '../../data/repositories/chat_repository_memory.dart';
+import '../../data/models/chat_dto.dart' as dto;
 import '../widgets/message_bubble.dart';
 
 final backendChatServiceProvider =
@@ -23,70 +24,71 @@ final chatRepositoryProvider = Provider<ChatRepository>((ref) {
 });
 
 final chatMessagesProvider = StateNotifierProvider.family<ChatMessagesNotifier,
-    List<ChatMessage>, String>(
+    AsyncValue<List<ChatMessage>>, String>(
   (ref, plantId) => ChatMessagesNotifier(
     plantId,
-    ref.read(chatRepositoryProvider),
+    ref.read(backendChatServiceProvider),
   ),
 );
 
-class ChatMessagesNotifier extends StateNotifier<List<ChatMessage>> {
+class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> {
   final String plantId;
-  final ChatRepository _repository;
-  StreamSubscription<List<ChatMessage>>? _subscription;
+  final BackendChatService _chatService;
 
-  ChatMessagesNotifier(this.plantId, this._repository)
-      : super(_generateMockMessages(plantId)) {
-    _subscription = _repository.watchMessages(plantId).listen((messages) {
-      syncMessages(messages);
-    });
+  ChatMessagesNotifier(this.plantId, this._chatService)
+      : super(const AsyncValue.loading()) {
+    _fetchHistory();
   }
 
-  static List<ChatMessage> _generateMockMessages(String plantId) {
-    final now = DateTime.now();
-    return [
-      ChatMessage(
-        id: '1',
-        content: 'Soy Monducuru. Opuntia monacantha. Llevo aquí más tiempo del que imaginas.',
-        sender: 'plant',
-        source: 'sensor',
+  Future<void> _fetchHistory() async {
+    try {
+      final history = await _chatService.getHistory(plantId);
+      final messages = history.messages.map((dtoMsg) => ChatMessage(
+        id: DateTime.now().microsecondsSinceEpoch.toString(), // Temporary
+        content: dtoMsg.content,
+        sender: dtoMsg.role == 'assistant' ? 'plant' : 'user',
+        source: 'backend',
         confidence: 'high',
-        timestamp: now.subtract(const Duration(minutes: 12)),
-      ),
-      ChatMessage(
-        id: '2',
-        content: 'Mi tierra está al 31% de humedad. Para un cactus de mi posición, perfecto. No me eches agua — te lo advierto.',
-        sender: 'plant',
-        source: 'sensor',
-        confidence: 'high',
-        timestamp: now.subtract(const Duration(minutes: 4)),
-      ),
-    ];
+        timestamp: dtoMsg.timestamp,
+      )).toList();
+      state = AsyncValue.data(messages);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
   }
 
-  void addMessage(String content,
-      {String sender = 'user',
-      String source = 'no-data',
-      String confidence = 'high'}) {
+  Future<void> sendMessage(String content) async {
+    final currentMessages = state.value ?? [];
+    
+    // Optimistic UI update
     final newMessage = ChatMessage(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
       content: content,
-      sender: sender,
-      source: source,
-      confidence: confidence,
+      sender: 'user',
+      source: 'no-data',
+      confidence: 'high',
       timestamp: DateTime.now(),
     );
-    state = [...state, newMessage];
-    _repository.sendMessage(plantId, newMessage);
-  }
+    state = AsyncValue.data([...currentMessages, newMessage]);
 
-  void syncMessages(List<ChatMessage> messages) {
-    state = messages;
-  }
+    try {
+      final response = await _chatService.chat(plantId: plantId, message: content);
+      
+      final replyMessage = ChatMessage(
+        id: DateTime.now().microsecondsSinceEpoch.toString(),
+        content: response.reply,
+        sender: 'plant',
+        source: 'backend',
+        confidence: 'high',
+        timestamp: response.timestamp,
+      );
 
-  @override
-  void dispose() {
-    _subscription?.cancel();
-    super.dispose();
+      final updatedMessages = state.value ?? [];
+      state = AsyncValue.data([...updatedMessages, replyMessage]);
+    } catch (e) {
+      // Revert or show error
+      state = AsyncValue.data(currentMessages);
+      rethrow;
+    }
   }
 }

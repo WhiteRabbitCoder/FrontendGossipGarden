@@ -1,34 +1,37 @@
-import 'dart:convert';
-import 'package:http/http.dart' as http;
-
-const _chatBaseUrl = 'https://deacon-graveless-conjugally.ngrok-free.dev';
+import 'package:dio/dio.dart';
+import 'package:gossip_garden/core/services/api_client.dart';
+import 'package:gossip_garden/features/plants/data/models/chat_dto.dart';
 
 class BackendChatService {
-  BackendChatService({http.Client? httpClient})
-      : _httpClient = httpClient ?? http.Client();
+  final ApiClient _apiClient;
 
-  final http.Client _httpClient;
+  BackendChatService({ApiClient? apiClient})
+      : _apiClient = apiClient ?? ApiClient();
 
-  Future<String> chat({
+  Future<ChatMessageResponse> chat({
     required String plantId,
     required String message,
-    String? token,
   }) async {
-    final uri = Uri.parse('$_chatBaseUrl/api/v1/chat/$plantId');
-    final response = await _httpClient.post(
-      uri,
-      headers: {
-        'Content-Type': 'application/json',
-        if (token != null) 'Authorization': 'Bearer $token',
-      },
-      body: jsonEncode({'message': message}),
-    );
-
-    if (response.statusCode == 200) {
-      final data = jsonDecode(response.body) as Map<String, dynamic>;
-      return (data['response'] as String?) ?? '';
+    try {
+      final request = ChatMessageRequest(message: message);
+      final response = await _apiClient.dio.post(
+        '/chat/$plantId',
+        data: request.toJson(),
+      );
+      return ChatMessageResponse.fromJson(response.data);
+    } on DioException catch (e) {
+      final detail = e.response?.data?['detail'] ?? 'Error desconocido';
+      throw Exception('Error en chat: $detail');
     }
+  }
 
-    throw Exception('Error ${response.statusCode} en chat: ${response.body}');
+  Future<ChatHistoryResponse> getHistory(String plantId) async {
+    try {
+      final response = await _apiClient.dio.get('/chat/$plantId/history');
+      return ChatHistoryResponse.fromJson(response.data);
+    } on DioException catch (e) {
+      final detail = e.response?.data?['detail'] ?? 'Error desconocido';
+      throw Exception('Error obteniendo historial: $detail');
+    }
   }
 }
