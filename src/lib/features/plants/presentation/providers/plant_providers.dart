@@ -14,6 +14,7 @@ import '../../data/models/sensors.dart';
 import '../../data/models/comfort_zones.dart';
 import '../../data/models/realtime_sensor_snapshot.dart';
 import '../../data/models/urgent_plant_task.dart';
+import '../../data/models/plant_dto.dart';
 import '../../data/datasources/plant_api_datasource.dart';
 
 // ── Demo plants ──────────────────────────────────────────────────────────────
@@ -200,7 +201,10 @@ final plantRealtimeSensorProvider =
         }
       }
     }
-  } catch (_) {
-    // Ignorar silenciosamente errores de red (ej. endpoint 404 de stream en QA)
-  }
+});
+
+// Provider to fetch the rich plant profile (including AI content and care ranges)
+final plantProfileProvider = FutureProvider.family<PlantProfileResponse?, String>((ref, plantId) async {
+  final api = PlantApiDatasource();
+  return api.getPlantProfile(plantId);
 });

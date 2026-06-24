@@ -11,6 +11,8 @@ import '../../../../core/theme/garden_text_styles.dart';
 import '../../../../core/widgets/garden_icon.dart';
 import 'sensor_settings_screen.dart';
 
+import '../../data/models/plant_dto.dart';
+
 // HARDCODE(demo): dueño, personalidad, cuidados y "Sobre la planta" por ID fijo ('1'..'3').
 // TODO(backend): GET /plants/{id} con especie, dueño y guía de cuidados.
 class PlantProfileScreen extends ConsumerWidget {
@@ -59,8 +61,18 @@ class PlantProfileScreen extends ConsumerWidget {
         final light = realtime?.light ?? plant.sensors.light;
         final humidity = realtime?.humidity ?? plant.sensors.humidity;
 
-        return Scaffold(
-          backgroundColor: GardenColors.creamPaper,
+        final profileAsync = ref.watch(plantProfileProvider(plantId));
+
+        return profileAsync.when(
+          data: (profile) {
+            if (profile == null) {
+              return const Scaffold(
+                body: Center(child: Text('Error cargando el perfil completo.')),
+              );
+            }
+
+            return Scaffold(
+              backgroundColor: GardenColors.creamPaper,
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
@@ -105,13 +117,13 @@ class PlantProfileScreen extends ConsumerWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // ── Hero card ──────────────────────────────────────────────
-                _PlantHeroCard(plant: plant),
+                _PlantHeroCard(plant: plant, profile: profile),
                 const SizedBox(height: 28),
 
                 // ── Personalidad ───────────────────────────────────────────
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: _PersonalitySection(plant: plant),
+                  child: _PersonalitySection(plant: plant, profile: profile),
                 ),
                 const SizedBox(height: 24),
 
@@ -131,6 +143,7 @@ class PlantProfileScreen extends ConsumerWidget {
                     temperature: temperature,
                     humidity: humidity,
                     comfortZones: plant.comfortZones,
+                    profile: profile,
                   ),
                 ),
                 const SizedBox(height: 24),
@@ -138,14 +151,23 @@ class PlantProfileScreen extends ConsumerWidget {
                 // ── Sobre la planta ────────────────────────────────────────
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: _AboutSection(plant: plant),
+                  child: _AboutSection(plant: plant, profile: profile),
                 ),
                 const SizedBox(height: 24),
+                
+                // ── Datos Curiosos ─────────────────────────────────────────
+                if (profile.speciesInfo.funFacts.isNotEmpty) ...[
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: _FunFactsSection(profile: profile),
+                  ),
+                  const SizedBox(height: 24),
+                ],
 
                 // ── Cuidados generales ─────────────────────────────────────
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: _CareSection(plant: plant),
+                  child: _CareSection(plant: plant, profile: profile),
                 ),
                 const SizedBox(height: 120),
               ],
@@ -167,7 +189,8 @@ class PlantProfileScreen extends ConsumerWidget {
 
 class _PlantHeroCard extends StatelessWidget {
   final Plant plant;
-  const _PlantHeroCard({required this.plant});
+  final PlantProfileResponse profile;
+  const _PlantHeroCard({required this.plant, required this.profile});
 
   @override
   Widget build(BuildContext context) {
@@ -255,9 +278,9 @@ class _PlantHeroCard extends StatelessWidget {
           ),
           const SizedBox(height: 6),
           // Quote
-          if (plant.insights.isNotEmpty)
+          if (profile.specificCareTips?['general_tip'] != null || plant.insights.isNotEmpty)
             Text(
-              '"${plant.insights.first}"',
+              '"${profile.specificCareTips?['general_tip'] ?? plant.insights.first}"',
               textAlign: TextAlign.center,
               style: GardenTextStyles.bodySmall.copyWith(
                 color: GardenColors.inkSoft,
@@ -373,7 +396,8 @@ class _PersonalityTag extends StatelessWidget {
 
 class _PersonalitySection extends StatelessWidget {
   final Plant plant;
-  const _PersonalitySection({required this.plant});
+  final PlantProfileResponse profile;
+  const _PersonalitySection({required this.plant, required this.profile});
 
   // HARDCODE(demo): rasgos por ID de planta. TODO(backend): plant_species endpoint.
   static const _personalityTraits = {
@@ -576,7 +600,7 @@ class _SensorStatusCard extends StatelessWidget {
   }
 }
 
-// ── Sensor Grid ───────────────────────────────────────────────────────────────
+// ── Sensor Grid ─────────────────────────────────────────────────────────────
 
 class _SensorGrid extends StatelessWidget {
   final double soilMoisture;
@@ -584,6 +608,7 @@ class _SensorGrid extends StatelessWidget {
   final double temperature;
   final double humidity;
   final ComfortZones comfortZones;
+  final PlantProfileResponse profile;
 
   const _SensorGrid({
     required this.soilMoisture,
@@ -591,6 +616,7 @@ class _SensorGrid extends StatelessWidget {
     required this.temperature,
     required this.humidity,
     required this.comfortZones,
+    required this.profile,
   });
 
   @override
@@ -619,21 +645,25 @@ class _SensorGrid extends StatelessWidget {
               label: 'TIERRA',
               value: '${soilMoisture.toInt()}%',
               iconAsset: GardenIcons.soilHumidity,
+              subLabel: 'Ideal: ${profile.speciesInfo.careRanges?.minSoilHumidityPct ?? 30}-${profile.speciesInfo.careRanges?.maxSoilHumidityPct ?? 60}%',
             ),
             _SensorTile(
               label: 'LUZ',
               value: '${light.toInt()}%',
               iconAsset: GardenIcons.sun,
+              subLabel: 'Ideal: ${profile.speciesInfo.careRanges?.minLightLux ?? 250}-${profile.speciesInfo.careRanges?.maxLightLux ?? 1100} lux',
             ),
             _SensorTile(
               label: 'TEMP.',
               value: '${temperature.toStringAsFixed(0)}°C',
               iconAsset: GardenIcons.thermostat,
+              subLabel: 'Ideal: ${profile.speciesInfo.careRanges?.minTempC ?? 18}-${profile.speciesInfo.careRanges?.maxTempC ?? 27}°C',
             ),
             _SensorTile(
               label: 'HUMEDAD',
               value: '${humidity.toInt()}%',
               iconAsset: GardenIcons.humidity,
+              subLabel: 'Ideal: ${profile.speciesInfo.careRanges?.minAirHumidityPct ?? 40}-${profile.speciesInfo.careRanges?.maxAirHumidityPct ?? 70}%',
             ),
           ],
         ),
@@ -646,11 +676,13 @@ class _SensorTile extends StatelessWidget {
   final String label;
   final String value;
   final String iconAsset;
+  final String subLabel;
 
   const _SensorTile({
     required this.label,
     required this.value,
     required this.iconAsset,
+    required this.subLabel,
   });
 
   @override
@@ -688,8 +720,16 @@ class _SensorTile extends StatelessWidget {
                 value,
                 style: GardenTextStyles.title.copyWith(
                   color: GardenColors.ink,
-                  fontSize: 20,
+                  fontSize: 18,
                   fontWeight: FontWeight.w800,
+                ),
+              ),
+              const SizedBox(height: 2),
+              Text(
+                subLabel,
+                style: GardenTextStyles.bodySmall.copyWith(
+                  color: GardenColors.inkSoft,
+                  fontSize: 10,
                 ),
               ),
             ],
@@ -700,44 +740,27 @@ class _SensorTile extends StatelessWidget {
   }
 }
 
-// ── About Section ─────────────────────────────────────────────────────────────
+// ── About Section (Sobre la planta) ─────────────────────────────────────────
 
 class _AboutSection extends StatelessWidget {
   final Plant plant;
-  const _AboutSection({required this.plant});
-
-  // HARDCODE(demo): origen, edad y ubicación por ID. TODO(backend): plants / plant_species.
-  static const _plantAbout = {
-    '1': (
-      origin: 'Bosques tropicales del sur de México',
-      age: '2 años · adoptada en Mar 2024',
-      location: 'Sala — junto a la ventana',
-    ),
-    '2': (
-      origin: 'Zonas áridas de México y Centro América',
-      age: '1 año · adoptada en Jun 2024',
-      location: 'Ventana sur — luz directa',
-    ),
-    '3': (
-      origin: 'África tropical occidental',
-      age: '3 años · adoptada en Ene 2023',
-      location: 'Sala — luz indirecta',
-    ),
-  };
+  final PlantProfileResponse profile;
+  const _AboutSection({required this.plant, required this.profile});
 
   @override
   Widget build(BuildContext context) {
-    final info = _plantAbout[plant.id] ??
-        (
-          origin: 'Origen desconocido',
-          age: 'Desconocido',
-          location: 'No especificado',
-        );
+    final ageMonths = profile.estimatedAgeMonths ?? 0;
+    final ageText = ageMonths > 0 
+      ? (ageMonths > 11 ? '${ageMonths ~/ 12} años y ${ageMonths % 12} meses' : '$ageMonths meses')
+      : 'Desconocido';
+
+    final origin = profile.commonName ?? profile.scientificName ?? 'Desconocido';
+    final location = profile.location ?? 'No especificado';
 
     final rows = [
-      (GardenIcons.mountain, 'Origen', info.origin),
-      (GardenIcons.calendar, 'Edad', info.age),
-      (GardenIcons.map, 'Vive en', info.location),
+      (GardenIcons.mountain, 'Nombre común', origin),
+      (GardenIcons.calendar, 'Edad est.', ageText),
+      (GardenIcons.map, 'Vive en', location),
     ];
 
     return Column(
@@ -807,45 +830,106 @@ class _AboutSection extends StatelessWidget {
   }
 }
 
-// ── Care Section ──────────────────────────────────────────────────────────────
+// ── Datos Curiosos ────────────────────────────────────────────────────────
 
-class _CareSection extends StatelessWidget {
-  final Plant plant;
-  const _CareSection({required this.plant});
-
-  // HARDCODE(demo): guía de cuidados por ID. TODO(backend): plant_species endpoint.
-  static const _careItems = {
-    '1': [
-      (GardenIcons.water, 'RIEGO', 'Cada 7 días, 250ml'),
-      (GardenIcons.sun, 'LUZ', 'Luz indirecta brillante'),
-      (GardenIcons.soil, 'SUSTRATO', 'Mezcla aireada con perlita'),
-      (GardenIcons.humidity, 'HUMEDAD', 'Le encanta la humedad alta (60%+)'),
-    ],
-    '2': [
-      (GardenIcons.water, 'RIEGO', 'Cada 14 días, 100ml'),
-      (GardenIcons.sun, 'LUZ', 'Luz directa varias horas'),
-      (GardenIcons.soil, 'SUSTRATO', 'Cactus y suculentas'),
-      (GardenIcons.humidity, 'HUMEDAD', 'Prefiere ambiente seco (20-40%)'),
-    ],
-    '3': [
-      (GardenIcons.water, 'RIEGO', 'Cada 10 días, 300ml'),
-      (GardenIcons.sun, 'LUZ', 'Luz indirecta brillante'),
-      (GardenIcons.soil, 'SUSTRATO', 'Tierra bien drenada'),
-      (GardenIcons.humidity, 'HUMEDAD', 'Humedad moderada (40-60%)'),
-    ],
-  };
-
-  // HARDCODE(demo): tips de cuidado por ID. TODO(backend): consejos desde backend/IA.
-  static const _tips = {
-    '1': 'Limpia sus hojas con un paño húmedo cada 2 semanas para que respire mejor.',
-    '2': 'Evita el exceso de agua — es mejor poco y bien drenado.',
-    '3': 'Gira el macetero cada 2 semanas para un crecimiento uniforme.',
-  };
+class _FunFactsSection extends StatelessWidget {
+  final PlantProfileResponse profile;
+  const _FunFactsSection({required this.profile});
 
   @override
   Widget build(BuildContext context) {
-    final items = _careItems[plant.id] ?? _careItems['1']!;
-    final tip = _tips[plant.id];
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Sabías que...',
+          style: GardenTextStyles.title.copyWith(
+            color: GardenColors.ink,
+            fontWeight: FontWeight.w800,
+            fontSize: 18,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: GardenColors.creamPaper),
+          ),
+          child: Column(
+            children: profile.speciesInfo.funFacts.asMap().entries.map((entry) {
+              final i = entry.key;
+              final fact = entry.value;
+              return Column(
+                children: [
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('💡', style: TextStyle(fontSize: 18)),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            fact,
+                            style: GardenTextStyles.bodySmall.copyWith(
+                              color: GardenColors.inkSoft,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (i < profile.speciesInfo.funFacts.length - 1)
+                    const Divider(
+                      height: 1,
+                      thickness: 1,
+                      color: GardenColors.creamPaper,
+                      indent: 16,
+                      endIndent: 16,
+                    ),
+                ],
+              );
+            }).toList(),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+// ── Care Section (Guía de Cuidados) ─────────────────────────────────────────
+
+class _CareSection extends StatelessWidget {
+  final Plant plant;
+  final PlantProfileResponse profile;
+  const _CareSection({required this.plant, required this.profile});
+
+  @override
+  Widget build(BuildContext context) {
+    final careTipsMap = profile.specificCareTips;
+    final hasSpecific = careTipsMap != null;
+    
+    final List<(String, String, String)> items;
+    if (hasSpecific) {
+      items = [
+        (GardenIcons.water, 'RIEGO', careTipsMap['watering']?.toString() ?? ''),
+        (GardenIcons.sun, 'LUZ', careTipsMap['light']?.toString() ?? ''),
+        (GardenIcons.soil, 'SUSTRATO', careTipsMap['substrate']?.toString() ?? ''),
+        (GardenIcons.humidity, 'HUMEDAD', careTipsMap['humidity']?.toString() ?? ''),
+      ];
+    } else if (profile.speciesInfo.careTips.isNotEmpty) {
+      items = profile.speciesInfo.careTips.asMap().entries.map((e) => (
+        GardenIcons.sparkle, 
+        'TIP ${e.key + 1}', 
+        e.value
+      )).toList();
+    } else {
+      items = [(GardenIcons.sparkle, 'CUIDADOS', profile.speciesInfo.careSummary ?? 'Pronto tendremos más información.')];
+    }
+
+    final tip = hasSpecific ? careTipsMap['general_tip']?.toString() : profile.speciesInfo.careSummary;
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,

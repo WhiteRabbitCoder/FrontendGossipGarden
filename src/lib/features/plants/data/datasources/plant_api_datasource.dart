@@ -32,6 +32,15 @@ class PlantApiDatasource implements PlantDatasource {
     }
   }
 
+  Future<PlantProfileResponse?> getPlantProfile(String plantId) async {
+    try {
+      final response = await _apiClient.dio.get('/plants/$plantId/profile');
+      return PlantProfileResponse.fromJson(response.data as Map<String, dynamic>);
+    } catch (e) {
+      return null;
+    }
+  }
+
   Future<Plant> _toPlant(PlantResponse response) async {
     final sensorResponse = await _getSensorSnapshot(response.plantId);
     
