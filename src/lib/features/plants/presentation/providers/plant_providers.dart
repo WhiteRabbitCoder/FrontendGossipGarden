@@ -1,8 +1,11 @@
 import 'dart:async';
 import 'dart:math';
 import 'dart:typed_data';
+import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:dio/dio.dart';
+import 'package:gossip_garden/core/services/api_client.dart';
 
 import '../../data/datasources/wifi_setup_datasource.dart';
 import '../../data/models/plant.dart';
@@ -11,6 +14,7 @@ import '../../data/models/sensors.dart';
 import '../../data/models/comfort_zones.dart';
 import '../../data/models/realtime_sensor_snapshot.dart';
 import '../../data/models/urgent_plant_task.dart';
+import '../../data/datasources/plant_api_datasource.dart';
 
 // ── Demo plants ──────────────────────────────────────────────────────────────
 // HARDCODE(demo): tres plantas locales con sensores y moods inventados.
@@ -105,12 +109,19 @@ const _demoFicus = Plant(
 // ── Providers ───────────────────────────────────────────────────────────────
 
 class PlantsNotifier extends StateNotifier<AsyncValue<List<Plant>>> {
-  PlantsNotifier() : super(const AsyncValue.loading()) {
-    state = const AsyncValue.data([
-      _demoMonstera,
-      _demoSuculenta,
-      _demoFicus,
-    ]);
+  final PlantApiDatasource _apiDatasource;
+
+  PlantsNotifier(this._apiDatasource) : super(const AsyncValue.loading()) {
+    _fetchPlants();
+  }
+
+  Future<void> _fetchPlants() async {
+    try {
+      final plants = await _apiDatasource.getPlants();
+      state = AsyncValue.data(plants);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
   }
 
   // HARDCODE(demo): actualiza mood/health en memoria al marcar checklist. TODO(backend): PATCH planta.
@@ -126,11 +137,16 @@ class PlantsNotifier extends StateNotifier<AsyncValue<List<Plant>>> {
       state = AsyncValue.data(updated);
     });
   }
+
+  Future<void> refresh() async {
+    state = const AsyncValue.loading();
+    await _fetchPlants();
+  }
 }
 
 final plantsProvider =
     StateNotifierProvider<PlantsNotifier, AsyncValue<List<Plant>>>(
-  (ref) => PlantsNotifier(),
+  (ref) => PlantsNotifier(PlantApiDatasource()),
 );
 
 // HARDCODE(demo): IDs iniciales de favoritas. TODO(backend): persistir en perfil de usuario.
@@ -145,17 +161,46 @@ final wifiSetupDatasourceProvider = Provider<WifiSetupDatasource>(
 
 // HARDCODE(demo): lecturas aleatorias simuladas cada 5 s. TODO(backend): stream MQTT/WebSocket del sensor.
 final plantRealtimeSensorProvider =
-    StreamProvider.family<RealtimeSensorSnapshot, String>((ref, plantId) {
-  final rng = Random();
-  return Stream.periodic(const Duration(seconds: 5), (_) {
-    return RealtimeSensorSnapshot(
-      sensorDataId: null,
-      plantId: 0,
-      timestamp: DateTime.now(),
-      temperature: 24.5 + (rng.nextDouble() - 0.5) * 0.6,
-      humidity: 38.0 + (rng.nextDouble() - 0.5) * 1.5,
-      soilMoisture: 31.0 + (rng.nextDouble() - 0.5) * 0.8,
-      light: 3400.0 + (rng.nextDouble() - 0.5) * 120,
+    StreamProvider.family<RealtimeSensorSnapshot, String>((ref, plantId) async* {
+  try {
+    final apiClient = ApiClient();
+    final response = await apiClient.dio.get<ResponseBody>(
+      '/plants/$plantId/sensor-data/stream',
+      options: Options(
+        responseType: ResponseType.stream,
+        headers: {'Accept': 'text/event-stream'},
+      ),
     );
-  });
+
+    final stream = response.data?.stream;
+    if (stream == null) return;
+
+    await for (final chunk in stream) {
+      final stringChunk = utf8.decode(chunk);
+      final lines = stringChunk.split('\n');
+      for (final line in lines) {
+        if (line.startsWith('data:')) {
+          final dataStr = line.substring(5).trim();
+          if (dataStr.isNotEmpty) {
+            try {
+              final json = jsonDecode(dataStr);
+              yield RealtimeSensorSnapshot(
+                sensorDataId: json['sensor_data_id'],
+                plantId: int.tryParse(plantId) ?? 0,
+                timestamp: DateTime.parse(json['timestamp']),
+                temperature: (json['temperature_c'] as num).toDouble(),
+                humidity: (json['humidity_pct'] as num).toDouble(),
+                soilMoisture: (json['soil_moisture_pct'] as num).toDouble(),
+                light: (json['light_lux'] as num).toDouble(),
+              );
+            } catch (_) {
+              // Ignorar errores de parseo o JSON inválido en el chunk
+            }
+          }
+        }
+      }
+    }
+  } catch (_) {
+    // Ignorar silenciosamente errores de red (ej. endpoint 404 de stream en QA)
+  }
 });

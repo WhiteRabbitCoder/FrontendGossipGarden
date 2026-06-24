@@ -21,6 +21,21 @@ class AppConfig {
     defaultValue: false,
   );
 
+  static const String supabaseUrl = String.fromEnvironment(
+    'SUPABASE_URL',
+    defaultValue: 'https://tslrtebdziilekddalcr.supabase.co',
+  );
+
+  static const String supabaseAnonKey = String.fromEnvironment(
+    'SUPABASE_ANON_KEY',
+    defaultValue: '',
+  );
+
+  static const String googleClientId = String.fromEnvironment(
+    'GOOGLE_CLIENT_ID',
+    defaultValue: '',
+  );
+
   static String get backendBaseUrl {
     final normalizedTarget = backendTarget.toLowerCase();
 

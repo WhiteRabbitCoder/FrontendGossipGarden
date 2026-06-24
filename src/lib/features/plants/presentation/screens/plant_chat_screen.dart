@@ -61,39 +61,16 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
     if (text.isEmpty || _plant == null || _waitingForPlant) return;
 
     _textController.clear();
-
-    // 1. Añadir mensaje del usuario al estado local
-    ref.read(chatMessagesProvider(widget.plantId).notifier).addMessage(text);
-    ref.read(achievementStatsProvider.notifier).recordChatMessage();
     setState(() => _waitingForPlant = true);
 
-    // 2. Llamar al backend
-    final token = ref.read(backendTokenProvider);
-    final chatService = ref.read(backendChatServiceProvider);
-
     try {
-      final response = await chatService.chat(
-        plantId: widget.plantId,
-        message: text,
-        token: token,
-      );
-
-      if (mounted) {
-        ref.read(chatMessagesProvider(widget.plantId).notifier).addMessage(
-              response,
-              sender: 'plant',
-              source: 'ai',
-              confidence: 'high',
-            );
-      }
+      await ref.read(chatMessagesProvider(widget.plantId).notifier).sendMessage(text);
+      ref.read(achievementStatsProvider.notifier).recordChatMessage();
     } catch (e) {
       if (mounted) {
-        ref.read(chatMessagesProvider(widget.plantId).notifier).addMessage(
-              'No pude conectar con el servidor. Intenta de nuevo.',
-              sender: 'plant',
-              source: 'error',
-              confidence: 'low',
-            );
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error al enviar el mensaje')),
+        );
       }
     } finally {
       if (mounted) {
@@ -107,7 +84,8 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
   @override
   Widget build(BuildContext context) {
     final plantsAsync = ref.watch(plantsProvider);
-    final messages = ref.watch(chatMessagesProvider(widget.plantId));
+    final messagesAsync = ref.watch(chatMessagesProvider(widget.plantId));
+    final messages = messagesAsync.value ?? [];
     final realtimeAsync =
         ref.watch(plantRealtimeSensorProvider(widget.plantId));
 
