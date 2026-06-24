@@ -48,7 +48,7 @@ class PlantProfileScreen extends ConsumerWidget {
           (p) => p.id == plantId,
           orElse: () => plants.first,
         );
-        final realtime = realtimeAsync.value;
+        final realtime = realtimeAsync.valueOrNull;
 
         // Sensor values: realtime if available, fallback to static
         final soilMoisture =

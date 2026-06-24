@@ -2,14 +2,17 @@ import 'dart:async';
 import 'dart:io';
 import 'dart:convert';
 
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 
+import 'package:gossip_garden/core/config/app_config.dart';
 import 'package:gossip_garden/core/config/firebase_environment.dart';
 import 'package:gossip_garden/core/services/backend_auth_service.dart';
+import 'package:gossip_garden/core/services/token_storage.dart';
 
 import '../../data/auth_service.dart';
 import '../../data/user_profile.dart';
@@ -30,6 +33,8 @@ class AuthSession {
 /// JWT de Supabase devuelto por el backend. Null cuando no hay sesión activa.
 final backendTokenProvider = StateProvider<String?>((_) => null);
 
+final tokenStorageProvider = Provider<TokenStorage>((_) => TokenStorage());
+
 final backendAuthServiceProvider =
     Provider<BackendAuthService>((_) => BackendAuthService());
 
@@ -39,7 +44,10 @@ final authServiceProvider = Provider<AuthService>((ref) {
   }
   return AuthService(
     auth: FirebaseAuth.instance,
-    googleSignIn: GoogleSignIn(),
+    googleSignIn: GoogleSignIn(
+      clientId: kIsWeb && AppConfig.googleClientId.isNotEmpty ? AppConfig.googleClientId : null,
+      serverClientId: !kIsWeb && AppConfig.googleClientId.isNotEmpty ? AppConfig.googleClientId : null,
+    ),
     firestore: FirebaseFirestore.instance,
   );
 });
@@ -49,13 +57,23 @@ final authStateProvider =
   (ref) => AuthNotifier(
     ref.read(authServiceProvider),
     ref.read(backendAuthServiceProvider),
+    ref.read(tokenStorageProvider),
     ref,
   ),
 );
 
 class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
-  AuthNotifier(this._authService, this._backendAuth, this._ref)
-      : super(
+  AuthNotifier(
+    this._authService,
+    this._backendAuth,
+    this._tokenStorage,
+    this._ref, {
+    GoogleSignIn? googleSignIn,
+  }) : _googleSignIn = googleSignIn ?? GoogleSignIn(
+         clientId: kIsWeb && AppConfig.googleClientId.isNotEmpty ? AppConfig.googleClientId : null,
+         serverClientId: !kIsWeb && AppConfig.googleClientId.isNotEmpty ? AppConfig.googleClientId : null,
+       ),
+       super(
           AsyncValue.data(
             AuthSession(
               profile: null,
@@ -63,21 +81,74 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
             ),
           ),
         ) {
-    _initBackendToken();
-    _bindFirebaseAuth();
-  }
-
-  Future<void> _initBackendToken() async {
-    final token = await _backendAuth.getStoredToken();
-    if (token != null) {
-      _ref.read(backendTokenProvider.notifier).state = token;
-    }
+    _bootstrap();
   }
 
   final AuthService _authService;
   final BackendAuthService _backendAuth;
+  final TokenStorage _tokenStorage;
   final Ref _ref;
+  final GoogleSignIn _googleSignIn;
   StreamSubscription<User?>? _subscription;
+
+  Future<void> _bootstrap() async {
+    final token = await _tokenStorage.getToken();
+    if (token != null) {
+      _ref.read(backendTokenProvider.notifier).state = token;
+      if (!FirebaseEnvironment.isConfigured) {
+        final profileData = await _tokenStorage.readProfile();
+        final profile = profileData != null
+            ? UserProfile(
+                uid: profileData['uid'] as String? ?? '',
+                displayName: profileData['displayName'] as String?,
+                email: profileData['email'] as String?,
+                photoUrl: profileData['photoUrl'] as String?,
+                onboardingCompleted:
+                    profileData['onboardingCompleted'] as bool? ?? false,
+                favoritePlantIds: (profileData['favoritePlantIds'] as List?)
+                        ?.cast<String>() ??
+                    const [],
+                useGridView: profileData['useGridView'] as bool? ?? true,
+                notificationPreference:
+                    profileData['notificationPreference'] as String? ??
+                        'important',
+              )
+            : null;
+
+        state = AsyncValue.data(
+          AuthSession(
+            profile: profile,
+            firebaseEnabled: false,
+            onboardingCompleted: profile?.onboardingCompleted ?? true,
+          ),
+        );
+        return;
+      }
+    } else {
+      if (!FirebaseEnvironment.isConfigured) {
+        state = AsyncValue.data(
+          AuthSession(
+            profile: null,
+            firebaseEnabled: false,
+            onboardingCompleted: false,
+          ),
+        );
+        return;
+      }
+    }
+    _bindFirebaseAuth();
+  }
+
+  Map<String, dynamic> _profileToMap(UserProfile profile) => {
+        'uid': profile.uid,
+        'displayName': profile.displayName,
+        'email': profile.email,
+        'photoUrl': profile.photoUrl,
+        'onboardingCompleted': profile.onboardingCompleted,
+        'favoritePlantIds': profile.favoritePlantIds,
+        'useGridView': profile.useGridView,
+        'notificationPreference': profile.notificationPreference,
+      };
 
   void _bindFirebaseAuth() {
     if (!FirebaseEnvironment.isConfigured) return;
@@ -94,7 +165,10 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
         return;
       }
 
-      final profile = await _authService.loadProfile(user.uid);
+      UserProfile? profile;
+      try {
+        profile = await _authService.loadProfile(user.uid);
+      } catch (_) {}
       state = AsyncValue.data(
         AuthSession(
           profile: profile ??
@@ -119,27 +193,53 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
   Future<void> signInWithGoogle() async {
     state = const AsyncValue.loading();
 
-    if (!FirebaseEnvironment.isConfigured) {
-      state = AsyncValue.data(
-        AuthSession(
-          profile: const UserProfile(
-            uid: 'local-user',
-            displayName: 'Garden User',
-            email: 'user@example.com',
-            onboardingCompleted: false,
-            favoritePlantIds: [],
-            useGridView: true,
-            notificationPreference: 'important',
-          ),
-          firebaseEnabled: false,
-          onboardingCompleted: false,
-        ),
-      );
-      return;
-    }
-
     try {
-      await _authService.signInWithGoogle();
+      // Limpiar sesión previa para que el picker siempre aparezca
+      await _googleSignIn.signOut();
+
+      final googleUser = await _googleSignIn.signIn();
+      if (googleUser == null) {
+        throw Exception('Inicio de sesión con Google cancelado por el usuario.');
+      }
+
+      final googleAuth = await googleUser.authentication;
+      final idToken = googleAuth.idToken;
+      if (idToken == null) {
+        throw Exception('No se recibió idToken de Google.');
+      }
+
+      final supabaseJwt = await _backendAuth.signInWithGoogleIdToken(idToken);
+      await _tokenStorage.saveToken(supabaseJwt);
+      _ref.read(backendTokenProvider.notifier).state = supabaseJwt;
+
+      final profile = UserProfile(
+        uid: googleUser.id,
+        displayName: googleUser.displayName,
+        email: googleUser.email,
+        photoUrl: googleUser.photoUrl,
+        onboardingCompleted: false,
+        favoritePlantIds: const [],
+        useGridView: true,
+        notificationPreference: 'important',
+      );
+
+      await _tokenStorage.saveProfile(_profileToMap(profile));
+
+      if (!FirebaseEnvironment.isConfigured) {
+        state = AsyncValue.data(
+          AuthSession(
+            profile: profile,
+            firebaseEnabled: false,
+            onboardingCompleted: false,
+          ),
+        );
+      } else {
+        final credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+        await FirebaseAuth.instance.signInWithCredential(credential);
+      }
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
       rethrow;
@@ -188,6 +288,13 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
         throw Exception('Error al registrar en el backend.');
       }
 
+      // Login en el backend de forma automática tras registrar
+      final tokenResponse = await _backendAuth.login(UserLogin(email: email, password: password));
+      if (tokenResponse != null) {
+        _ref.read(backendTokenProvider.notifier).state = tokenResponse.accessToken;
+        await _tokenStorage.saveToken(tokenResponse.accessToken);
+      }
+
       // Si no hay Firebase, persistimos localmente el nombre elegido y hacemos login
       if (!FirebaseEnvironment.isConfigured) {
         final profile = UserProfile(
@@ -199,8 +306,14 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
           useGridView: true,
           notificationPreference: 'important',
         );
-        await _saveLocalProfile(profile);
-        await signInWithEmailAndPassword(email, password);
+        await _tokenStorage.saveProfile(_profileToMap(profile));
+        state = AsyncValue.data(
+          AuthSession(
+            profile: profile,
+            firebaseEnabled: false,
+            onboardingCompleted: true,
+          ),
+        );
       }
     } catch (error, stackTrace) {
       state = AsyncValue.error(error, stackTrace);
@@ -221,23 +334,38 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
 
       // Siempre intentar obtener JWT del backend
       final tokenResponse = await _backendAuth.login(UserLogin(email: email, password: password));
-      _ref.read(backendTokenProvider.notifier).state = tokenResponse?.accessToken;
+      if (tokenResponse != null) {
+        _ref.read(backendTokenProvider.notifier).state = tokenResponse.accessToken;
+        await _tokenStorage.saveToken(tokenResponse.accessToken);
+      }
 
       // Si no hay Firebase, creamos la sesión local basada en el éxito del backend
       if (!FirebaseEnvironment.isConfigured) {
-        final cachedProfile = await _loadLocalProfile(email);
+        final cachedProfile = await _tokenStorage.readProfile();
+        final profile = (cachedProfile != null && cachedProfile['email'] == email)
+            ? UserProfile(
+                uid: cachedProfile['uid'] as String? ?? email,
+                displayName: cachedProfile['displayName'] as String?,
+                email: cachedProfile['email'] as String?,
+                photoUrl: cachedProfile['photoUrl'] as String?,
+                onboardingCompleted: cachedProfile['onboardingCompleted'] as bool? ?? true,
+                favoritePlantIds: (cachedProfile['favoritePlantIds'] as List?)?.cast<String>() ?? const [],
+                useGridView: cachedProfile['useGridView'] as bool? ?? true,
+                notificationPreference: cachedProfile['notificationPreference'] as String? ?? 'important',
+              )
+            : UserProfile(
+                uid: email,
+                displayName: email.split('@').first,
+                email: email,
+                onboardingCompleted: true,
+                favoritePlantIds: const [],
+                useGridView: true,
+                notificationPreference: 'important',
+              );
+        await _tokenStorage.saveProfile(_profileToMap(profile));
         state = AsyncValue.data(
           AuthSession(
-            profile: cachedProfile ??
-                UserProfile(
-                  uid: email,
-                  displayName: email.split('@').first,
-                  email: email,
-                  onboardingCompleted: true,
-                  favoritePlantIds: const [],
-                  useGridView: true,
-                  notificationPreference: 'important',
-                ),
+            profile: profile,
             firebaseEnabled: false,
             onboardingCompleted: true,
           ),
@@ -251,7 +379,10 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
 
   Future<void> signOut() async {
     _ref.read(backendTokenProvider.notifier).state = null;
-    await _backendAuth.logout();
+    await _tokenStorage.deleteToken();
+    await _tokenStorage.clearProfile();
+
+    await _googleSignIn.signOut();
 
     if (FirebaseEnvironment.isConfigured) {
       await _authService.signOut();
@@ -275,20 +406,26 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
     }
 
     final profile = current.profile;
+    final updated = profile == null
+        ? null
+        : UserProfile(
+            uid: profile.uid,
+            displayName: profile.displayName,
+            email: profile.email,
+            photoUrl: profile.photoUrl,
+            onboardingCompleted: true,
+            favoritePlantIds: profile.favoritePlantIds,
+            useGridView: profile.useGridView,
+            notificationPreference: profile.notificationPreference,
+          );
+
+    if (updated != null && !FirebaseEnvironment.isConfigured) {
+      await _tokenStorage.saveProfile(_profileToMap(updated));
+    }
+
     state = AsyncValue.data(
       AuthSession(
-        profile: profile == null
-            ? null
-            : UserProfile(
-                uid: profile.uid,
-                displayName: profile.displayName,
-                email: profile.email,
-                photoUrl: profile.photoUrl,
-                onboardingCompleted: true,
-                favoritePlantIds: profile.favoritePlantIds,
-                useGridView: profile.useGridView,
-                notificationPreference: profile.notificationPreference,
-              ),
+        profile: updated,
         firebaseEnabled: current.firebaseEnabled,
         onboardingCompleted: true,
       ),
@@ -310,19 +447,21 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
       notificationPreference: current.profile!.notificationPreference,
     );
 
-    if (FirebaseEnvironment.isConfigured) {
-      final user = FirebaseAuth.instance.currentUser;
-      if (user != null) {
-        if (displayName != null) await user.updateDisplayName(displayName);
-        if (photoUrl != null) await user.updatePhotoURL(photoUrl);
+    await _tokenStorage.saveProfile(_profileToMap(updatedProfile));
 
-        await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
-          updatedProfile.toJson(),
-          SetOptions(merge: true),
-        );
-      }
-    } else {
-      await _saveLocalProfile(updatedProfile);
+    if (FirebaseEnvironment.isConfigured) {
+      try {
+        final user = FirebaseAuth.instance.currentUser;
+        if (user != null) {
+          if (displayName != null) await user.updateDisplayName(displayName);
+          if (photoUrl != null) await user.updatePhotoURL(photoUrl);
+
+          await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
+            updatedProfile.toJson(),
+            SetOptions(merge: true),
+          );
+        }
+      } catch (_) {}
     }
 
     state = AsyncValue.data(
@@ -332,24 +471,6 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
         onboardingCompleted: current.onboardingCompleted,
       ),
     );
-  }
-
-  Future<void> _saveLocalProfile(UserProfile profile) async {
-    try {
-      final file = File('${Directory.systemTemp.path}/gossip_garden_user_${profile.email}.json');
-      await file.writeAsString(jsonEncode(profile.toJson()));
-    } catch (_) {}
-  }
-
-  Future<UserProfile?> _loadLocalProfile(String email) async {
-    try {
-      final file = File('${Directory.systemTemp.path}/gossip_garden_user_$email.json');
-      if (await file.exists()) {
-        final content = await file.readAsString();
-        return UserProfile.fromJson(jsonDecode(content) as Map<String, dynamic>);
-      }
-    } catch (_) {}
-    return null;
   }
 
   @override

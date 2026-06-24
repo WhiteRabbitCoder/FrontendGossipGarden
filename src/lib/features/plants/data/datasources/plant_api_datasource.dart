@@ -47,11 +47,35 @@ class PlantApiDatasource implements PlantDatasource {
     final sensors = _buildSensors(sensorResponse);
     final status = _deriveSensorStatus(sensorResponse);
 
+    String resolvedImage = response.photoUrl ?? '';
+    if (resolvedImage.contains('firebasestorage.googleapis.com') && !resolvedImage.contains('token=')) {
+      try {
+        final uri = Uri.parse(resolvedImage);
+        final pathSegments = uri.pathSegments;
+        if (pathSegments.length >= 5 && pathSegments[0] == 'v0' && pathSegments[1] == 'b' && pathSegments[3] == 'o') {
+          final bucket = pathSegments[2];
+          final encodedPath = pathSegments[4];
+          final decodedPath = Uri.decodeComponent(encodedPath);
+          resolvedImage = 'https://storage.googleapis.com/$bucket/$decodedPath';
+        }
+      } catch (_) {}
+    }
+
+    if (resolvedImage.isEmpty &&
+        response.photoStoragePath != null &&
+        response.photoStoragePath!.isNotEmpty) {
+      final bucket = const String.fromEnvironment('FIREBASE_STORAGE_BUCKET').isNotEmpty
+          ? const String.fromEnvironment('FIREBASE_STORAGE_BUCKET')
+          : 'gossipgarden-e2879.firebasestorage.app';
+      resolvedImage =
+          'https://storage.googleapis.com/$bucket/${response.photoStoragePath}';
+    }
+
     return Plant(
       id: response.plantId,
       name: response.nickname,
       species: response.commonName ?? response.scientificName ?? 'Especie desconocida',
-      image: response.photoUrl ?? '',
+      image: resolvedImage,
       personality: PlantPersonality.playful, // Now needs to be derived from profile if needed
       health: response.healthScore,
       mood: _deriveMood(status),

@@ -20,6 +20,14 @@ class ApiClient {
   void _setupInterceptors() {
     dio.interceptors.add(InterceptorsWrapper(
       onRequest: (options, handler) async {
+        // Asegurar que la ruta comience con /api/v1 si no es absoluta o ya lo tiene
+        if (!options.path.startsWith('/api/v1') &&
+            !options.path.startsWith('http://') &&
+            !options.path.startsWith('https://')) {
+          final cleanPath = options.path.startsWith('/') ? options.path : '/${options.path}';
+          options.path = '/api/v1$cleanPath';
+        }
+
         // Rutas públicas que no requieren token
         final isPublicRoute = options.path.contains('/auth/login') ||
             options.path.contains('/auth/register') ||

@@ -158,41 +158,45 @@ final wifiSetupDatasourceProvider = Provider<WifiSetupDatasource>(
 
 final plantRealtimeSensorProvider =
     StreamProvider.family<RealtimeSensorSnapshot, String>((ref, plantId) async* {
-  final apiClient = ApiClient();
-  final response = await apiClient.dio.get<ResponseBody>(
-    '/plants/$plantId/sensor-data/stream',
-    options: Options(
-      responseType: ResponseType.stream,
-      headers: {'Accept': 'text/event-stream'},
-    ),
-  );
+  try {
+    final apiClient = ApiClient();
+    final response = await apiClient.dio.get<ResponseBody>(
+      '/plants/$plantId/sensor-data/stream',
+      options: Options(
+        responseType: ResponseType.stream,
+        headers: {'Accept': 'text/event-stream'},
+      ),
+    );
 
-  final stream = response.data?.stream;
-  if (stream == null) return;
+    final stream = response.data?.stream;
+    if (stream == null) return;
 
-  await for (final chunk in stream) {
-    final stringChunk = utf8.decode(chunk);
-    final lines = stringChunk.split('\n');
-    for (final line in lines) {
-      if (line.startsWith('data:')) {
-        final dataStr = line.substring(5).trim();
-        if (dataStr.isNotEmpty) {
-          try {
-            final json = jsonDecode(dataStr);
-            yield RealtimeSensorSnapshot(
-              sensorDataId: json['sensor_data_id'],
-              plantId: int.tryParse(plantId) ?? 0,
-              timestamp: DateTime.parse(json['timestamp']),
-              temperature: (json['temperature_c'] as num).toDouble(),
-              humidity: (json['humidity_pct'] as num).toDouble(),
-              soilMoisture: (json['soil_moisture_pct'] as num).toDouble(),
-              light: (json['light_lux'] as num).toDouble(),
-            );
-          } catch (_) {
-            // Ignorar errores de parseo o JSON inválido en el chunk
+    await for (final chunk in stream) {
+      final stringChunk = utf8.decode(chunk);
+      final lines = stringChunk.split('\n');
+      for (final line in lines) {
+        if (line.startsWith('data:')) {
+          final dataStr = line.substring(5).trim();
+          if (dataStr.isNotEmpty) {
+            try {
+              final json = jsonDecode(dataStr);
+              yield RealtimeSensorSnapshot(
+                sensorDataId: json['sensor_data_id'],
+                plantId: int.tryParse(plantId) ?? 0,
+                timestamp: DateTime.parse(json['timestamp']),
+                temperature: (json['temperature_c'] as num).toDouble(),
+                humidity: (json['humidity_pct'] as num).toDouble(),
+                soilMoisture: (json['soil_moisture_pct'] as num).toDouble(),
+                light: (json['light_lux'] as num).toDouble(),
+              );
+            } catch (_) {
+              // Ignorar errores de parseo o JSON inválido en el chunk
+            }
           }
         }
       }
     }
+  } catch (_) {
+    // Ignorar silenciosamente errores de red (ej. endpoint 404 de stream en QA)
   }
 });

@@ -14,6 +14,18 @@ class FirebaseBootstrap {
       return;
     }
 
-    await Firebase.initializeApp(options: FirebaseEnvironment.options);
+    try {
+      if (FirebaseEnvironment.hasWebOptions) {
+        await Firebase.initializeApp(options: FirebaseEnvironment.options);
+      } else {
+        await Firebase.initializeApp();
+      }
+    } catch (e) {
+      if (e.toString().contains('duplicate-app')) {
+        // Si ya fue inicializado (ej. por parte nativa), lo ignoramos.
+        return;
+      }
+      rethrow;
+    }
   }
 }

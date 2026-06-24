@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:gossip_garden/core/config/app_config.dart';
 import 'package:gossip_garden/core/services/api_client.dart';
 import 'package:gossip_garden/core/services/token_storage.dart';
 import 'package:gossip_garden/features/auth/data/auth_dto.dart';
@@ -47,6 +48,35 @@ class BackendAuthService {
       return GoogleUrlResponse.fromJson(response.data);
     } on DioException catch (e) {
       final message = e.response?.data?['detail'] ?? 'Error desconocido';
+      throw Exception(message);
+    }
+  }
+
+  Future<String> signInWithGoogleIdToken(String idToken) async {
+    try {
+      final dio = Dio();
+      final response = await dio.post(
+        '${AppConfig.supabaseUrl}/auth/v1/token?grant_type=id_token',
+        options: Options(
+          headers: {
+            'Content-Type': 'application/json',
+            'apikey': AppConfig.supabaseAnonKey,
+          },
+        ),
+        data: {
+          'provider': 'google',
+          'id_token': idToken,
+          'client_id': AppConfig.googleClientId,
+        },
+      );
+
+      final token = response.data['access_token'] as String?;
+      if (token == null) {
+        throw Exception('Respuesta de Supabase inválida');
+      }
+      return token;
+    } on DioException catch (e) {
+      final message = e.response?.data?['error_description'] ?? e.response?.data?['msg'] ?? 'Error al autenticar con Google';
       throw Exception(message);
     }
   }
