@@ -34,38 +34,46 @@ class MainScreen extends ConsumerWidget {
     final hasOverlay =
         nav.showChat || nav.showPlantProfile || nav.selectedFriendId != null;
 
-    return Scaffold(
-      body: Stack(
-        children: [
-          SafeArea(
-            child: IndexedStack(
-              index: nav.activeTab.index,
-              children: [
-                DashboardScreen(
-                  onSelectPlant: notifier.selectPlant,
-                  onOpenChat: notifier.openChat,
-                  onOpenFriendGarden: notifier.openFriendGarden,
-                ),
-                const ChatListScreen(),
-                GardenViewScreen(),
-                const ProfileSettingsScreen(),
-              ],
-            ),
-          ),
-
-          /// OVERLAY
-          if (hasOverlay) _buildOverlay(nav, notifier),
-
-          /// BOTTOM NAV (True Floating)
-          if (!hasOverlay)
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: AnimatedBottomNav(
-                activeTab: nav.activeTab,
-                onTabChange: notifier.changeTab,
+    return PopScope(
+      canPop: !hasOverlay,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop && hasOverlay) {
+          notifier.handleBack();
+        }
+      },
+      child: Scaffold(
+        body: Stack(
+          children: [
+            SafeArea(
+              child: IndexedStack(
+                index: nav.activeTab.index,
+                children: [
+                  DashboardScreen(
+                    onSelectPlant: notifier.selectPlant,
+                    onOpenChat: notifier.openChat,
+                    onOpenFriendGarden: notifier.openFriendGarden,
+                  ),
+                  const ChatListScreen(),
+                  GardenViewScreen(),
+                  const ProfileSettingsScreen(),
+                ],
               ),
             ),
-        ],
+  
+            /// OVERLAY
+            if (hasOverlay) _buildOverlay(nav, notifier),
+  
+            /// BOTTOM NAV (True Floating)
+            if (!hasOverlay)
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: AnimatedBottomNav(
+                  activeTab: nav.activeTab,
+                  onTabChange: notifier.changeTab,
+                ),
+              ),
+          ],
+        ),
       ),
     );
   }

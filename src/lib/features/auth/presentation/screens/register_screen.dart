@@ -166,25 +166,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
                         .copyWith(color: GardenColors.inkSoft),
                   ),
                   const SizedBox(height: 40),
-                  TextField(
-                    controller: _usernameController,
-                    keyboardType: TextInputType.text,
-                    decoration: InputDecoration(
-                      hintText: 'Nombre de usuario',
-                      hintStyle: GardenTextStyles.body
-                          .copyWith(color: GardenColors.inkSoft),
-                      prefixIcon: const Padding(
-                        padding: EdgeInsets.all(12),
-                        child: GardenIcon(asset: GardenIcons.profile, size: 22),
-                      ),
-                      const SizedBox(height: 8),
-                      Text(
-                        'Únete a Gossip Garden',
-                        textAlign: TextAlign.center,
-                        style: GardenTextStyles.body
-                            .copyWith(color: GardenColors.inkSoft),
-                      ),
-                      const SizedBox(height: 32),
+
 
                       // ── Error inline ─────────────────────────────────────
                       AnimatedSize(
@@ -374,9 +356,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
               ),
             ),
           ),
-        ),
-      ),
-    );
+        );
   }
 
   /// Campo de texto con estilo Garden unificado.

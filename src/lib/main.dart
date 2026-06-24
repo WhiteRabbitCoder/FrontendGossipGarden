@@ -1,5 +1,7 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'core/services/api_client.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/plants/presentation/screens/main_screen.dart';
 import 'features/auth/presentation/screens/login_screen.dart';
@@ -30,11 +32,32 @@ class MyApp extends StatelessWidget {
   }
 }
 
-class _AppGate extends ConsumerWidget {
+class _AppGate extends ConsumerStatefulWidget {
   const _AppGate();
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_AppGate> createState() => _AppGateState();
+}
+
+class _AppGateState extends ConsumerState<_AppGate> {
+  StreamSubscription? _unauthorizedSub;
+
+  @override
+  void initState() {
+    super.initState();
+    _unauthorizedSub = ApiClient.onUnauthorized.listen((_) {
+      ref.read(authStateProvider.notifier).signOut();
+    });
+  }
+
+  @override
+  void dispose() {
+    _unauthorizedSub?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
 
     return authState.when(

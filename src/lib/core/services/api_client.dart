@@ -1,8 +1,12 @@
+import 'dart:async';
 import 'package:dio/dio.dart';
 import '../config/app_config.dart';
 import 'token_storage.dart';
 
 class ApiClient {
+  static final StreamController<void> _unauthorizedController = StreamController<void>.broadcast();
+  static Stream<void> get onUnauthorized => _unauthorizedController.stream;
+
   final Dio dio;
   final TokenStorage tokenStorage;
 
@@ -46,8 +50,9 @@ class ApiClient {
         return handler.next(response);
       },
       onError: (DioException e, handler) {
-        // Aquí podríamos manejar lógica para refrescar el token si hubiera refresh token,
-        // o emitir un evento global para cerrar sesión si es 401.
+        if (e.response?.statusCode == 401) {
+          _unauthorizedController.add(null);
+        }
         return handler.next(e);
       },
     ));
