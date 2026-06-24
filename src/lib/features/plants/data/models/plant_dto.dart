@@ -94,6 +94,8 @@ class CareRangesDTO {
 class SpeciesInfoDTO {
   final String? careSummary;
   final String? aiPersonalityPrompt;
+  final List<String> personalityTraits;
+  final String? personalityDescription;
   final List<String> careTips;
   final List<String> funFacts;
   final CareRangesDTO? careRanges;
@@ -101,6 +103,8 @@ class SpeciesInfoDTO {
   SpeciesInfoDTO({
     this.careSummary,
     this.aiPersonalityPrompt,
+    this.personalityTraits = const [],
+    this.personalityDescription,
     this.careTips = const [],
     this.funFacts = const [],
     this.careRanges,
@@ -110,11 +114,11 @@ class SpeciesInfoDTO {
     return SpeciesInfoDTO(
       careSummary: json['care_summary'],
       aiPersonalityPrompt: json['ai_personality_prompt'],
-      careTips: List<String>.from(json['care_tips'] ?? []),
-      funFacts: List<String>.from(json['fun_facts'] ?? []),
-      careRanges: json['care_ranges'] != null
-          ? CareRangesDTO.fromJson(json['care_ranges'])
-          : null,
+      personalityTraits: (json['personality_traits'] as List?)?.map((e) => e.toString()).toList() ?? [],
+      personalityDescription: json['personality_description'],
+      careTips: (json['care_tips'] as List?)?.map((e) => e.toString()).toList() ?? [],
+      funFacts: (json['fun_facts'] as List?)?.map((e) => e.toString()).toList() ?? [],
+      careRanges: json['care_ranges'] != null ? CareRangesDTO.fromJson(json['care_ranges']) : null,
     );
   }
 }

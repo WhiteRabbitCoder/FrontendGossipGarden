@@ -12,6 +12,7 @@ import '../../../../core/widgets/garden_icon.dart';
 import 'sensor_settings_screen.dart';
 
 import '../../data/models/plant_dto.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 // HARDCODE(demo): dueño, personalidad, cuidados y "Sobre la planta" por ID fijo ('1'..'3').
 // TODO(backend): GET /plants/{id} con especie, dueño y guía de cuidados.
@@ -89,10 +90,24 @@ class PlantProfileScreen extends ConsumerWidget {
                     fontWeight: FontWeight.w700,
                   ),
                 ),
-                Text(
-                  plant.species,
-                  style: GardenTextStyles.label.copyWith(
-                    color: GardenColors.inkSoft,
+                InkWell(
+                  onTap: () async {
+                    final query = Uri.encodeComponent(plant.species);
+                    final url = Uri.parse('https://www.google.com/search?q=$query');
+                    if (await canLaunchUrl(url)) {
+                      await launchUrl(url);
+                    }
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 8.0),
+                    child: Text(
+                      plant.species,
+                      style: GardenTextStyles.label.copyWith(
+                        color: GardenColors.inkSoft,
+                        decoration: TextDecoration.underline,
+                        decorationColor: GardenColors.inkSoft.withOpacity(0.5),
+                      ),
+                    ),
                   ),
                 ),
               ],
@@ -425,7 +440,11 @@ class _PersonalitySection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final info = _personalityTraits[plant.personality]!;
+    final defaultInfo = _personalityTraits[plant.personality]!;
+    final traits = profile.speciesInfo.personalityTraits.isNotEmpty 
+        ? profile.speciesInfo.personalityTraits 
+        : defaultInfo.traits;
+    final description = profile.speciesInfo.personalityDescription ?? defaultInfo.description;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -456,7 +475,7 @@ class _PersonalitySection extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                info.description,
+                description,
                 style: GardenTextStyles.bodySmall.copyWith(
                   color: GardenColors.inkSoft,
                   height: 1.5,
@@ -465,7 +484,7 @@ class _PersonalitySection extends StatelessWidget {
               const SizedBox(height: 12),
               Wrap(
                 spacing: 8,
-                children: info.traits
+                children: traits
                     .map(
                       (trait) => Container(
                         padding: const EdgeInsets.symmetric(
@@ -712,35 +731,37 @@ class _SensorTile extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                label,
-                style: GardenTextStyles.label.copyWith(
-                  color: GardenColors.inkSoft,
-                  fontSize: 10,
-                  letterSpacing: 0.8,
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Text(
+                  label,
+                  style: GardenTextStyles.label.copyWith(
+                    color: GardenColors.inkSoft,
+                    fontSize: 10,
+                    letterSpacing: 0.8,
+                  ),
                 ),
-              ),
-              Text(
-                value,
-                style: GardenTextStyles.title.copyWith(
-                  color: GardenColors.ink,
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
+                Text(
+                  value,
+                  style: GardenTextStyles.title.copyWith(
+                    color: GardenColors.ink,
+                    fontSize: 18,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                subLabel,
-                style: GardenTextStyles.bodySmall.copyWith(
-                  color: GardenColors.inkSoft,
-                  fontSize: 10,
+                const SizedBox(height: 2),
+                Text(
+                  subLabel,
+                  style: GardenTextStyles.bodySmall.copyWith(
+                    color: GardenColors.inkSoft,
+                    fontSize: 10,
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ],
       ),
@@ -808,14 +829,16 @@ class _AboutSection extends StatelessWidget {
                             color: GardenColors.inkSoft,
                           ),
                         ),
-                        const Spacer(),
-                        Text(
-                          row.$3,
-                          style: GardenTextStyles.bodySmall.copyWith(
-                            color: GardenColors.ink,
-                            fontWeight: FontWeight.w500,
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            row.$3,
+                            style: GardenTextStyles.bodySmall.copyWith(
+                              color: GardenColors.ink,
+                              fontWeight: FontWeight.w500,
+                            ),
+                            textAlign: TextAlign.right,
                           ),
-                          textAlign: TextAlign.right,
                         ),
                       ],
                     ),
@@ -978,25 +1001,27 @@ class _CareSection extends StatelessWidget {
                           child: GardenIcon(asset: item.$1, size: 18),
                         ),
                         const SizedBox(width: 12),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              item.$2,
-                              style: GardenTextStyles.label.copyWith(
-                                color: GardenColors.inkSoft,
-                                fontSize: 10,
-                                letterSpacing: 0.8,
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                item.$2,
+                                style: GardenTextStyles.label.copyWith(
+                                  color: GardenColors.inkSoft,
+                                  fontSize: 10,
+                                  letterSpacing: 0.8,
+                                ),
                               ),
-                            ),
-                            Text(
-                              item.$3,
-                              style: GardenTextStyles.bodySmall.copyWith(
-                                color: GardenColors.ink,
-                                fontWeight: FontWeight.w500,
+                              Text(
+                                item.$3,
+                                style: GardenTextStyles.bodySmall.copyWith(
+                                  color: GardenColors.ink,
+                                  fontWeight: FontWeight.w500,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ],
                     ),

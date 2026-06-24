@@ -1,3 +1,4 @@
+import 'package:flutter/services.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
@@ -35,10 +36,15 @@ class MainScreen extends ConsumerWidget {
         nav.showChat || nav.showPlantProfile || nav.selectedFriendId != null;
 
     return PopScope(
-      canPop: !hasOverlay,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop && hasOverlay) {
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) async {
+        if (didPop) return;
+        if (hasOverlay) {
           notifier.handleBack();
+        } else if (nav.activeTab != TabId.dashboard) {
+          notifier.changeTab(TabId.dashboard);
+        } else {
+          await SystemNavigator.pop();
         }
       },
       child: Scaffold(
