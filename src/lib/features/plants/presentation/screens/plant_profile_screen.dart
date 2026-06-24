@@ -182,6 +182,14 @@ class PlantProfileScreen extends ConsumerWidget {
         body: Center(child: Text('Error: $e', style: GardenTextStyles.bodySmall)),
       ),
     );
+      },
+      loading: () => const Scaffold(
+        body: Center(child: CircularProgressIndicator(color: GardenColors.leafGreen)),
+      ),
+      error: (e, _) => Scaffold(
+        body: Center(child: Text('Error: $e', style: GardenTextStyles.bodySmall)),
+      ),
+    );
   }
 }
 
@@ -921,12 +929,12 @@ class _CareSection extends StatelessWidget {
       ];
     } else if (profile.speciesInfo.careTips.isNotEmpty) {
       items = profile.speciesInfo.careTips.asMap().entries.map((e) => (
-        GardenIcons.sparkle, 
+        GardenIcons.notificationAlt, 
         'TIP ${e.key + 1}', 
         e.value
       )).toList();
     } else {
-      items = [(GardenIcons.sparkle, 'CUIDADOS', profile.speciesInfo.careSummary ?? 'Pronto tendremos más información.')];
+      items = [(GardenIcons.notificationAlt, 'CUIDADOS', profile.speciesInfo.careSummary ?? 'Pronto tendremos más información.')];
     }
 
     final tip = hasSpecific ? careTipsMap['general_tip']?.toString() : profile.speciesInfo.careSummary;

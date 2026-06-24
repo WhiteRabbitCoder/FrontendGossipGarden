@@ -201,6 +201,9 @@ final plantRealtimeSensorProvider =
         }
       }
     }
+  } catch (_) {
+    // Ignorar silenciosamente errores de red (ej. endpoint 404 de stream en QA)
+  }
 });
 
 // Provider to fetch the rich plant profile (including AI content and care ranges)
