@@ -177,7 +177,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
     _scanController.repeat(reverse: true);
     try {
       final formData = FormData.fromMap({
-        'file': await MultipartFile.fromFile(
+        'image': await MultipartFile.fromFile(
           file.path,
           filename: 'scan.jpg',
         ),
@@ -215,7 +215,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
       if (mounted) {
         setState(() {
           _mode = _IdentifyMode.camera;
-          _errorMessage = e.toString();
+          _errorMessage = _getFriendlyErrorMessage(e);
         });
       }
     }
@@ -231,7 +231,15 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
       final response = await ApiClient().dio.post(
         '/species/from-candidate',
         data: {
-          'scientific_name': candidate.scientificName,
+          'candidate': {
+            'scientific_name': candidate.scientificName,
+            'common_names': candidate.commonNames,
+            'probability': candidate.probability,
+            'gbif_id': candidate.gbifId,
+            'inaturalist_id': candidate.inaturalistId,
+            'taxonomy': candidate.taxonomy,
+          },
+          'output_language': 'es',
         },
       );
       final result = IdentifyResponse.fromJson(response.data);
@@ -249,7 +257,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
       if (mounted) {
         setState(() {
           _mode = _IdentifyMode.matches;
-          _errorMessage = e.toString();
+          _errorMessage = _getFriendlyErrorMessage(e);
         });
       }
     }
@@ -281,10 +289,38 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
       if (mounted) {
         setState(() {
           _mode = _IdentifyMode.result;
-          _errorMessage = e.toString();
+          _errorMessage = _getFriendlyErrorMessage(e);
         });
       }
     }
+  }
+
+  String _getFriendlyErrorMessage(Object e) {
+    if (e is DioException) {
+      if (e.type == DioExceptionType.connectionTimeout || 
+          e.type == DioExceptionType.receiveTimeout || 
+          e.type == DioExceptionType.sendTimeout) {
+        return 'La conexión tardó demasiado. Revisa tu internet e intenta de nuevo.';
+      } else if (e.type == DioExceptionType.connectionError) {
+        return 'No hay conexión a internet. Revisa tu red.';
+      } else if (e.response != null) {
+        final statusCode = e.response!.statusCode;
+        if (statusCode == 500 || statusCode == 502) {
+          return 'El servidor está experimentando problemas. Por favor, intenta de nuevo más tarde.';
+        } else if (statusCode == 503) {
+          return 'Servicio temporalmente saturado. Dale unos segundos y reintenta.';
+        } else if (statusCode == 413) {
+          return 'La imagen es demasiado pesada. Intenta con una foto de menor resolución.';
+        } else if (statusCode == 415) {
+          return 'Formato de imagen no soportado. Usa JPEG, PNG o WebP.';
+        } else if (statusCode == 422) {
+          return 'Error procesando la imagen. Asegúrate de enfocar bien la planta.';
+        } else {
+          return 'Ha ocurrido un error inesperado ($statusCode).';
+        }
+      }
+    }
+    return 'Ocurrió un error inesperado. Vuelve a intentarlo.';
   }
 
   void _showNeedsMorePhotosDialog(String reason) {
@@ -1267,6 +1303,37 @@ class _MatchesViewState extends State<_MatchesView> {
   int _currentIndex = 0;
   final PageController _pageController = PageController(viewportFraction: 0.82);
 
+  String _getSpanishCommonName(List<String> commonNames, String scientificName) {
+    if (commonNames.isEmpty) return scientificName;
+
+    final englishWords = [
+      'weed', 'plant', 'grass', 'fern', 'tree', 'common', 'stinking', 'daisy',
+      'lily', 'moss', 'vine', 'bush', 'creeper', 'flower', 'leaf', 'dogfennel',
+      'chamomile', 'poison', 'ivy', 'oak', 'pine', 'palm', 'rose', 'orchid',
+      'creeping', 'climbing', 'sweet', 'wild', 'false', 'true', 'water', 'wood',
+      'giant', 'dwarf', 'trailing', 'weeping', 'spotted', 'striped', 'cheese',
+      'shield', 'sword', 'brake', 'maidenhair', 'bird', 'nest', 'spider', 'snake',
+      'mother', 'law', 'tongue', 'money', 'jade', 'rubber', 'fig', 'ivy', 'pothos'
+    ];
+
+    for (var name in commonNames) {
+      final lowerName = name.toLowerCase();
+      if (lowerName == scientificName.toLowerCase()) continue;
+
+      bool isEnglish = false;
+      for (var word in englishWords) {
+        if (RegExp(r'\b' + word + r'\b').hasMatch(lowerName)) {
+          isEnglish = true;
+          break;
+        }
+      }
+      if (!isEnglish) {
+        return name;
+      }
+    }
+
+    return commonNames.first;
+  }
 
   @override
   void dispose() {
@@ -1280,7 +1347,7 @@ class _MatchesViewState extends State<_MatchesView> {
       return const Center(child: CircularProgressIndicator(color: GardenColors.forest));
     }
     final currentMatch = widget.candidates[_currentIndex];
-    final currentMatchName = currentMatch.commonNames.isNotEmpty ? currentMatch.commonNames.first : currentMatch.scientificName;
+    final currentMatchName = _getSpanishCommonName(currentMatch.commonNames, currentMatch.scientificName);
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1343,7 +1410,7 @@ class _MatchesViewState extends State<_MatchesView> {
               final match = widget.candidates[index];
               final isActive = index == _currentIndex;
               final pct = (match.probability * 100).round();
-              final name = match.commonNames.isNotEmpty ? match.commonNames.first : match.scientificName;
+              final name = _getSpanishCommonName(match.commonNames, match.scientificName);
               final species = match.scientificName;
               const emoji = '🌿';
               final tags = ['Planta', 'Detectada'];
@@ -1394,15 +1461,33 @@ class _MatchesViewState extends State<_MatchesView> {
                                 top: Radius.circular(22),
                               ),
                             ),
-                            child: Center(
-                              child: AnimatedScale(
-                                duration: const Duration(milliseconds: 300),
-                                scale: isActive ? 1.15 : 1.0,
-                                child: Text(
-                                  emoji,
-                                  style: const TextStyle(fontSize: 84),
-                                ),
-                              ),
+                            child: ClipRRect(
+                              borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
+                              child: match.imageUrl != null
+                                  ? SizedBox.expand(
+                                      child: Image.network(
+                                        match.imageUrl!,
+                                        fit: BoxFit.cover,
+                                        errorBuilder: (context, error, stackTrace) {
+                                          return Center(
+                                            child: Text(
+                                              emoji,
+                                              style: const TextStyle(fontSize: 84),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                    )
+                                  : Center(
+                                      child: AnimatedScale(
+                                        duration: const Duration(milliseconds: 300),
+                                        scale: isActive ? 1.15 : 1.0,
+                                        child: Text(
+                                          emoji,
+                                          style: const TextStyle(fontSize: 84),
+                                        ),
+                                      ),
+                                    ),
                             ),
                           ),
                           // Percentage badge
