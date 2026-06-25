@@ -190,9 +190,11 @@ final achievementWateringWatcherProvider = Provider.family<void, String>(
   (ref, plantId) {
     ref.listen(plantRealtimeSensorProvider(plantId), (previous, next) {
       next.whenData((snapshot) {
-        ref
-            .read(achievementStatsProvider.notifier)
-            .processSensorReading(plantId, snapshot);
+        if (snapshot != null) {
+          ref
+              .read(achievementStatsProvider.notifier)
+              .processSensorReading(plantId, snapshot);
+        }
       });
     });
   },
