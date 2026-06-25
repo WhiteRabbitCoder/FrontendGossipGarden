@@ -7,6 +7,7 @@ class UserProfile {
   final List<String> favoritePlantIds;
   final bool useGridView;
   final String notificationPreference;
+  final String preferredLanguage;
 
   const UserProfile({
     required this.uid,
@@ -17,6 +18,7 @@ class UserProfile {
     required this.favoritePlantIds,
     required this.useGridView,
     required this.notificationPreference,
+    this.preferredLanguage = 'es',
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -31,6 +33,7 @@ class UserProfile {
       useGridView: json['useGridView'] as bool? ?? true,
       notificationPreference:
           json['notificationPreference']?.toString() ?? 'important',
+      preferredLanguage: json['preferredLanguage']?.toString() ?? 'es',
     );
   }
 
@@ -44,6 +47,7 @@ class UserProfile {
       'favoritePlantIds': favoritePlantIds,
       'useGridView': useGridView,
       'notificationPreference': notificationPreference,
+      'preferredLanguage': preferredLanguage,
     };
   }
 }

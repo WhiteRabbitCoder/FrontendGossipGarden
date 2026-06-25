@@ -36,12 +36,17 @@ class PlantApiDatasource implements PlantDatasource {
     await _apiClient.dio.patch('/plants/$plantId', data: updates);
   }
 
-  Future<PlantProfileResponse?> getPlantProfile(String plantId) async {
+  Future<void> completeUrgentTask(String plantId, String actionType) async {
+    await _apiClient.dio.post('/plants/$plantId/actions', data: {'action_type': actionType});
+  }
+
+  Future<PlantProfileResponse> getPlantProfile(String plantId) async {
     try {
       final response = await _apiClient.dio.get('/plants/$plantId/profile');
       return PlantProfileResponse.fromJson(response.data as Map<String, dynamic>);
-    } catch (e) {
-      return null;
+    } catch (e, st) {
+      print('Error getPlantProfile: $e\n$st');
+      throw Exception('Error loading profile: $e');
     }
   }
 
@@ -49,7 +54,7 @@ class PlantApiDatasource implements PlantDatasource {
     final sensorResponse = await _getSensorSnapshot(response.plantId);
     
     // As the new backend doesn't provide min/max ranges directly on the /plants/ endpoint,
-    // we use fallback comfort zones or could fetch the profile.
+    // we use fallback comfort zones or could fetch the profile. (Using fallback to prevent N+1 requests, UI will load real ranges in profile screen)
     final comfortZones = ComfortZones(
       humidity: Range(40, 70),
       temperature: Range(18, 27),
@@ -92,7 +97,9 @@ class PlantApiDatasource implements PlantDatasource {
       personality: PlantPersonality.playful, // Now needs to be derived from profile if needed
       health: response.healthScore,
       mood: _deriveMood(status),
-      lastWatered: _estimateLastWatered(sensors, comfortZones, status),
+      lastWatered: response.lastWatered != null 
+          ? _formatLastWatered(response.lastWatered!) 
+          : _estimateLastWatered(sensors, comfortZones, status),
       sensors: sensors,
       sensorStatus: status,
       confidence: _deriveConfidence(status),
@@ -148,6 +155,15 @@ class PlantApiDatasource implements PlantDatasource {
   PlantMood _deriveMood(SensorStatus status) {
     if (status == SensorStatus.offline || status == SensorStatus.degraded) return PlantMood.stressed;
     return PlantMood.happy; // simplified for now
+  }
+
+  String _formatLastWatered(DateTime date) {
+    final age = DateTime.now().toUtc().difference(date.toUtc());
+    if (age.inDays == 0) return 'Hoy';
+    if (age.inDays == 1) return 'Ayer';
+    if (age.inDays < 7) return 'Hace ${age.inDays} días';
+    final weeks = age.inDays ~/ 7;
+    return 'Hace $weeks ${weeks == 1 ? 'semana' : 'semanas'}';
   }
 
   String _estimateLastWatered(Sensors sensors, ComfortZones zones, SensorStatus status) {

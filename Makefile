@@ -58,6 +58,9 @@ samsung-qa:
 build-web:
 	cd src && flutter build web $(_DEFINES) --dart-define=BACKEND_TARGET=prod --dart-define=BACKEND_DEPLOY_URL=$(PROD_BACKEND_URL)
 
+build-web-qa:
+	cd src && flutter build web $(_DEFINES) --dart-define=BACKEND_TARGET=prod --dart-define=BACKEND_DEPLOY_URL=$(QA_BACKEND_URL)
+
 build-apk:
 	cd src && flutter build apk --release $(_DEFINES) --dart-define=BACKEND_TARGET=prod --dart-define=BACKEND_DEPLOY_URL=$(PROD_BACKEND_URL)
 

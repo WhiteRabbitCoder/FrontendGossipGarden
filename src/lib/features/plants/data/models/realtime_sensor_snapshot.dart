@@ -1,6 +1,6 @@
 class RealtimeSensorSnapshot {
   final int? sensorDataId;
-  final int plantId;
+  final String plantId;
   final DateTime? timestamp;
   final double? temperature;
   final double? humidity;
@@ -23,7 +23,7 @@ class RealtimeSensorSnapshot {
 
     return RealtimeSensorSnapshot(
       sensorDataId: _toInt(data?['sensor_data_id']),
-      plantId: _toInt(json['plant_id']) ?? 0,
+      plantId: json['plant_id']?.toString() ?? '',
       timestamp: ts == null ? null : DateTime.tryParse(ts),
       temperature: _toDouble(data?['temperature']),
       humidity: _toDouble(data?['humidity']),

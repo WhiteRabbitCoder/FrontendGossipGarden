@@ -87,7 +87,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
     return Scaffold(
       backgroundColor: GardenColors.creamPaper,
-      body: SafeArea(
+      body: Stack(
+        children: [
+          SafeArea(
         child: Center(
           child: SingleChildScrollView(
             padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 24),
@@ -377,7 +379,33 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
               ),
             ),
           ),
-        ),
+            ),
+          ),
+          if (isLoading)
+            Positioned.fill(
+              child: Container(
+                color: GardenColors.creamPaper.withValues(alpha: 0.8),
+                child: Center(
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      const CircularProgressIndicator(
+                        color: GardenColors.leafDark,
+                        strokeWidth: 3,
+                      ),
+                      const SizedBox(height: 16),
+                      Text(
+                        'Abriendo el jardín...',
+                        style: GardenTextStyles.title.copyWith(
+                          color: GardenColors.leafDark,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }

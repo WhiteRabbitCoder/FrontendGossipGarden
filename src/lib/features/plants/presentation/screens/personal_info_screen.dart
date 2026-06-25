@@ -75,6 +75,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
             displayName: newName,
             photoUrl: _localAvatarPath,
           );
+      await ref.read(backendAuthServiceProvider).updateUserProfile(username: newName);
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Información personal actualizada con éxito.')),

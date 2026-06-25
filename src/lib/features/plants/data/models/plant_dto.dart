@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 class PlantResponse {
   final String plantId;
   final String userId;
@@ -11,6 +13,7 @@ class PlantResponse {
   final String? scientificName;
   final DateTime createdAt;
   final DateTime? lastHealthCheck;
+  final DateTime? lastWatered;
   final int? estimatedAgeMonths;
   final String? location;
   final Map<String, dynamic>? specificCareTips;
@@ -28,6 +31,7 @@ class PlantResponse {
     this.scientificName,
     required this.createdAt,
     this.lastHealthCheck,
+    this.lastWatered,
     this.estimatedAgeMonths,
     this.location,
     this.specificCareTips,
@@ -49,22 +53,35 @@ class PlantResponse {
       lastHealthCheck: json['last_health_check'] != null 
           ? DateTime.parse(json['last_health_check']) 
           : null,
+      lastWatered: json['last_watered'] != null
+          ? DateTime.parse(json['last_watered'])
+          : null,
       estimatedAgeMonths: json['estimated_age_months'],
       location: json['location'],
-      specificCareTips: json['specific_care_tips'],
+      specificCareTips: json['specific_care_tips'] is String
+          ? _tryDecodeJson(json['specific_care_tips'])
+          : json['specific_care_tips'],
     );
+  }
+
+  static Map<String, dynamic>? _tryDecodeJson(String source) {
+    try {
+      final decoded = jsonDecode(source);
+      if (decoded is Map<String, dynamic>) return decoded;
+    } catch (_) {}
+    return null;
   }
 }
 
 class CareRangesDTO {
-  final int minTempC;
-  final int maxTempC;
-  final int minLightLux;
-  final int maxLightLux;
-  final int minAirHumidityPct;
-  final int maxAirHumidityPct;
-  final int minSoilHumidityPct;
-  final int maxSoilHumidityPct;
+  final double minTempC;
+  final double maxTempC;
+  final double minLightLux;
+  final double maxLightLux;
+  final double minAirHumidityPct;
+  final double maxAirHumidityPct;
+  final double minSoilHumidityPct;
+  final double maxSoilHumidityPct;
 
   CareRangesDTO({
     required this.minTempC,
@@ -79,14 +96,14 @@ class CareRangesDTO {
 
   factory CareRangesDTO.fromJson(Map<String, dynamic> json) {
     return CareRangesDTO(
-      minTempC: json['min_temp_c'] ?? 0,
-      maxTempC: json['max_temp_c'] ?? 0,
-      minLightLux: json['min_light_lux'] ?? 0,
-      maxLightLux: json['max_light_lux'] ?? 0,
-      minAirHumidityPct: json['min_air_humidity_pct'] ?? 0,
-      maxAirHumidityPct: json['max_air_humidity_pct'] ?? 0,
-      minSoilHumidityPct: json['min_soil_humidity_pct'] ?? 0,
-      maxSoilHumidityPct: json['max_soil_humidity_pct'] ?? 0,
+      minTempC: (json['min_temp_c'] as num?)?.toDouble() ?? 0.0,
+      maxTempC: (json['max_temp_c'] as num?)?.toDouble() ?? 0.0,
+      minLightLux: (json['min_light_lux'] as num?)?.toDouble() ?? 0.0,
+      maxLightLux: (json['max_light_lux'] as num?)?.toDouble() ?? 0.0,
+      minAirHumidityPct: (json['min_air_humidity_pct'] as num?)?.toDouble() ?? 0.0,
+      maxAirHumidityPct: (json['max_air_humidity_pct'] as num?)?.toDouble() ?? 0.0,
+      minSoilHumidityPct: (json['min_soil_humidity_pct'] as num?)?.toDouble() ?? 0.0,
+      maxSoilHumidityPct: (json['max_soil_humidity_pct'] as num?)?.toDouble() ?? 0.0,
     );
   }
 }
@@ -139,6 +156,7 @@ class PlantProfileResponse extends PlantResponse {
     super.scientificName,
     required super.createdAt,
     super.lastHealthCheck,
+    super.lastWatered,
     super.estimatedAgeMonths,
     super.location,
     super.specificCareTips,
@@ -160,6 +178,7 @@ class PlantProfileResponse extends PlantResponse {
       scientificName: base.scientificName,
       createdAt: base.createdAt,
       lastHealthCheck: base.lastHealthCheck,
+      lastWatered: base.lastWatered,
       estimatedAgeMonths: base.estimatedAgeMonths,
       location: base.location,
       specificCareTips: base.specificCareTips,

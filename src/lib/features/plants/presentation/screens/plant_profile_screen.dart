@@ -66,12 +66,6 @@ class PlantProfileScreen extends ConsumerWidget {
 
         return profileAsync.when(
           data: (profile) {
-            if (profile == null) {
-              return const Scaffold(
-                body: Center(child: Text('Error cargando el perfil completo.')),
-              );
-            }
-
             return Scaffold(
               backgroundColor: GardenColors.creamPaper,
           appBar: AppBar(
@@ -194,7 +188,19 @@ class PlantProfileScreen extends ConsumerWidget {
         body: Center(child: CircularProgressIndicator(color: GardenColors.leafGreen)),
       ),
       error: (e, _) => Scaffold(
-        body: Center(child: Text('Error: $e', style: GardenTextStyles.bodySmall)),
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const GardenIcon(asset: GardenIcons.back, size: 20),
+            onPressed: onBack,
+          ),
+          title: const Text('Error de perfil'),
+        ),
+        body: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Text('Error cargando el perfil completo:\n$e', style: GardenTextStyles.bodySmall),
+          ),
+        ),
       ),
     );
       },
@@ -202,7 +208,19 @@ class PlantProfileScreen extends ConsumerWidget {
         body: Center(child: CircularProgressIndicator(color: GardenColors.leafGreen)),
       ),
       error: (e, _) => Scaffold(
-        body: Center(child: Text('Error: $e', style: GardenTextStyles.bodySmall)),
+        appBar: AppBar(
+          leading: IconButton(
+            icon: const GardenIcon(asset: GardenIcons.back, size: 20),
+            onPressed: onBack,
+          ),
+          title: const Text('Error'),
+        ),
+        body: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(20),
+            child: Text('Detalle del error:\n$e', style: GardenTextStyles.bodySmall),
+          ),
+        ),
       ),
     );
   }

@@ -88,4 +88,28 @@ class BackendAuthService {
   Future<String?> getStoredToken() async {
     return await _tokenStorage.getToken();
   }
+
+  Future<Map<String, dynamic>> getUserProfile() async {
+    try {
+      final response = await _apiClient.dio.get('/users/me');
+      return response.data;
+    } on DioException catch (e) {
+      final message = e.response?.data?['detail'] ?? 'Error al obtener perfil';
+      throw Exception(message);
+    }
+  }
+
+  Future<void> updateUserProfile({String? username, String? preferredLanguage}) async {
+    try {
+      final data = <String, dynamic>{};
+      if (username != null) data['username'] = username;
+      if (preferredLanguage != null) data['preferred_language'] = preferredLanguage;
+      if (data.isNotEmpty) {
+        await _apiClient.dio.patch('/users/me', data: data);
+      }
+    } on DioException catch (e) {
+      final message = e.response?.data?['detail'] ?? 'Error al actualizar perfil';
+      throw Exception(message);
+    }
+  }
 }

@@ -1,6 +1,4 @@
 import 'dart:async';
-import 'dart:io';
-import 'dart:convert';
 
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -112,6 +110,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
                 notificationPreference:
                     profileData['notificationPreference'] as String? ??
                         'important',
+                preferredLanguage: profileData['preferredLanguage'] as String? ?? 'es',
               )
             : null;
 
@@ -148,6 +147,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
         'favoritePlantIds': profile.favoritePlantIds,
         'useGridView': profile.useGridView,
         'notificationPreference': profile.notificationPreference,
+        'preferredLanguage': profile.preferredLanguage,
       };
 
   void _bindFirebaseAuth() {
@@ -181,6 +181,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
                 favoritePlantIds: const [],
                 useGridView: true,
                 notificationPreference: 'important',
+                preferredLanguage: 'es',
               ),
           firebaseEnabled: true,
           onboardingCompleted:
@@ -221,6 +222,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
         favoritePlantIds: const [],
         useGridView: true,
         notificationPreference: 'important',
+        preferredLanguage: 'es',
       );
 
       await _tokenStorage.saveProfile(_profileToMap(profile));
@@ -271,6 +273,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
                 favoritePlantIds: const [],
                 useGridView: true,
                 notificationPreference: 'important',
+                preferredLanguage: 'es',
               ),
               firebaseEnabled: true,
               onboardingCompleted: false,
@@ -305,6 +308,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
           favoritePlantIds: const [],
           useGridView: true,
           notificationPreference: 'important',
+          preferredLanguage: 'es',
         );
         await _tokenStorage.saveProfile(_profileToMap(profile));
         state = AsyncValue.data(
@@ -339,28 +343,55 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
         await _tokenStorage.saveToken(tokenResponse.accessToken);
       }
 
+      // Sincronizar perfil con backend
+      Map<String, dynamic>? backendProfile;
+      if (tokenResponse != null) {
+        try {
+          backendProfile = await _backendAuth.getUserProfile();
+          if (FirebaseEnvironment.isConfigured) {
+            final user = FirebaseAuth.instance.currentUser;
+            if (user != null) {
+              final newName = backendProfile['username'];
+              final newLang = backendProfile['preferred_language'] ?? 'es';
+              if (newName != null && user.displayName != newName) {
+                await user.updateDisplayName(newName);
+              }
+              await FirebaseFirestore.instance.collection('users').doc(user.uid).set(
+                {
+                  if (newName != null) 'displayName': newName,
+                  'preferredLanguage': newLang,
+                },
+                SetOptions(merge: true),
+              );
+            }
+          }
+        } catch (_) {}
+      }
+
       // Si no hay Firebase, creamos la sesión local basada en el éxito del backend
       if (!FirebaseEnvironment.isConfigured) {
         final cachedProfile = await _tokenStorage.readProfile();
         final profile = (cachedProfile != null && cachedProfile['email'] == email)
             ? UserProfile(
                 uid: cachedProfile['uid'] as String? ?? email,
-                displayName: cachedProfile['displayName'] as String?,
+                displayName: backendProfile?['username'] ?? cachedProfile['displayName'] as String?,
                 email: cachedProfile['email'] as String?,
                 photoUrl: cachedProfile['photoUrl'] as String?,
                 onboardingCompleted: cachedProfile['onboardingCompleted'] as bool? ?? true,
                 favoritePlantIds: (cachedProfile['favoritePlantIds'] as List?)?.cast<String>() ?? const [],
                 useGridView: cachedProfile['useGridView'] as bool? ?? true,
                 notificationPreference: cachedProfile['notificationPreference'] as String? ?? 'important',
+                preferredLanguage: backendProfile?['preferred_language'] ?? cachedProfile['preferredLanguage'] as String? ?? 'es',
               )
             : UserProfile(
                 uid: email,
-                displayName: email.split('@').first,
+                displayName: backendProfile?['username'] ?? email.split('@').first,
                 email: email,
                 onboardingCompleted: true,
                 favoritePlantIds: const [],
                 useGridView: true,
                 notificationPreference: 'important',
+                preferredLanguage: backendProfile?['preferred_language'] ?? 'es',
               );
         await _tokenStorage.saveProfile(_profileToMap(profile));
         state = AsyncValue.data(
@@ -417,6 +448,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
             favoritePlantIds: profile.favoritePlantIds,
             useGridView: profile.useGridView,
             notificationPreference: profile.notificationPreference,
+            preferredLanguage: profile.preferredLanguage,
           );
 
     if (updated != null && !FirebaseEnvironment.isConfigured) {
@@ -432,7 +464,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
     );
   }
 
-  Future<void> updateProfile({String? displayName, String? photoUrl}) async {
+  Future<void> updateProfile({String? displayName, String? photoUrl, String? preferredLanguage}) async {
     final current = state.value;
     if (current == null || current.profile == null) return;
 
@@ -445,6 +477,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
       favoritePlantIds: current.profile!.favoritePlantIds,
       useGridView: current.profile!.useGridView,
       notificationPreference: current.profile!.notificationPreference,
+      preferredLanguage: preferredLanguage ?? current.profile!.preferredLanguage,
     );
 
     await _tokenStorage.saveProfile(_profileToMap(updatedProfile));

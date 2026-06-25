@@ -1,17 +1,10 @@
-import 'dart:async';
-import 'dart:math';
 import 'dart:typed_data';
-import 'dart:convert';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:dio/dio.dart';
 import 'package:gossip_garden/core/services/api_client.dart';
 
 import '../../data/datasources/wifi_setup_datasource.dart';
 import '../../data/models/plant.dart';
-import '../../data/models/plant_enums.dart';
-import '../../data/models/sensors.dart';
-import '../../data/models/comfort_zones.dart';
 import '../../data/models/realtime_sensor_snapshot.dart';
 import '../../data/models/urgent_plant_task.dart';
 import '../../data/models/plant_dto.dart';
@@ -37,11 +30,7 @@ class PlantsNotifier extends StateNotifier<AsyncValue<List<Plant>>> {
 
   Future<void> completeUrgentTask(UrgentPlantTask task) async {
     try {
-      final apiClient = ApiClient();
-      await apiClient.dio.post(
-        '/plants/${task.plantId}/actions',
-        data: {'action_type': task.kind.name},
-      );
+      await _apiDatasource.completeUrgentTask(task.plantId, task.kind.name);
       await _fetchPlants();
     } catch (e) {
       // Ignorar fallo por ahora, pero la planta se recargará la próxima vez
@@ -80,7 +69,7 @@ final plantRealtimeSensorProvider =
       if (data != null) {
         yield RealtimeSensorSnapshot(
           sensorDataId: data['id'] is int ? data['id'] as int : int.tryParse(data['id']?.toString() ?? ''),
-          plantId: int.tryParse(plantId) ?? 0,
+          plantId: plantId,
           timestamp: DateTime.tryParse(data['timestamp']?.toString() ?? '') ?? DateTime.now(),
           temperature: (data['temperature_c'] as num?)?.toDouble() ?? 0.0,
           humidity: (data['humidity_pct'] as num?)?.toDouble() ?? 0.0,
@@ -97,7 +86,7 @@ final plantRealtimeSensorProvider =
 });
 
 // Provider to fetch the rich plant profile (including AI content and care ranges)
-final plantProfileProvider = FutureProvider.family<PlantProfileResponse?, String>((ref, plantId) async {
+final plantProfileProvider = FutureProvider.family<PlantProfileResponse, String>((ref, plantId) async {
   final api = PlantApiDatasource();
   return api.getPlantProfile(plantId);
 });

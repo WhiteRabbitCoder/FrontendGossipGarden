@@ -113,7 +113,7 @@ class _SensorSettingsScreenState extends ConsumerState<SensorSettingsScreen> {
           if (macAddress != null && plantIdToLink != null) {
             final api = PlantApiDatasource();
             await api.updatePlant(plantIdToLink, {'mac_address': macAddress});
-            ref.read(plantsProvider.notifier).loadPlants();
+            ref.read(plantsProvider.notifier).refresh();
           }
         } catch (e) {
           debugPrint('Error patching MAC address: $e');

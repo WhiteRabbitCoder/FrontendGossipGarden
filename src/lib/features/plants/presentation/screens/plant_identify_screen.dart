@@ -14,6 +14,7 @@ import '../../../../core/services/api_client.dart';
 import 'package:dio/dio.dart';
 import '../providers/plant_providers.dart';
 import '../providers/achievement_providers.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 // Flujo: método → cámara/búsqueda → resultado identificado → agregar
 enum _IdentifyMode { select, camera, search, uploading, matches, generating, result, creating }
@@ -231,6 +232,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
       _mode = _IdentifyMode.generating;
       _errorMessage = null;
     });
+    final language = ref.read(authStateProvider).value?.profile?.preferredLanguage ?? 'es';
     try {
       final response = await ApiClient().dio.post(
         '/species/from-candidate',
@@ -243,7 +245,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
             'inaturalist_id': candidate.inaturalistId,
             'taxonomy': candidate.taxonomy,
           },
-          'output_language': 'es',
+          'output_language': language,
         },
       );
       final result = IdentifyResponse.fromJson(response.data);

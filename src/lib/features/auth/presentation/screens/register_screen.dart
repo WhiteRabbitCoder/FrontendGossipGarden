@@ -124,10 +124,13 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     final authState = ref.watch(authStateProvider);
     final isLoading = authState.isLoading;
 
-    // Escuchar errores del provider y mostrarlos inline
+    // Escuchar cambios del provider para errores o éxito
     ref.listen<AsyncValue<AuthSession>>(authStateProvider, (previous, next) {
       if (next.hasError) {
         setState(() => _inlineError = next.error.toString());
+      } else if (!next.isLoading && next.value?.profile != null) {
+        // Redirigir si la autenticación fue exitosa
+        Navigator.of(context).popUntil((route) => route.isFirst);
       }
     });
 
