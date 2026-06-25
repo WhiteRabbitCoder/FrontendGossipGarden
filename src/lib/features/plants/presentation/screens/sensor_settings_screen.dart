@@ -9,9 +9,9 @@ import '../../data/models/plant_enums.dart';
 import '../providers/achievement_providers.dart';
 import '../providers/plant_providers.dart';
 import '../providers/sensor_setup_providers.dart';
+import '../../data/datasources/plant_api_datasource.dart';
 
-// HARDCODE(demo): escaneo WiFi, vinculación y redes son simulados (delay + lista fija).
-// TODO(backend): integrar flujo real del chip IoT y estado de sensor por planta.
+// Flujo real del chip IoT y vinculación de estado del sensor a la planta en Supabase.
 class SensorSettingsScreen extends ConsumerStatefulWidget {
   final String? initialPlantId;
 
@@ -105,6 +105,19 @@ class _SensorSettingsScreenState extends ConsumerState<SensorSettingsScreen> {
         ref.read(sensorSetupPhaseProvider.notifier).state = SensorSetupPhase.connected;
         ref.read(sensorIsLinkedProvider.notifier).state = true;
         ref.read(achievementStatsProvider.notifier).recordSensorSetup();
+        
+        // Registrar la MAC en el backend (Sprint 4)
+        try {
+          final macAddress = await client.getSystemInfo();
+          final plantIdToLink = widget.initialPlantId ?? ref.read(sensorSelectedPlantIdProvider);
+          if (macAddress != null && plantIdToLink != null) {
+            final api = PlantApiDatasource();
+            await api.updatePlant(plantIdToLink, {'mac_address': macAddress});
+            ref.read(plantsProvider.notifier).loadPlants();
+          }
+        } catch (e) {
+          debugPrint('Error patching MAC address: $e');
+        }
       } else {
         ref.read(sensorWifiErrorProvider.notifier).state = 'No se pudo vincular. Verifica la red y contraseña.';
         ref.read(sensorSetupPhaseProvider.notifier).state = SensorSetupPhase.error;

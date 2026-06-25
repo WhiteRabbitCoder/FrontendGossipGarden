@@ -32,6 +32,10 @@ class PlantApiDatasource implements PlantDatasource {
     }
   }
 
+  Future<void> updatePlant(String plantId, Map<String, dynamic> updates) async {
+    await _apiClient.dio.patch('/plants/$plantId', data: updates);
+  }
+
   Future<PlantProfileResponse?> getPlantProfile(String plantId) async {
     try {
       final response = await _apiClient.dio.get('/plants/$plantId/profile');

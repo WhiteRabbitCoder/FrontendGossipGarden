@@ -13,7 +13,7 @@ class UserRegister {
     return {
       'email': email,
       'password': password,
-      'name': name,
+      'username': name,
     };
   }
 }
