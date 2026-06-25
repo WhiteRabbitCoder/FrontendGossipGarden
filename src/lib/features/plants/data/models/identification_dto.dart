@@ -39,6 +39,7 @@ class PlantCandidate {
   final int? inaturalistId;
   final Map<String, dynamic>? taxonomy;
   final String? description;
+  final String? imageUrl;
 
   PlantCandidate({
     required this.scientificName,
@@ -48,6 +49,7 @@ class PlantCandidate {
     this.inaturalistId,
     this.taxonomy,
     this.description,
+    this.imageUrl,
   });
 
   factory PlantCandidate.fromJson(Map<String, dynamic> json) {
@@ -59,6 +61,7 @@ class PlantCandidate {
       inaturalistId: json['inaturalist_id'],
       taxonomy: json['taxonomy'],
       description: json['description'],
+      imageUrl: json['image_url'],
     );
   }
 

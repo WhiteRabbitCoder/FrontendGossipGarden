@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -15,7 +16,7 @@ import '../providers/plant_providers.dart';
 import '../providers/achievement_providers.dart';
 
 // Flujo: método → cámara/búsqueda → resultado identificado → agregar
-enum _IdentifyMode { select, camera, uploading, matches, search, result, creating }
+enum _IdentifyMode { select, camera, search, uploading, matches, generating, result, creating }
 
 // HARDCODE(demo): cámara, catálogo, matches y resultado sin API de identificación.
 // TODO(backend): POST /plants/identify (imagen/texto) y POST /plants al confirmar.
@@ -43,6 +44,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
   IdentifyResponse? _completed;
   List<PlantCandidate> _candidates = [];
   String? _errorMessage;
+  String? _photoStoragePath;
   final _nicknameController = TextEditingController();
 
   @override
@@ -118,6 +120,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
         _completed = null;
         _candidates = [];
         _errorMessage = null;
+        _photoStoragePath = null;
         _mode = _IdentifyMode.select;
       });
     } else if (_mode == _IdentifyMode.camera || _mode == _IdentifyMode.search) {
@@ -202,10 +205,12 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
         setState(() {
           _mode = _IdentifyMode.matches;
           _candidates = result.candidates ?? [];
+          _photoStoragePath = result.photoStoragePath;
         });
       } else if (result.status == 'completed') {
         setState(() {
           _completed = result;
+          _photoStoragePath = result.photoStoragePath;
           _nicknameController.text = result.profile?.commonName ?? result.profile?.scientificName ?? '';
           _mode = _IdentifyMode.result;
         });
@@ -223,10 +228,9 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
 
   Future<void> _selectCandidate(PlantCandidate candidate) async {
     setState(() {
-      _mode = _IdentifyMode.uploading;
+      _mode = _IdentifyMode.generating;
       _errorMessage = null;
     });
-    _scanController.repeat(reverse: true);
     try {
       final response = await ApiClient().dio.post(
         '/species/from-candidate',
@@ -253,7 +257,6 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
         });
       }
     } catch (e) {
-      _scanController.stop();
       if (mounted) {
         setState(() {
           _mode = _IdentifyMode.matches;
@@ -275,7 +278,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
         data: {
           'species_id': completed.profile?.speciesId,
           'nickname': nickname,
-          'photo_storage_path': completed.photoStoragePath,
+          'photo_storage_path': _photoStoragePath ?? completed.photoStoragePath,
         },
       );
       ref.invalidate(plantsProvider);
@@ -370,6 +373,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
       case _IdentifyMode.uploading: return 'Analizando...';
       case _IdentifyMode.matches: return 'Elige una opción';
       case _IdentifyMode.search: return 'Buscar planta';
+      case _IdentifyMode.generating: return 'Consultando IA...';
       case _IdentifyMode.result: return 'Confirmar planta';
       case _IdentifyMode.creating: return 'Guardando...';
     }
@@ -413,13 +417,21 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
         );
       case _IdentifyMode.search:
         return _SearchView(
-          controller: _searchController,
-          query: _searchQuery,
-          onQueryChanged: (q) => setState(() => _searchQuery = q),
-          onSelectPlant: () {
+          onSelectPlant: (candidate) {
             ref.read(achievementStatsProvider.notifier).recordIdentification();
-            setState(() => _mode = _IdentifyMode.result);
+            _selectCandidate(candidate);
           },
+        );
+      case _IdentifyMode.generating:
+        return const Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              CircularProgressIndicator(color: GardenColors.leafDark),
+              SizedBox(height: 16),
+              Text('Consultando a la IA experta...', style: TextStyle(color: GardenColors.inkSoft)),
+            ],
+          ),
         );
       case _IdentifyMode.result:
         return _ResultView(
@@ -821,70 +833,79 @@ List<Widget> _viewfinderCorners() {
 
 // ── 2b. Búsqueda por nombre ───────────────────────────────────────────────────
 
-class _SearchView extends StatelessWidget {
-  final TextEditingController controller;
-  final String query;
-  final ValueChanged<String> onQueryChanged;
-  final VoidCallback onSelectPlant;
+class _SearchView extends StatefulWidget {
+  final ValueChanged<PlantCandidate> onSelectPlant;
 
   const _SearchView({
-    required this.controller,
-    required this.query,
-    required this.onQueryChanged,
     required this.onSelectPlant,
   });
 
-  // HARDCODE(demo): catálogo local para búsqueda. TODO(backend): GET /plant-species.
-  static const _catalog = [
-    (
-      emoji: '🌿',
-      name: 'Monstera',
-      species: 'Monstera Deliciosa',
-      level: 'Fácil'
-    ),
-    (emoji: '🍃', name: 'Potos', species: 'Epipremnum Aureum', level: 'Fácil'),
-    (
-      emoji: '🌳',
-      name: 'Ficus Lyrata',
-      species: 'Ficus Lyrata',
-      level: 'Exigente'
-    ),
-    (
-      emoji: '🌵',
-      name: 'Suculenta Echeveria',
-      species: 'Echeveria Elegans',
-      level: 'Fácil'
-    ),
-    (
-      emoji: '🪴',
-      name: 'Sansevieria',
-      species: 'Dracaena Trifasciata',
-      level: 'Fácil'
-    ),
-    (
-      emoji: '🌱',
-      name: 'Calathea',
-      species: 'Calathea Orbifolia',
-      level: 'Exigente'
-    ),
-  ];
+  @override
+  State<_SearchView> createState() => _SearchViewState();
+}
+
+class _SearchViewState extends State<_SearchView> {
+  final TextEditingController _controller = TextEditingController();
+  List<PlantCandidate> _results = [];
+  bool _isLoading = false;
+  Timer? _debounce;
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    _debounce?.cancel();
+    super.dispose();
+  }
+
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    if (query.trim().isEmpty) {
+      setState(() {
+        _results = [];
+        _isLoading = false;
+      });
+      return;
+    }
+
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      _performSearch(query.trim());
+    });
+  }
+
+  Future<void> _performSearch(String query) async {
+    setState(() => _isLoading = true);
+    try {
+      final response = await ApiClient().dio.get(
+        '/species/search',
+        queryParameters: {'q': query},
+      );
+      final list = (response.data as List).map((json) => PlantCandidate.fromJson(json)).toList();
+      if (mounted) {
+        setState(() {
+          _results = list;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _results = [];
+          _isLoading = false;
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final filtered = _catalog
-        .where((p) =>
-            p.name.toLowerCase().contains(query.toLowerCase()) ||
-            p.species.toLowerCase().contains(query.toLowerCase()))
-        .toList();
-
     return Column(
       children: [
         // Barra de búsqueda
         Padding(
           padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
           child: TextField(
-            controller: controller,
-            onChanged: onQueryChanged,
+            controller: _controller,
+            onChanged: _onSearchChanged,
             style: GardenTextStyles.bodySmall.copyWith(color: GardenColors.ink),
             decoration: InputDecoration(
               prefixIcon: const Padding(
@@ -916,65 +937,68 @@ class _SearchView extends StatelessWidget {
         ),
         // Lista de resultados
         Expanded(
-          child: ListView.separated(
-            padding: const EdgeInsets.symmetric(horizontal: 20),
-            itemCount: filtered.length,
-            separatorBuilder: (_, __) => const SizedBox(height: 10),
-            itemBuilder: (context, i) {
-              final plant = filtered[i];
-              return Material(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                child: InkWell(
-                  borderRadius: BorderRadius.circular(14),
-                  onTap: onSelectPlant,
-                  child: Container(
-                    decoration: BoxDecoration(
+          child: _isLoading
+              ? const Center(child: CircularProgressIndicator(color: GardenColors.leafDark))
+              : ListView.separated(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  itemCount: _results.length,
+                  separatorBuilder: (_, __) => const SizedBox(height: 10),
+                  itemBuilder: (context, i) {
+                    final plant = _results[i];
+                    return Material(
+                      color: Colors.white,
                       borderRadius: BorderRadius.circular(14),
-                      border: Border.all(color: GardenColors.creamPaper),
-                    ),
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 12),
-                    child: Row(
-                      children: [
-                        Container(
-                          width: 44,
-                          height: 44,
-                          decoration: const BoxDecoration(
-                              color: GardenColors.creamLight,
-                              shape: BoxShape.circle),
-                          child: Center(
-                            child: Text(plant.emoji,
-                                style: const TextStyle(fontSize: 20)),
+                      child: InkWell(
+                        borderRadius: BorderRadius.circular(14),
+                        onTap: () => widget.onSelectPlant(plant),
+                        child: Container(
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: GardenColors.creamPaper),
                           ),
-                        ),
-                        const SizedBox(width: 14),
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 16, vertical: 12),
+                          child: Row(
                             children: [
-                              Text(plant.name,
-                                  style: GardenTextStyles.title.copyWith(
-                                      color: GardenColors.ink,
-                                      fontSize: 15,
-                                      fontWeight: FontWeight.w700)),
-                              Text(plant.species,
-                                  style: GardenTextStyles.label.copyWith(
-                                      color: GardenColors.inkSoft,
-                                      fontSize: 12)),
+                              Container(
+                                width: 44,
+                                height: 44,
+                                decoration: const BoxDecoration(
+                                    color: GardenColors.creamLight,
+                                    shape: BoxShape.circle),
+                                child: const Center(
+                                  child: Text('🪴',
+                                      style: TextStyle(fontSize: 20)),
+                                ),
+                              ),
+                              const SizedBox(width: 14),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                        plant.commonNames.isNotEmpty
+                                            ? plant.commonNames.first
+                                            : plant.scientificName,
+                                        style: GardenTextStyles.title.copyWith(
+                                            color: GardenColors.ink,
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w700)),
+                                    Text(plant.scientificName,
+                                        style: GardenTextStyles.label.copyWith(
+                                            color: GardenColors.inkSoft,
+                                            fontSize: 12)),
+                                  ],
+                                ),
+                              ),
+                              const Icon(Icons.chevron_right, color: GardenColors.inkSoft),
                             ],
                           ),
                         ),
-                        Text(plant.level,
-                            style: GardenTextStyles.label.copyWith(
-                                color: GardenColors.inkSoft, fontSize: 12)),
-                      ],
-                    ),
-                  ),
+                      ),
+                    );
+                  },
                 ),
-              );
-            },
-          ),
         ),
         const SizedBox(height: 100),
       ],

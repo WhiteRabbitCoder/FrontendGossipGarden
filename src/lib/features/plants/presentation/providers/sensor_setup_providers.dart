@@ -1,4 +1,5 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import '../../data/datasources/esp32_api_client.dart';
 
 enum SensorSetupPhase {
   overview,
@@ -25,6 +26,10 @@ class WifiNetworkOption {
 final sensorSetupPhaseProvider =
     StateProvider<SensorSetupPhase>((ref) => SensorSetupPhase.overview);
 
+final esp32ApiClientProvider = Provider<Esp32ApiClient>((ref) => Esp32ApiClient());
+
+final sensorWifiErrorProvider = StateProvider<String?>((ref) => null);
+
 final sensorWifiSsidProvider = StateProvider<String>((ref) => '');
 
 final sensorWifiPasswordProvider = StateProvider<String>((ref) => '');
@@ -33,6 +38,9 @@ final sensorWifiNetworksProvider =
     StateProvider<List<WifiNetworkOption>>((ref) => []);
 
 final sensorWifiScanningProvider = StateProvider<bool>((ref) => false);
+
+// MAC Address temporal del sensor que se lee antes de crear la planta
+final sensorMacAddressProvider = StateProvider<String?>((ref) => null);
 
 /// Planta seleccionada para vincular o reconfigurar el sensor.
 final sensorSelectedPlantIdProvider = StateProvider<String?>((ref) => null);

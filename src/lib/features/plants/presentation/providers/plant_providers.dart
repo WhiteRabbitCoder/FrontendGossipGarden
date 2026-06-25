@@ -17,96 +17,6 @@ import '../../data/models/urgent_plant_task.dart';
 import '../../data/models/plant_dto.dart';
 import '../../data/datasources/plant_api_datasource.dart';
 
-// ── Demo plants ──────────────────────────────────────────────────────────────
-// HARDCODE(demo): tres plantas locales con sensores y moods inventados.
-// TODO(backend): Reemplazar el cuerpo del FutureProvider con:
-//   PlantApiDatasource().getPlants()
-// cuando el backend esté disponible. Los modelos Plant ya están mapeados al contrato.
-
-const _demoMonstera = Plant(
-  id: '1',
-  name: 'Monstera',
-  species: 'Monstera Deliciosa',
-  image: '',
-  personality: PlantPersonality.dramatic,
-  health: 78.0,
-  mood: PlantMood.thirsty,
-  lastWatered: 'Hace 3 días',
-  sensors: Sensors(
-    humidity: 25.0,
-    temperature: 22.0,
-    light: 1500.0,
-    soilMoisture: 15.0,
-  ),
-  sensorStatus: SensorStatus.offline,
-  confidence: ConfidenceLevel.low,
-  actions: [],
-  insights: ['Necesito agua, la tierra está muy seca.'],
-  comfortZones: ComfortZones(
-    humidity: Range(40, 70),
-    temperature: Range(18, 27),
-    light: Range(500, 2000),
-    soilMoisture: Range(30, 60),
-  ),
-);
-
-const _demoSuculenta = Plant(
-  id: '2',
-  name: 'Suculenta Luna',
-  species: 'Echeveria Elegans',
-  image: '',
-  personality: PlantPersonality.wise,
-  health: 95.0,
-  mood: PlantMood.perfect,
-  lastWatered: 'Hace 1 semana',
-  sensors: Sensors(
-    humidity: 45.0,
-    temperature: 23.0,
-    light: 4000.0,
-    soilMoisture: 35.0,
-  ),
-  sensorStatus: SensorStatus.online,
-  confidence: ConfidenceLevel.high,
-  actions: [],
-  insights: [
-    'Todo perfecto, luz y humedad en nivel...',
-    'Suculenta Luna querrá un poquito de agua en 4 días según sus proyecciones de humedad.',
-  ],
-  comfortZones: ComfortZones(
-    humidity: Range(20, 60),
-    temperature: Range(15, 35),
-    light: Range(2000, 6000),
-    soilMoisture: Range(10, 40),
-  ),
-);
-
-const _demoFicus = Plant(
-  id: '3',
-  name: 'Ficus Maestro',
-  species: 'Ficus Lyrata',
-  image: '',
-  personality: PlantPersonality.playful,
-  health: 55.0,
-  mood: PlantMood.stressed,
-  lastWatered: 'Hace 2 días',
-  sensors: Sensors(
-    humidity: 30.0,
-    temperature: 19.0,
-    light: 800.0,
-    soilMoisture: 40.0,
-  ),
-  sensorStatus: SensorStatus.online,
-  confidence: ConfidenceLevel.medium,
-  actions: [],
-  insights: ['La luz no es suficiente para mantener un crecimiento saludable.'],
-  comfortZones: ComfortZones(
-    humidity: Range(30, 65),
-    temperature: Range(18, 30),
-    light: Range(1500, 4000),
-    soilMoisture: Range(30, 60),
-  ),
-);
-
 // ── Providers ───────────────────────────────────────────────────────────────
 
 class PlantsNotifier extends StateNotifier<AsyncValue<List<Plant>>> {
@@ -125,18 +35,17 @@ class PlantsNotifier extends StateNotifier<AsyncValue<List<Plant>>> {
     }
   }
 
-  // HARDCODE(demo): actualiza mood/health en memoria al marcar checklist. TODO(backend): PATCH planta.
-  void completeUrgentTask(UrgentPlantTask task) {
-    state.whenData((plants) {
-      final updated = plants
-          .map(
-            (plant) => plant.id == task.plantId
-                ? applyUrgentTaskCompletion(plant, task)
-                : plant,
-          )
-          .toList();
-      state = AsyncValue.data(updated);
-    });
+  Future<void> completeUrgentTask(UrgentPlantTask task) async {
+    try {
+      final apiClient = ApiClient();
+      await apiClient.dio.post(
+        '/plants/${task.plantId}/actions',
+        data: {'action_type': task.kind.name},
+      );
+      await _fetchPlants();
+    } catch (e) {
+      // Ignorar fallo por ahora, pero la planta se recargará la próxima vez
+    }
   }
 
   Future<void> refresh() async {
@@ -150,9 +59,8 @@ final plantsProvider =
   (ref) => PlantsNotifier(PlantApiDatasource()),
 );
 
-// HARDCODE(demo): IDs iniciales de favoritas. TODO(backend): persistir en perfil de usuario.
-final favoritePlantsProvider =
-    StateProvider<List<String>>((ref) => ['1', '2']);
+// TODO(backend): persistir en perfil de usuario.
+final favoritePlantsProvider = StateProvider<List<String>>((ref) => []);
 
 final localAvatarBytesProvider = StateProvider<Uint8List?>((ref) => null);
 
@@ -160,49 +68,31 @@ final wifiSetupDatasourceProvider = Provider<WifiSetupDatasource>(
   (ref) => WifiSetupDatasource(),
 );
 
-// HARDCODE(demo): lecturas aleatorias simuladas cada 5 s. TODO(backend): stream MQTT/WebSocket del sensor.
+// Adaptado al backend actual: Polling cada 10 segundos al endpoint latest
 final plantRealtimeSensorProvider =
     StreamProvider.family<RealtimeSensorSnapshot, String>((ref, plantId) async* {
-  try {
-    final apiClient = ApiClient();
-    final response = await apiClient.dio.get<ResponseBody>(
-      '/plants/$plantId/sensor-data/stream',
-      options: Options(
-        responseType: ResponseType.stream,
-        headers: {'Accept': 'text/event-stream'},
-      ),
-    );
+  final apiClient = ApiClient();
 
-    final stream = response.data?.stream;
-    if (stream == null) return;
-
-    await for (final chunk in stream) {
-      final stringChunk = utf8.decode(chunk);
-      final lines = stringChunk.split('\n');
-      for (final line in lines) {
-        if (line.startsWith('data:')) {
-          final dataStr = line.substring(5).trim();
-          if (dataStr.isNotEmpty) {
-            try {
-              final json = jsonDecode(dataStr);
-              yield RealtimeSensorSnapshot(
-                sensorDataId: json['sensor_data_id'],
-                plantId: int.tryParse(plantId) ?? 0,
-                timestamp: DateTime.parse(json['timestamp']),
-                temperature: (json['temperature_c'] as num).toDouble(),
-                humidity: (json['humidity_pct'] as num).toDouble(),
-                soilMoisture: (json['soil_moisture_pct'] as num).toDouble(),
-                light: (json['light_lux'] as num).toDouble(),
-              );
-            } catch (_) {
-              // Ignorar errores de parseo o JSON inválido en el chunk
-            }
-          }
-        }
+  while (true) {
+    try {
+      final response = await apiClient.dio.get('/plants/$plantId/sensor-data/latest');
+      final data = response.data;
+      if (data != null) {
+        yield RealtimeSensorSnapshot(
+          sensorDataId: data['id'] is int ? data['id'] as int : int.tryParse(data['id']?.toString() ?? ''),
+          plantId: int.tryParse(plantId) ?? 0,
+          timestamp: DateTime.tryParse(data['timestamp']?.toString() ?? '') ?? DateTime.now(),
+          temperature: (data['temperature_c'] as num?)?.toDouble() ?? 0.0,
+          humidity: (data['humidity_pct'] as num?)?.toDouble() ?? 0.0,
+          soilMoisture: (data['soil_moisture_pct'] as num?)?.toDouble() ?? 0.0,
+          light: (data['light_lux'] as num?)?.toDouble() ?? 0.0,
+        );
       }
+    } catch (_) {
+      // Ignorar errores de red y continuar el polling
     }
-  } catch (_) {
-    // Ignorar silenciosamente errores de red (ej. endpoint 404 de stream en QA)
+    // Esperamos 10 segundos antes del siguiente polling para no saturar el backend
+    await Future.delayed(const Duration(seconds: 10));
   }
 });
 

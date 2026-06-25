@@ -14,8 +14,8 @@ import 'sensor_settings_screen.dart';
 import '../../data/models/plant_dto.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-// HARDCODE(demo): dueño, personalidad, cuidados y "Sobre la planta" por ID fijo ('1'..'3').
-// TODO(backend): GET /plants/{id} con especie, dueño y guía de cuidados.
+// El perfil se obtiene llamando al endpoint en segundo plano y fusionando 
+// los datos base de la planta (sensors) con la respuesta de IA de getPlantProfile.
 class PlantProfileScreen extends ConsumerWidget {
   final String plantId;
   final VoidCallback onBack;
@@ -422,7 +422,7 @@ class _PersonalitySection extends StatelessWidget {
   final PlantProfileResponse profile;
   const _PersonalitySection({required this.plant, required this.profile});
 
-  // HARDCODE(demo): rasgos por ID de planta. TODO(backend): plant_species endpoint.
+  // Fallback if the RAG species endpoint fails to load the plant personality:
   static const _personalityTraits = {
     PlantPersonality.dramatic: (
       description: 'Te avisará con suspiros si algo no le gusta.',

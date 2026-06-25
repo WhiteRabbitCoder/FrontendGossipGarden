@@ -8,6 +8,7 @@ import 'package:gossip_garden/features/plants/presentation/providers/navigation_
 import 'package:gossip_garden/features/auth/presentation/providers/auth_provider.dart';
 import 'package:gossip_garden/features/plants/presentation/screens/plant_identify_screen.dart';
 import 'package:gossip_garden/features/plants/presentation/providers/achievement_providers.dart';
+import 'package:gossip_garden/features/plants/presentation/providers/sensor_setup_providers.dart';
 
 enum OnboardingStep { wow, choosePath, connect, identify, firstInsight, config }
 
@@ -26,8 +27,9 @@ final wifiSsidProvider = StateProvider<String>((ref) => '');
 final wifiPasswordProvider = StateProvider<String>((ref) => '');
 final wifiSetupPhaseProvider =
     StateProvider<_WifiPhase>((ref) => _WifiPhase.instruction);
-final wifiNetworksProvider = StateProvider<List<_WifiNetwork>>((ref) => []);
+final wifiNetworksProvider = StateProvider<List<WifiNetworkOption>>((ref) => []);
 final wifiScanningProvider = StateProvider<bool>((ref) => false);
+final wifiErrorProvider = StateProvider<String?>((ref) => null);
 final sensorNetworksProvider = StateProvider<List<String>>((ref) => []);
 
 enum _WifiPhase {
@@ -40,13 +42,7 @@ enum _WifiPhase {
   error
 }
 
-class _WifiNetwork {
-  final String ssid;
-  final int signal; // 1-4 bars
-  final bool secured;
-  const _WifiNetwork(
-      {required this.ssid, required this.signal, required this.secured});
-}
+
 
 class OnboardingScreen extends ConsumerStatefulWidget {
   const OnboardingScreen({super.key});
@@ -178,37 +174,37 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     }
   }
 
-  // HARDCODE(demo): conexión WiFi del onboarding simulada (delay + regla de contraseña).
-  // TODO(backend): mismo flujo real que SensorSettingsScreen / chip IoT.
   void _startWifiConnection() async {
     final ssid = _ssidController.text.trim();
     final password = _passwordController.text;
     if (ssid.isEmpty) return;
 
+    ref.read(wifiErrorProvider.notifier).state = null;
     ref.read(wifiSsidProvider.notifier).state = ssid;
     ref.read(wifiPasswordProvider.notifier).state = password;
     ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.connecting;
 
-    // Simulate network connection delay
-    await Future.delayed(const Duration(seconds: 3));
-    if (!mounted) return;
+    try {
+      final client = ref.read(esp32ApiClientProvider);
+      final success = await client.connectWifi(ssid, password);
+      
+      if (!mounted) return;
 
-    // Simulate success or failure (e.g. fail if password is 'error' or too short)
-    if (password.isNotEmpty && password.length < 5) {
+      if (success) {
+        ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.connected;
+        ref.read(achievementStatsProvider.notifier).recordSensorSetup();
+      } else {
+        ref.read(wifiErrorProvider.notifier).state = 'No se pudo vincular. Verifica la red y contraseña.';
+        ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.error;
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ref.read(wifiErrorProvider.notifier).state = e.toString().replaceAll('Exception: ', '');
       ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.error;
-    } else {
-      ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.connected;
-      ref.read(achievementStatsProvider.notifier).recordSensorSetup();
     }
   }
 
   void _showWifiForm() {
-    // HARDCODE(demo): redes WiFi de ejemplo en onboarding.
-    ref.read(wifiNetworksProvider.notifier).state = const [
-      _WifiNetwork(ssid: 'GossipGarden_Home', signal: 4, secured: true),
-      _WifiNetwork(ssid: 'CasaDeAngelo_5G', signal: 3, secured: true),
-      _WifiNetwork(ssid: 'Vecinos_WiFi', signal: 2, secured: true),
-    ];
     ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.form;
   }
 
@@ -216,6 +212,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.instruction;
     ref.read(wifiNetworksProvider.notifier).state = [];
     ref.read(wifiScanningProvider.notifier).state = false;
+    ref.read(wifiErrorProvider.notifier).state = null;
     ref.read(wifiSsidProvider.notifier).state = '';
     ref.read(wifiPasswordProvider.notifier).state = '';
     _ssidController.clear();
@@ -228,25 +225,54 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
 
   void _verifyAndStartScanning() async {
     if (!mounted) return;
-    ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.verifying;
     
-    await Future.delayed(const Duration(milliseconds: 2500));
-
-    if (!mounted) return;
-    ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.scanning;
-  }
-
-  void _scanNetworks() async {
-    ref.read(wifiScanningProvider.notifier).state = true;
-    // Simula que le pedimos al chip que refresque la lista
-    await Future.delayed(const Duration(seconds: 2));
-
-    if (mounted) {
-      ref.read(wifiScanningProvider.notifier).state = false;
+    // Entramos en modo carga real
+    ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.verifying;
+    ref.read(wifiErrorProvider.notifier).state = null;
+    
+    try {
+      final client = ref.read(esp32ApiClientProvider);
+      final networks = await client.getWifiNetworks();
+      final macAddress = await client.getSystemInfo();
+      
+      if (!mounted) return;
+      
+      // Guardamos las redes pre-cargadas y la MAC
+      ref.read(wifiNetworksProvider.notifier).state = networks;
+      ref.read(sensorMacAddressProvider.notifier).state = macAddress;
+      
+      // Ahora SÍ avanzamos a la pantalla de éxito (Chip en línea)
+      ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.scanning;
+    } catch (e) {
+      if (!mounted) return;
+      ref.read(wifiErrorProvider.notifier).state = e.toString().replaceAll('Exception: ', '');
+      ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.error;
     }
   }
 
-  void _selectNetwork(_WifiNetwork net) {
+  void _scanNetworks() async {
+    ref.read(wifiErrorProvider.notifier).state = null;
+    ref.read(wifiScanningProvider.notifier).state = true;
+    
+    try {
+      final client = ref.read(esp32ApiClientProvider);
+      final networks = await client.getWifiNetworks();
+      
+      if (!mounted) return;
+      ref.read(wifiNetworksProvider.notifier).state = networks;
+      // Si todo va bien en el refresh manual, nos mantenemos en la vista del form.
+    } catch (e) {
+      if (!mounted) return;
+      ref.read(wifiErrorProvider.notifier).state = e.toString().replaceAll('Exception: ', '');
+      ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.error;
+    } finally {
+      if (mounted) {
+        ref.read(wifiScanningProvider.notifier).state = false;
+      }
+    }
+  }
+
+  void _selectNetwork(WifiNetworkOption net) {
     _ssidController.text = net.ssid;
     setState(() => _showPasswordField = true);
   }
@@ -1208,7 +1234,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
     );
   }
 
-  Widget _buildNetworkTile(_WifiNetwork net, bool isLast, bool isSelected) {
+  Widget _buildNetworkTile(WifiNetworkOption net, bool isLast, bool isSelected) {
     final signalIcon = [
       Icons.network_wifi_1_bar,
       Icons.network_wifi_2_bar,
@@ -1495,6 +1521,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
   }
 
   Widget _buildWifiError() {
+    final errorMessage = ref.watch(wifiErrorProvider);
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -1519,7 +1546,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           ),
           const SizedBox(height: 12),
           Text(
-            'El chip no pudo conectarse a la red WiFi.\nVerifica la contraseña e intenta de nuevo.',
+            errorMessage ?? 'El chip no pudo conectarse a la red WiFi.\nVerifica la contraseña e intenta de nuevo.',
             textAlign: TextAlign.center,
             style: TextStyle(color: GardenColors.inkSoft, height: 1.5),
           ),

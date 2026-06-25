@@ -35,34 +35,37 @@ help:
 	@echo "  Copia .env.example → .env y rellena SUPABASE_ANON_KEY y GOOGLE_CLIENT_ID"
 
 dev-web:
-	flutter run -d chrome $(_DEFINES) --dart-define=BACKEND_TARGET=local
+	cd src && flutter run -d chrome $(_DEFINES) --dart-define=BACKEND_TARGET=local
 
 prod-web:
-	flutter run -d chrome $(_DEFINES) --dart-define=BACKEND_TARGET=prod --dart-define=BACKEND_DEPLOY_URL=$(PROD_BACKEND_URL)
+	cd src && flutter run -d chrome $(_DEFINES) --dart-define=BACKEND_TARGET=prod --dart-define=BACKEND_DEPLOY_URL=$(PROD_BACKEND_URL)
 
 qa-web:
-	flutter run -d chrome $(_DEFINES) --dart-define=BACKEND_TARGET=prod --dart-define=BACKEND_DEPLOY_URL=$(QA_BACKEND_URL)
+	cd src && flutter run -d chrome $(_DEFINES) --dart-define=BACKEND_TARGET=prod --dart-define=BACKEND_DEPLOY_URL=$(QA_BACKEND_URL)
 
 dev-android:
-	flutter run -d android $(_DEFINES) --dart-define=BACKEND_TARGET=local
+	cd src && flutter run -d android $(_DEFINES) --dart-define=BACKEND_TARGET=local
 
 prod-android:
-	flutter run -d android $(_DEFINES) --dart-define=BACKEND_TARGET=prod --dart-define=BACKEND_DEPLOY_URL=$(PROD_BACKEND_URL)
+	cd src && flutter run -d android $(_DEFINES) --dart-define=BACKEND_TARGET=prod --dart-define=BACKEND_DEPLOY_URL=$(PROD_BACKEND_URL)
 
 samsung:
-	flutter run -d R5CY508WWYW $(_DEFINES) --dart-define=BACKEND_TARGET=prod --dart-define=BACKEND_DEPLOY_URL=$(PROD_BACKEND_URL)
+	cd src && flutter run -d R5CY508WWYW $(_DEFINES) --dart-define=BACKEND_TARGET=prod --dart-define=BACKEND_DEPLOY_URL=$(PROD_BACKEND_URL)
 
 samsung-qa:
-	flutter run -d R5CY508WWYW $(_DEFINES) --dart-define=BACKEND_TARGET=prod --dart-define=BACKEND_DEPLOY_URL=$(QA_BACKEND_URL)
+	cd src && flutter run -d R5CY508WWYW $(_DEFINES) --dart-define=BACKEND_TARGET=prod --dart-define=BACKEND_DEPLOY_URL=$(QA_BACKEND_URL)
 
 build-web:
-	flutter build web $(_DEFINES) --dart-define=BACKEND_TARGET=prod --dart-define=BACKEND_DEPLOY_URL=$(PROD_BACKEND_URL)
+	cd src && flutter build web $(_DEFINES) --dart-define=BACKEND_TARGET=prod --dart-define=BACKEND_DEPLOY_URL=$(PROD_BACKEND_URL)
 
 build-apk:
-	flutter build apk --release $(_DEFINES) --dart-define=BACKEND_TARGET=prod --dart-define=BACKEND_DEPLOY_URL=$(PROD_BACKEND_URL)
+	cd src && flutter build apk --release $(_DEFINES) --dart-define=BACKEND_TARGET=prod --dart-define=BACKEND_DEPLOY_URL=$(PROD_BACKEND_URL)
+
+build-apk-qa-debug:
+	cd src && flutter build apk --debug $(_DEFINES) --dart-define=BACKEND_TARGET=prod --dart-define=BACKEND_DEPLOY_URL=$(QA_BACKEND_URL)
 
 analyze:
-	flutter analyze
+	cd src && flutter analyze
 
 test:
-	flutter test --coverage
+	cd src && flutter test --coverage

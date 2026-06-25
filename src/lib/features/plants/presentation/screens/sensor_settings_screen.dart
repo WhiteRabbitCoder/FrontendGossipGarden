@@ -56,18 +56,27 @@ class _SensorSettingsScreenState extends ConsumerState<SensorSettingsScreen> {
   }
 
   Future<void> _scanNetworks() async {
+    ref.read(sensorWifiErrorProvider.notifier).state = null;
     ref.read(sensorWifiScanningProvider.notifier).state = true;
-    await Future.delayed(const Duration(seconds: 2));
-    if (!mounted) return;
-
-    // HARDCODE(demo): redes WiFi de ejemplo.
-    ref.read(sensorWifiNetworksProvider.notifier).state = const [
-      WifiNetworkOption(ssid: 'GossipGarden_Home', signal: 4, secured: true),
-      WifiNetworkOption(ssid: 'CasaDeAngelo_5G', signal: 3, secured: true),
-      WifiNetworkOption(ssid: 'Vecinos_WiFi', signal: 2, secured: true),
-    ];
-    ref.read(sensorWifiScanningProvider.notifier).state = false;
-    ref.read(sensorSetupPhaseProvider.notifier).state = SensorSetupPhase.form;
+    
+    try {
+      final client = ref.read(esp32ApiClientProvider);
+      final networks = await client.getWifiNetworks();
+      final macAddress = await client.getSystemInfo();
+      
+      if (!mounted) return;
+      ref.read(sensorWifiNetworksProvider.notifier).state = networks;
+      ref.read(sensorMacAddressProvider.notifier).state = macAddress;
+      ref.read(sensorSetupPhaseProvider.notifier).state = SensorSetupPhase.form;
+    } catch (e) {
+      if (!mounted) return;
+      ref.read(sensorWifiErrorProvider.notifier).state = e.toString().replaceAll('Exception: ', '');
+      ref.read(sensorSetupPhaseProvider.notifier).state = SensorSetupPhase.error;
+    } finally {
+      if (mounted) {
+        ref.read(sensorWifiScanningProvider.notifier).state = false;
+      }
+    }
   }
 
   void _selectNetwork(WifiNetworkOption network) {
@@ -81,21 +90,30 @@ class _SensorSettingsScreenState extends ConsumerState<SensorSettingsScreen> {
     final password = _passwordController.text;
     if (ssid.isEmpty) return;
 
+    ref.read(sensorWifiErrorProvider.notifier).state = null;
     ref.read(sensorWifiSsidProvider.notifier).state = ssid;
     ref.read(sensorWifiPasswordProvider.notifier).state = password;
     ref.read(sensorSetupPhaseProvider.notifier).state = SensorSetupPhase.connecting;
 
-    await Future.delayed(const Duration(seconds: 3));
-    if (!mounted) return;
+    try {
+      final client = ref.read(esp32ApiClientProvider);
+      final success = await client.connectWifi(ssid, password);
+      
+      if (!mounted) return;
 
-    if (password.isNotEmpty && password.length < 5) {
+      if (success) {
+        ref.read(sensorSetupPhaseProvider.notifier).state = SensorSetupPhase.connected;
+        ref.read(sensorIsLinkedProvider.notifier).state = true;
+        ref.read(achievementStatsProvider.notifier).recordSensorSetup();
+      } else {
+        ref.read(sensorWifiErrorProvider.notifier).state = 'No se pudo vincular. Verifica la red y contraseña.';
+        ref.read(sensorSetupPhaseProvider.notifier).state = SensorSetupPhase.error;
+      }
+    } catch (e) {
+      if (!mounted) return;
+      ref.read(sensorWifiErrorProvider.notifier).state = e.toString().replaceAll('Exception: ', '');
       ref.read(sensorSetupPhaseProvider.notifier).state = SensorSetupPhase.error;
-      return;
     }
-
-    ref.read(sensorSetupPhaseProvider.notifier).state = SensorSetupPhase.connected;
-    ref.read(sensorIsLinkedProvider.notifier).state = true;
-    ref.read(achievementStatsProvider.notifier).recordSensorSetup();
   }
 
   @override
@@ -459,6 +477,7 @@ class _SensorSettingsScreenState extends ConsumerState<SensorSettingsScreen> {
   }
 
   Widget _buildError() {
+    final errorMessage = ref.watch(sensorWifiErrorProvider);
     return Padding(
       padding: const EdgeInsets.all(24),
       child: Column(
@@ -467,7 +486,7 @@ class _SensorSettingsScreenState extends ConsumerState<SensorSettingsScreen> {
           const GardenIcon(asset: GardenIcons.info, size: 64),
           const SizedBox(height: 16),
           Text(
-            'No se pudo conectar',
+            'Error de conexión',
             style: GardenTextStyles.title.copyWith(
               fontWeight: FontWeight.w800,
               color: GardenColors.ink,
@@ -475,7 +494,7 @@ class _SensorSettingsScreenState extends ConsumerState<SensorSettingsScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Verifica la contraseña WiFi e intenta de nuevo.',
+            errorMessage ?? 'Verifica la contraseña WiFi e intenta de nuevo.',
             style: GardenTextStyles.bodySmall.copyWith(color: GardenColors.inkSoft),
             textAlign: TextAlign.center,
           ),
