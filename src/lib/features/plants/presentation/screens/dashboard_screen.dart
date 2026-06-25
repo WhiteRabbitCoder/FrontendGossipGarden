@@ -176,15 +176,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
               padding: const EdgeInsets.fromLTRB(20, 24, 20, 12),
               child: Row(
                 children: [
-                  Text(
-                    'Estado Actual',
-                    style: GardenTextStyles.title.copyWith(
-                      color: GardenColors.ink,
-                      fontWeight: FontWeight.w800,
-                      fontSize: 18,
+                  Expanded(
+                    child: Text(
+                      'Estado Actual',
+                      style: GardenTextStyles.title.copyWith(
+                        color: GardenColors.ink,
+                        fontWeight: FontWeight.w800,
+                        fontSize: 18,
+                      ),
                     ),
                   ),
-                  const Spacer(),
                   Container(
                     padding: const EdgeInsets.all(4),
                     decoration: BoxDecoration(
