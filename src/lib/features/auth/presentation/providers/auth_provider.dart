@@ -43,7 +43,9 @@ final authServiceProvider = Provider<AuthService>((ref) {
   return AuthService(
     auth: FirebaseAuth.instance,
     googleSignIn: GoogleSignIn(
-      clientId: kIsWeb && AppConfig.googleClientId.isNotEmpty ? AppConfig.googleClientId : null,
+      clientId: kIsWeb 
+          ? (AppConfig.googleClientId.isNotEmpty ? AppConfig.googleClientId : 'dummy.apps.googleusercontent.com') 
+          : null,
       serverClientId: !kIsWeb && AppConfig.googleClientId.isNotEmpty ? AppConfig.googleClientId : null,
     ),
     firestore: FirebaseFirestore.instance,

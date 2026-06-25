@@ -59,7 +59,7 @@ final wifiSetupDatasourceProvider = Provider<WifiSetupDatasource>(
 
 // Adaptado al backend actual: Polling cada 10 segundos al endpoint latest
 final plantRealtimeSensorProvider =
-    StreamProvider.family<RealtimeSensorSnapshot, String>((ref, plantId) async* {
+    StreamProvider.family<RealtimeSensorSnapshot?, String>((ref, plantId) async* {
   final apiClient = ApiClient();
 
   while (true) {
@@ -78,7 +78,8 @@ final plantRealtimeSensorProvider =
         );
       }
     } catch (_) {
-      // Ignorar errores de red y continuar el polling
+      // Si falla, emitimos null para no dejar el stream bloqueado en 'loading'
+      yield null;
     }
     // Esperamos 10 segundos antes del siguiente polling para no saturar el backend
     await Future.delayed(const Duration(seconds: 10));
