@@ -193,7 +193,7 @@ final achievementWateringWatcherProvider = Provider.family<void, String>(
         if (snapshot != null) {
           ref
               .read(achievementStatsProvider.notifier)
-              .processSensorReading(plantId, snapshot);
+              .processSensorReading(plantId, snapshot!);
         }
       });
     });
