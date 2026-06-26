@@ -332,11 +332,15 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
     state = const AsyncValue.loading();
     try {
       if (FirebaseEnvironment.isConfigured) {
-        // Firebase maneja el estado vía _bindFirebaseAuth
-        await _authService.signInWithEmailAndPassword(
-          email: email,
-          password: password,
-        );
+        try {
+          // Firebase maneja el estado vía _bindFirebaseAuth
+          await _authService.signInWithEmailAndPassword(
+            email: email,
+            password: password,
+          );
+        } catch (e) {
+          throw Exception('Credenciales inválidas');
+        }
       }
 
       // Siempre intentar obtener JWT del backend
