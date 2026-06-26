@@ -2,11 +2,13 @@ class ChatMessageRequest {
   final String message;
   final String language;
   final String responseFormat;
+  final String? imageBase64;
 
   ChatMessageRequest({
     required this.message,
     this.language = 'es',
     this.responseFormat = 'text',
+    this.imageBase64,
   });
 
   Map<String, dynamic> toJson() {
@@ -14,6 +16,7 @@ class ChatMessageRequest {
       'message': message,
       'language': language,
       'response_format': responseFormat,
+      if (imageBase64 != null) 'image_base64': imageBase64,
     };
   }
 }

@@ -1,12 +1,15 @@
 import 'dart:math' as math;
+import 'dart:io';
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:gossip_garden/core/services/audio_helper.dart';
+import '../../../../core/widgets/in_app_camera_screen.dart';
 import '../providers/plant_providers.dart';
 import '../providers/chat_providers.dart';
 import '../providers/achievement_providers.dart';
 import '../widgets/message_bubble.dart';
-import '../widgets/telemetry_panel.dart';
 import '../../data/models/plant.dart';
 import '../../data/models/plant_enums.dart';
 import '../../../../../core/theme/garden_colors.dart';
@@ -34,7 +37,6 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen>
   final ScrollController _scrollController = ScrollController();
   bool _waitingForPlant = false;
   bool _isRecording = false;
-  bool _showTelemetry = false;
   bool _hasText = false;
 
   late final AnimationController _floatController;
@@ -84,20 +86,22 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen>
     }
   }
 
-  Future<void> _sendMessage({String? text, String? audioUrl}) async {
+  Future<void> _sendMessage({String? text, String? audioUrl, String? imageBase64}) async {
     final messageText = text ?? _textController.text.trim();
-    if (messageText.isEmpty || _plant == null || _waitingForPlant) return;
+    if (messageText.isEmpty && imageBase64 == null) return;
+    if (_plant == null || _waitingForPlant) return;
 
-    if (text == null) _textController.clear();
+    if (text == null && imageBase64 == null) _textController.clear();
     setState(() => _waitingForPlant = true);
 
     try {
       await ref
           .read(chatMessagesProvider(widget.plantId).notifier)
           .sendMessage(
-            messageText,
+            messageText.isNotEmpty ? messageText : 'Te envío esta foto de la planta.',
             responseFormat: audioUrl != null ? 'audio' : 'text',
             audioUrl: audioUrl,
+            imageBase64: imageBase64,
           );
       ref.read(achievementStatsProvider.notifier).recordChatMessage();
     } catch (_) {
@@ -193,8 +197,51 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen>
     }
   }
 
-  void _toggleTelemetry() {
-    setState(() => _showTelemetry = !_showTelemetry);
+  Future<void> _pickImage(ImageSource source) async {
+    File? file;
+    if (source == ImageSource.camera) {
+      file = await Navigator.push<File?>(
+        context,
+        MaterialPageRoute(builder: (_) => const InAppCameraScreen()),
+      );
+    } else {
+      final picker = ImagePicker();
+      final pickedFile = await picker.pickImage(source: source);
+      if (pickedFile != null) {
+        file = File(pickedFile.path);
+      }
+    }
+
+    if (file != null && mounted) {
+      final bytes = await file.readAsBytes();
+      final base64String = base64Encode(bytes);
+      
+      // Enviar la foto con un mensaje predeterminado si el usuario no escribe nada
+      final currentText = _textController.text.trim();
+      _textController.clear();
+      
+      await _sendMessage(
+        text: currentText.isNotEmpty ? currentText : 'Aquí tienes una foto de mi planta, ¿cómo la ves?',
+        imageBase64: base64String,
+      );
+    }
+  }
+
+  void _showAttachmentOptions() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _AttachmentSheet(
+        onCamera: () {
+          Navigator.pop(context);
+          _pickImage(ImageSource.camera);
+        },
+        onGallery: () {
+          Navigator.pop(context);
+          _pickImage(ImageSource.gallery);
+        },
+      ),
+    );
   }
 
   void _showChatSettings(Plant plant) {
@@ -231,12 +278,11 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen>
             realtime?.soilMoisture ?? _plant!.sensors.soilMoisture;
         final temperature =
             realtime?.temperature ?? _plant!.sensors.temperature;
-        final light = realtime?.light ?? _plant!.sensors.light;
         final humidity = realtime?.humidity ?? _plant!.sensors.humidity;
 
         return Scaffold(
           backgroundColor: GardenColors.creamPaper,
-          appBar: _buildAppBar(_plant),
+          appBar: _buildAppBar(_plant, soilMoisture: soilMoisture, temperature: temperature, humidity: humidity),
           body: Column(
             children: [
               // ── Lista de mensajes con fondo animado ─────────────────────
@@ -267,51 +313,6 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen>
                 ),
               ),
 
-              // ── Panel telemetría ─────────────────────────────────────────
-              if (_plant != null && _showTelemetry) ...[
-                TelemetryPanel(
-                  telemetryData: [
-                    TelemetryData(
-                      label: 'Humedad suelo',
-                      value: soilMoisture,
-                      min: _plant!.comfortZones.soilMoisture.min,
-                      max: _plant!.comfortZones.soilMoisture.max,
-                      unit: '%',
-                      iconAsset: GardenIcons.soilHumidity,
-                      color: GardenColors.leafGreen,
-                    ),
-                    TelemetryData(
-                      label: 'Temperatura',
-                      value: temperature,
-                      min: _plant!.comfortZones.temperature.min,
-                      max: _plant!.comfortZones.temperature.max,
-                      unit: '°C',
-                      iconAsset: GardenIcons.thermostat,
-                      color: GardenColors.potOrange,
-                    ),
-                    TelemetryData(
-                      label: 'Luz',
-                      value: light,
-                      min: _plant!.comfortZones.light.min,
-                      max: _plant!.comfortZones.light.max,
-                      unit: 'lux',
-                      iconAsset: GardenIcons.sun,
-                      color: GardenColors.golden,
-                    ),
-                    TelemetryData(
-                      label: 'Humedad aire',
-                      value: humidity,
-                      min: _plant!.comfortZones.humidity.min,
-                      max: _plant!.comfortZones.humidity.max,
-                      unit: '%',
-                      iconAsset: GardenIcons.humidity,
-                      color: GardenColors.waterBlue,
-                    ),
-                  ],
-                  initiallyExpanded: true,
-                ),
-              ],
-
               // ── Input bar ────────────────────────────────────────────────
               _ChatInputBar(
                 controller: _textController,
@@ -321,8 +322,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen>
                 micPulseController: _micPulseController,
                 onSend: () => _sendMessage(),
                 onMicToggle: _toggleRecording,
-                onTelemetryToggle: _toggleTelemetry,
-                showTelemetry: _showTelemetry,
+                onAttachmentTap: _showAttachmentOptions,
               ),
             ],
           ),
@@ -341,7 +341,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen>
     );
   }
 
-  PreferredSizeWidget _buildAppBar(Plant? plant) {
+  PreferredSizeWidget _buildAppBar(Plant? plant, {double? soilMoisture, double? temperature, double? humidity}) {
     final isOnline = plant?.sensorStatus == SensorStatus.online;
     return AppBar(
       backgroundColor: GardenColors.creamPaper,
@@ -400,38 +400,52 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen>
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
-                  Row(
-                    children: [
-                      Container(
-                        width: 6,
-                        height: 6,
-                        decoration: BoxDecoration(
-                          color: isOnline
-                              ? GardenColors.leafGreen
-                              : GardenColors.dustLight,
-                          shape: BoxShape.circle,
+                  if (soilMoisture != null && temperature != null && humidity != null)
+                    Row(
+                      children: [
+                        Text(
+                          '💧 ${soilMoisture.toStringAsFixed(0)}%  🌡️ ${temperature.toStringAsFixed(1)}°C  🌧️ ${humidity.toStringAsFixed(0)}%',
+                          style: GardenTextStyles.label.copyWith(
+                            color: GardenColors.inkSoft,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 5),
-                      Text(
-                        isOnline ? 'En línea' : 'Sin conexión',
-                        style: GardenTextStyles.label.copyWith(
-                          color: GardenColors.inkSoft,
-                          fontSize: 12,
-                          fontWeight: FontWeight.w500,
+                      ],
+                    )
+                  else
+                    Row(
+                      children: [
+                        Container(
+                          width: 6,
+                          height: 6,
+                          decoration: BoxDecoration(
+                            color: isOnline
+                                ? GardenColors.leafGreen
+                                : GardenColors.dustLight,
+                            shape: BoxShape.circle,
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                        const SizedBox(width: 5),
+                        Text(
+                          isOnline ? 'En línea' : 'Sin conexión',
+                          style: GardenTextStyles.label.copyWith(
+                            color: GardenColors.inkSoft,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ],
+                    ),
                 ],
               ),
             ),
-            // Chevron hint
+            // Chevron hint -> 3 dots
             if (plant != null)
-              GardenIcon(
-                asset: GardenIcons.forward,
-                size: 14,
-                color: GardenColors.ink.withValues(alpha: 0.5),
+              const Icon(
+                Icons.more_vert_rounded,
+                size: 20,
+                color: GardenColors.inkSoft,
               ),
           ],
         ),
@@ -552,8 +566,7 @@ class _ChatInputBar extends StatelessWidget {
   final AnimationController micPulseController;
   final VoidCallback onSend;
   final VoidCallback onMicToggle;
-  final VoidCallback onTelemetryToggle;
-  final bool showTelemetry;
+  final VoidCallback onAttachmentTap;
 
   const _ChatInputBar({
     required this.controller,
@@ -563,8 +576,7 @@ class _ChatInputBar extends StatelessWidget {
     required this.micPulseController,
     required this.onSend,
     required this.onMicToggle,
-    required this.onTelemetryToggle,
-    required this.showTelemetry,
+    required this.onAttachmentTap,
   });
 
   @override
@@ -579,20 +591,20 @@ class _ChatInputBar extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          // ── Botón Telemetría ───────────────────────────────────────────
+          // ── Botón Adjuntar Foto ───────────────────────────────────────────
           GestureDetector(
-            onTap: onTelemetryToggle,
+            onTap: onAttachmentTap,
             child: Container(
               width: 44,
               height: 44,
               margin: const EdgeInsets.only(bottom: 2, right: 8),
-              decoration: BoxDecoration(
-                color: showTelemetry ? GardenColors.leafGreen : Colors.transparent,
+              decoration: const BoxDecoration(
+                color: Colors.transparent,
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                Icons.speed_rounded,
-                color: showTelemetry ? Colors.white : GardenColors.inkSoft,
+              child: const Icon(
+                Icons.add_a_photo_rounded,
+                color: GardenColors.inkSoft,
                 size: 24,
               ),
             ),
@@ -929,4 +941,103 @@ class _Divider extends StatelessWidget {
         color: GardenColors.dustLight,
         margin: const EdgeInsets.symmetric(horizontal: 16),
       );
+}
+
+// ── Opciones de adjuntar ──────────────────────────────────────────────────────
+
+class _AttachmentSheet extends StatelessWidget {
+  final VoidCallback onCamera;
+  final VoidCallback onGallery;
+
+  const _AttachmentSheet({
+    required this.onCamera,
+    required this.onGallery,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(20, 12, 20, MediaQuery.of(context).padding.bottom + 20),
+      decoration: const BoxDecoration(
+        color: GardenColors.creamPaper,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: GardenColors.dustLight,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+            children: [
+              _AttachmentOption(
+                icon: Icons.camera_alt_rounded,
+                label: 'Cámara',
+                color: GardenColors.heartRed,
+                onTap: onCamera,
+              ),
+              _AttachmentOption(
+                icon: Icons.photo_library_rounded,
+                label: 'Galería',
+                color: GardenColors.waterBlue,
+                onTap: onGallery,
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AttachmentOption extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _AttachmentOption({
+    required this.icon,
+    required this.label,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 64,
+            height: 64,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.15),
+              shape: BoxShape.circle,
+              border: Border.all(color: color, width: 2),
+            ),
+            child: Icon(icon, color: color, size: 28),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            label,
+            style: GardenTextStyles.bodySmall.copyWith(
+              color: GardenColors.ink,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
