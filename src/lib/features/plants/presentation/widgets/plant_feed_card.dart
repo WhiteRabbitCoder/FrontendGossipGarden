@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import '../../data/models/plant.dart';
-import '../../data/models/plant_enums.dart';
 import '../../../../core/theme/garden_colors.dart';
 import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
 import '../../../../core/widgets/garden_icon.dart';
+import 'plant_badges.dart';
 
 class PlantFeedCard extends StatelessWidget {
   final Plant plant;
@@ -93,7 +93,7 @@ class PlantFeedCard extends StatelessWidget {
                             ),
                           ),
                           const SizedBox(width: 8),
-                          _MoodBadge(mood: plant.mood),
+                          PlantMoodBadge(mood: plant.mood),
                         ],
                       ),
                       const SizedBox(height: 4),
@@ -196,7 +196,7 @@ class PlantFeedGridCard extends StatelessWidget {
                 overflow: TextOverflow.ellipsis,
               ),
               const SizedBox(height: 6),
-              _MoodBadge(mood: plant.mood),
+              PlantMoodBadge(mood: plant.mood, horizontalPadding: 10, fontSize: 11),
               const SizedBox(height: 8),
               Expanded(
                 child: Text(
@@ -220,47 +220,3 @@ class PlantFeedGridCard extends StatelessWidget {
   }
 }
 
-// ── Mood Badge ────────────────────────────────────────────────────────────────
-
-class _MoodBadge extends StatelessWidget {
-  final PlantMood mood;
-
-  const _MoodBadge({required this.mood});
-
-  @override
-  Widget build(BuildContext context) {
-    final (label, bgColor, textColor) = _moodStyle(mood);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 3),
-      decoration: BoxDecoration(
-        color: bgColor,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: bgColor.withOpacity(0.55)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(
-          color: textColor,
-          fontSize: 11,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-    );
-  }
-
-  static (String, Color, Color) _moodStyle(PlantMood mood) {
-    switch (mood) {
-      case PlantMood.thirsty:
-        return ('Sedienta', const Color(0xFFFFEDED), const Color(0xFFD94040));
-      case PlantMood.stressed:
-        return ('Estresada', const Color(0xFFFFF1E0), const Color(0xFFB85C00));
-      case PlantMood.cold:
-        return ('Fría', const Color(0xFFE0F0FF), const Color(0xFF2563EB));
-      case PlantMood.hot:
-        return ('Acalorada', const Color(0xFFFFF1E0), const Color(0xFFB85C00));
-      case PlantMood.perfect:
-      case PlantMood.happy:
-        return ('Óptimo', const Color(0xFFE6F4EA), const Color(0xFF2E7D32));
-    }
-  }
-}
