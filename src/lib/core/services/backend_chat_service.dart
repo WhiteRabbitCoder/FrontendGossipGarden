@@ -13,12 +13,14 @@ class BackendChatService {
     required String message,
     String responseFormat = 'text',
     String? imageBase64,
+    String? userAudioBase64,
   }) async {
     try {
       final request = ChatMessageRequest(
         message: message, 
         responseFormat: responseFormat,
         imageBase64: imageBase64,
+        userAudioBase64: userAudioBase64,
       );
       final response = await _apiClient.dio.post(
         '/chat/$plantId',

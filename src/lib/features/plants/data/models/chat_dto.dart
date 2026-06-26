@@ -3,12 +3,14 @@ class ChatMessageRequest {
   final String language;
   final String responseFormat;
   final String? imageBase64;
+  final String? userAudioBase64;
 
   ChatMessageRequest({
     required this.message,
     this.language = 'es',
     this.responseFormat = 'text',
     this.imageBase64,
+    this.userAudioBase64,
   });
 
   Map<String, dynamic> toJson() {
@@ -17,6 +19,7 @@ class ChatMessageRequest {
       'language': language,
       'response_format': responseFormat,
       if (imageBase64 != null) 'image_base64': imageBase64,
+      if (userAudioBase64 != null) 'user_audio_base64': userAudioBase64,
     };
   }
 }

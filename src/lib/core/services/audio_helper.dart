@@ -33,9 +33,11 @@ abstract class AudioHelper {
 class AudioRecordingResult {
   final String audioUrl;
   final String transcription;
+  final String? audioBase64;
 
   AudioRecordingResult({
     required this.audioUrl,
     required this.transcription,
+    this.audioBase64,
   });
 }

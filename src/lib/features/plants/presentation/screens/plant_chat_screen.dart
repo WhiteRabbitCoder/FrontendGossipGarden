@@ -86,12 +86,12 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen>
     }
   }
 
-  Future<void> _sendMessage({String? text, String? audioUrl, String? imageBase64}) async {
+  Future<void> _sendMessage({String? text, String? audioUrl, String? imageBase64, String? userAudioBase64}) async {
     final messageText = text ?? _textController.text.trim();
-    if (messageText.isEmpty && imageBase64 == null) return;
+    if (messageText.isEmpty && imageBase64 == null && userAudioBase64 == null) return;
     if (_plant == null || _waitingForPlant) return;
 
-    if (text == null && imageBase64 == null) _textController.clear();
+    if (text == null && imageBase64 == null && userAudioBase64 == null) _textController.clear();
     setState(() => _waitingForPlant = true);
 
     try {
@@ -102,6 +102,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen>
             responseFormat: audioUrl != null ? 'audio' : 'text',
             audioUrl: audioUrl,
             imageBase64: imageBase64,
+            userAudioBase64: userAudioBase64,
           );
       ref.read(achievementStatsProvider.notifier).recordChatMessage();
     } catch (_) {
@@ -142,6 +143,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen>
             await _sendMessage(
               text: result.transcription,
               audioUrl: result.audioUrl,
+              userAudioBase64: result.audioBase64,
             );
           } else {
             setState(() => _waitingForPlant = false);

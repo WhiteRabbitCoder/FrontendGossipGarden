@@ -98,7 +98,7 @@ class AudioHelperWeb implements AudioHelper {
     final completer = Completer<AudioRecordingResult>();
 
     if (_mediaRecorder != null) {
-      _mediaRecorder!.addEventListener('stop', (event) {
+      _mediaRecorder!.addEventListener('stop', (event) async {
         // Detener los tracks del stream para liberar el micrófono
         _mediaRecorder!.stream?.getTracks().forEach((track) {
           track.stop();
@@ -107,9 +107,16 @@ class AudioHelperWeb implements AudioHelper {
         final blob = html.Blob(_chunks, 'audio/webm');
         final audioUrl = html.Url.createObjectUrl(blob);
         
+        final reader = html.FileReader();
+        reader.readAsDataUrl(blob);
+        await reader.onLoadEnd.first;
+        final dataUrl = reader.result as String;
+        final base64Audio = dataUrl.split(',').last;
+        
         completer.complete(AudioRecordingResult(
           audioUrl: audioUrl,
           transcription: _transcription.isNotEmpty ? _transcription : 'Nota de voz',
+          audioBase64: base64Audio,
         ));
       });
 

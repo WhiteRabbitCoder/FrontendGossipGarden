@@ -62,6 +62,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     String responseFormat = 'text',
     String? audioUrl,
     String? imageBase64,
+    String? userAudioBase64,
   }) async {
     final currentMessages = state.value ?? [];
     
@@ -83,6 +84,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         message: content, 
         responseFormat: responseFormat,
         imageBase64: imageBase64,
+        userAudioBase64: userAudioBase64,
       );
       
       final replyMessage = ChatMessage(
