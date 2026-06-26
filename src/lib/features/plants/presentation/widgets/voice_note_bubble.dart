@@ -142,7 +142,7 @@ class _VoiceNoteBubbleState extends State<VoiceNoteBubble>
     final isUser = widget.isUser;
     final progress = _progress;
 
-    final bgColor = isUser ? const Color(0xFFB2F29D) : Colors.white;
+    final bgColor = isUser ? GardenColors.leafGreen.withValues(alpha: 0.2) : Colors.white;
     final fgColor = const Color(0xFF2E382E); // Gris oscuro botánico
     final subColor = GardenColors.inkSoft.withValues(alpha: 0.7);
     final unplayedColor = isUser
@@ -154,6 +154,7 @@ class _VoiceNoteBubbleState extends State<VoiceNoteBubble>
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
         color: bgColor,
+        border: Border.all(color: GardenColors.ink, width: 1.5),
         borderRadius: BorderRadius.only(
           topLeft: const Radius.circular(20),
           topRight: const Radius.circular(20),
@@ -162,9 +163,9 @@ class _VoiceNoteBubbleState extends State<VoiceNoteBubble>
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            color: GardenColors.ink.withValues(alpha: 0.15),
+            offset: const Offset(0, 3),
+            blurRadius: 0,
           ),
         ],
       ),

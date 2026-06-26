@@ -243,8 +243,13 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen>
               Expanded(
                 child: Stack(
                   children: [
-                    // Fondo con figuritas flotantes
-                    _AnimatedChatBackground(controller: _floatController),
+                    // Fondo de imagen
+                    Positioned.fill(
+                      child: Image.asset(
+                        'images/FondoChatGossipGarden.png',
+                        fit: BoxFit.cover,
+                      ),
+                    ),
                     // Mensajes
                     ListView.builder(
                       controller: _scrollController,
@@ -339,13 +344,13 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen>
   PreferredSizeWidget _buildAppBar(Plant? plant) {
     final isOnline = plant?.sensorStatus == SensorStatus.online;
     return AppBar(
-      backgroundColor: GardenColors.cream,
+      backgroundColor: GardenColors.creamPaper,
       elevation: 0,
       shadowColor: Colors.transparent,
       surfaceTintColor: Colors.transparent,
-      iconTheme: const IconThemeData(color: GardenColors.ink), // Botones oscuros
+      iconTheme: const IconThemeData(color: GardenColors.ink),
       leading: IconButton(
-        icon: const GardenIcon(asset: GardenIcons.back, size: 22, color: GardenColors.ink),
+        icon: const GardenIcon(asset: GardenIcons.back, size: 20),
         onPressed: widget.onBack,
       ),
       title: GestureDetector(
@@ -441,110 +446,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen>
 
 // ── Animated Chat Background (WOW Effect) ───────────────────────────────────
 
-class _AnimatedChatBackground extends StatelessWidget {
-  final AnimationController controller;
-
-  const _AnimatedChatBackground({required this.controller});
-
-  @override
-  Widget build(BuildContext context) {
-    return AnimatedBuilder(
-      animation: controller,
-      builder: (_, __) => CustomPaint(
-        size: Size.infinite,
-        painter: _BotanicalWallpaperPainter(progress: controller.value),
-      ),
-    );
-  }
-}
-
-class _BotanicalWallpaperPainter extends CustomPainter {
-  final double progress;
-
-  _BotanicalWallpaperPainter({required this.progress});
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    // 1. Fondo base verde muy claro (similar a WhatsApp botánico)
-    canvas.drawRect(
-      Offset.zero & size,
-      Paint()..color = const Color(0xFFE8F3E8),
-    );
-
-    // 2. Formas grandes y sutiles (hojas y círculos flotando como marca de agua)
-    _drawWatermarkShapes(canvas, size);
-  }
-
-  void _drawWatermarkShapes(Canvas canvas, Size size) {
-    final rand = math.Random(123); // Semilla fija para posiciones base
-    
-    // Desplazamiento lento
-    final t = progress * math.pi * 2;
-    
-    final int shapeCount = 12; // Formas grandes
-
-    for (int i = 0; i < shapeCount; i++) {
-      final isCircle = rand.nextDouble() > 0.6;
-      final startX = rand.nextDouble() * size.width;
-      final startY = rand.nextDouble() * size.height;
-      final scale = 1.0 + rand.nextDouble() * 2.0;
-      final phase = rand.nextDouble() * math.pi * 2;
-      
-      // Movimiento muy lento
-      final animY = (startY - (progress * size.height * 0.2)) % size.height;
-      final finalY = animY < 0 ? animY + size.height : animY;
-      final finalX = startX + math.sin(t + phase) * 20 * scale;
-
-      canvas.save();
-      canvas.translate(finalX, finalY);
-      canvas.rotate(math.sin(t * 0.5 + phase) * 0.2);
-
-      // Verde translúcido para el efecto de marca de agua
-      final paint = Paint()
-        ..color = const Color(0xFFC8E6C9).withValues(alpha: 0.3)
-        ..style = PaintingStyle.fill;
-
-      if (isCircle) {
-        // Círculos concéntricos sutiles
-        paint.style = PaintingStyle.stroke;
-        paint.strokeWidth = 2;
-        canvas.drawCircle(Offset.zero, 40 * scale, paint);
-        canvas.drawCircle(Offset.zero, 60 * scale, paint..color = paint.color.withValues(alpha: 0.15));
-      } else {
-        // Hoja grande, redondeada
-        paint.style = PaintingStyle.fill;
-        final path = Path()
-          ..moveTo(0, -40 * scale)
-          ..quadraticBezierTo(40 * scale, -40 * scale, 40 * scale, 0)
-          ..quadraticBezierTo(40 * scale, 40 * scale, 0, 40 * scale)
-          ..quadraticBezierTo(-40 * scale, 40 * scale, -40 * scale, 0)
-          ..quadraticBezierTo(-40 * scale, -40 * scale, 0, -40 * scale);
-          
-        canvas.drawPath(path, paint);
-        
-        // Línea central de la hoja
-        final linePaint = Paint()
-          ..color = const Color(0xFFA5D6A7).withValues(alpha: 0.4)
-          ..style = PaintingStyle.stroke
-          ..strokeWidth = 2;
-        canvas.drawLine(Offset(0, -35 * scale), Offset(0, 35 * scale), linePaint);
-      }
-
-      canvas.restore();
-    }
-    
-    // 3. Puntos pequeñitos al azar (semillas/polvo)
-    final dotPaint = Paint()..color = const Color(0xFFA5D6A7).withValues(alpha: 0.5);
-    for (int i = 0; i < 20; i++) {
-      final x = (rand.nextDouble() * size.width + math.cos(t + i) * 10) % size.width;
-      final y = (rand.nextDouble() * size.height + math.sin(t + i) * 10) % size.height;
-      canvas.drawCircle(Offset(x, y), 2.5 + rand.nextDouble() * 2, dotPaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(_BotanicalWallpaperPainter old) => old.progress != progress;
-}
+// Animacion borrada
 
 // ── Thinking bubble ───────────────────────────────────────────────────────────
 

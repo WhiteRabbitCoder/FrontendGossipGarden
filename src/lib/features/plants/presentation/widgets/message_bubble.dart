@@ -127,7 +127,8 @@ class _Bubble extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: isUser ? const Color(0xFFB2F29D) : Colors.white,
+        color: isUser ? GardenColors.leafGreen.withValues(alpha: 0.2) : Colors.white,
+        border: Border.all(color: GardenColors.ink, width: 1.5),
         borderRadius: BorderRadius.only(
           topLeft: const Radius.circular(20),
           topRight: const Radius.circular(20),
@@ -136,9 +137,9 @@ class _Bubble extends StatelessWidget {
         ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
-            blurRadius: 4,
-            offset: const Offset(0, 2),
+            color: GardenColors.ink.withValues(alpha: 0.15),
+            offset: const Offset(0, 3),
+            blurRadius: 0,
           ),
         ],
       ),
@@ -164,9 +165,9 @@ class _PlantAvatar extends StatelessWidget {
       width: 28,
       height: 28,
       decoration: BoxDecoration(
-        color: const Color(0xFFA5D6A7), // Verde claro botánico
+        color: GardenColors.leafGreen.withValues(alpha: 0.3),
         shape: BoxShape.circle,
-        border: Border.all(color: const Color(0xFF81C784), width: 1.5),
+        border: Border.all(color: GardenColors.ink, width: 1.5),
       ),
       child: const Center(
         child: Text('✿', style: TextStyle(fontSize: 14)),
