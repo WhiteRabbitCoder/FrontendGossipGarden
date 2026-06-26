@@ -11,7 +11,7 @@ import 'audio_helper.dart';
 AudioHelper getAudioHelper() => AudioHelperMobile();
 
 class AudioHelperMobile implements AudioHelper {
-  final Record _audioRecorder = Record();
+  final AudioRecorder _audioRecorder = AudioRecorder();
   final SpeechToText _speechToText = SpeechToText();
   final AudioPlayer _audioPlayer = AudioPlayer();
 
@@ -49,9 +49,11 @@ class AudioHelperMobile implements AudioHelper {
       _recordedFilePath = '${tempDir.path}/audio_record_${DateTime.now().millisecondsSinceEpoch}.m4a';
 
       await _audioRecorder.start(
-        path: _recordedFilePath,
-        encoder: AudioEncoder.aacLc,
-        bitRate: 128000,
+        const RecordConfig(
+          encoder: AudioEncoder.aacLc,
+          bitRate: 128000,
+        ),
+        path: _recordedFilePath!,
       );
       _isRecording = true;
 
