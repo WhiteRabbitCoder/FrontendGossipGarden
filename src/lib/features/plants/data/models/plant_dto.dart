@@ -17,6 +17,7 @@ class PlantResponse {
   final int? estimatedAgeMonths;
   final String? location;
   final Map<String, dynamic>? specificCareTips;
+  final String? macAddress;
 
   PlantResponse({
     required this.plantId,
@@ -35,6 +36,7 @@ class PlantResponse {
     this.estimatedAgeMonths,
     this.location,
     this.specificCareTips,
+    this.macAddress,
   });
 
   factory PlantResponse.fromJson(Map<String, dynamic> json) {
@@ -61,6 +63,7 @@ class PlantResponse {
       specificCareTips: json['specific_care_tips'] is String
           ? _tryDecodeJson(json['specific_care_tips'])
           : json['specific_care_tips'],
+      macAddress: json['mac_address'],
     );
   }
 
@@ -160,6 +163,7 @@ class PlantProfileResponse extends PlantResponse {
     super.estimatedAgeMonths,
     super.location,
     super.specificCareTips,
+    super.macAddress,
     required this.speciesInfo,
   });
 
@@ -182,6 +186,7 @@ class PlantProfileResponse extends PlantResponse {
       estimatedAgeMonths: base.estimatedAgeMonths,
       location: base.location,
       specificCareTips: base.specificCareTips,
+      macAddress: base.macAddress,
       speciesInfo: SpeciesInfoDTO.fromJson(json['species_info'] ?? {}),
     );
   }

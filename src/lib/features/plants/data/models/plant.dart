@@ -22,6 +22,8 @@ class Plant {
   final List<PlantAction> actions;
   final List<String> insights;
   final ComfortZones comfortZones;
+  
+  final String? macAddress;
 
   const Plant({
     required this.id,
@@ -38,6 +40,7 @@ class Plant {
     required this.actions,
     required this.insights,
     required this.comfortZones,
+    this.macAddress,
   });
 
   factory Plant.fromJson(Map<String, dynamic> json) {
@@ -82,6 +85,7 @@ class Plant {
               ?.map((e) => PlantAction.fromJson(e))
               .toList() ??
           [],
+      macAddress: json['mac_address']?.toString(),
     );
   }
 
@@ -100,6 +104,7 @@ class Plant {
     List<PlantAction>? actions,
     List<String>? insights,
     ComfortZones? comfortZones,
+    String? macAddress,
   }) {
     return Plant(
       id: id ?? this.id,
@@ -116,6 +121,7 @@ class Plant {
       actions: actions ?? this.actions,
       insights: insights ?? this.insights,
       comfortZones: comfortZones ?? this.comfortZones,
+      macAddress: macAddress ?? this.macAddress,
     );
   }
 }

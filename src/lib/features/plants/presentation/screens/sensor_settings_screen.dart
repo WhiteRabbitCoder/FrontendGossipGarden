@@ -81,8 +81,87 @@ class _SensorSettingsScreenState extends ConsumerState<SensorSettingsScreen> {
 
   void _selectNetwork(WifiNetworkOption network) {
     _ssidController.text = network.ssid;
-    ref.read(sensorWifiSsidProvider.notifier).state = network.ssid;
-    setState(() {});
+    _passwordController.clear();
+    _passwordVisible = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom),
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: GardenColors.creamPaper,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      network.ssid.isEmpty ? 'Conectar a red oculta' : 'Conectar a ${network.ssid}',
+                      style: GardenTextStyles.title.copyWith(
+                        fontWeight: FontWeight.w800,
+                        color: GardenColors.ink,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    if (network.ssid.isEmpty) ...[
+                      TextField(
+                        controller: _ssidController,
+                        decoration: _inputDecoration('Nombre de la red (SSID)', GardenIcons.wifi),
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    TextField(
+                      controller: _passwordController,
+                      obscureText: !_passwordVisible,
+                      decoration: _inputDecoration('Contraseña WiFi', GardenIcons.lock).copyWith(
+                        suffixIcon: IconButton(
+                          icon: GardenIcon(
+                            asset: _passwordVisible
+                                ? GardenIcons.eyeClose
+                                : GardenIcons.eyeOpen,
+                            size: 22,
+                            opacity: 0.6,
+                          ),
+                          onPressed: () => setModalState(() => _passwordVisible = !_passwordVisible),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton(
+                        onPressed: () {
+                          Navigator.pop(context); // Close modal
+                          _connectSensor(); // Start connection phase on main screen
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: GardenColors.leafDark,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16)),
+                        ),
+                        child: const Text('Conectar al sensor'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   Future<void> _connectSensor() async {
@@ -119,7 +198,7 @@ class _SensorSettingsScreenState extends ConsumerState<SensorSettingsScreen> {
           debugPrint('Error patching MAC address: $e');
         }
       } else {
-        ref.read(sensorWifiErrorProvider.notifier).state = 'No se pudo vincular. Verifica la red y contraseña.';
+        ref.read(sensorWifiErrorProvider.notifier).state = 'Contraseña incorrecta o red fuera de alcance.';
         ref.read(sensorSetupPhaseProvider.notifier).state = SensorSetupPhase.error;
       }
     } catch (e) {
@@ -396,42 +475,26 @@ class _SensorSettingsScreenState extends ConsumerState<SensorSettingsScreen> {
             ),
           );
         }),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _ssidController,
-          decoration: _inputDecoration('Nombre de la red', GardenIcons.wifi),
-        ),
-        const SizedBox(height: 12),
-        TextField(
-          controller: _passwordController,
-          obscureText: !_passwordVisible,
-          decoration: _inputDecoration('Contraseña WiFi', GardenIcons.lock).copyWith(
-            suffixIcon: IconButton(
-              icon: GardenIcon(
-                asset: _passwordVisible ? GardenIcons.eyeClose : GardenIcons.eyeOpen,
-                size: 22,
-                opacity: 0.6,
-              ),
-              onPressed: () => setState(() => _passwordVisible = !_passwordVisible),
-            ),
-          ),
-        ),
-        const SizedBox(height: 8),
-        Text(
-          'La contraseña se envía solo al sensor. No pasa por nuestros servidores.',
-          style: GardenTextStyles.label.copyWith(color: GardenColors.inkSoft, fontSize: 11),
-        ),
         const SizedBox(height: 24),
-        ElevatedButton(
-          onPressed: scanning || _ssidController.text.trim().isEmpty ? null : _connectSensor,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: GardenColors.leafDark,
-            foregroundColor: Colors.white,
+        OutlinedButton.icon(
+          onPressed: scanning
+              ? null
+              : () {
+                  // Modal para red oculta
+                  _selectNetwork(const WifiNetworkOption(
+                      ssid: 'Ingresar red oculta',
+                      signal: 0,
+                      secured: true));
+                },
+          icon: const GardenIcon(asset: GardenIcons.addPlant, size: 18),
+          label: const Text('Conectarse a red oculta'),
+          style: OutlinedButton.styleFrom(
+            foregroundColor: GardenColors.leafDark,
+            side: const BorderSide(color: GardenColors.leafDark),
             padding: const EdgeInsets.symmetric(vertical: 16),
-            elevation: 0,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(16)),
           ),
-          child: const Text('Vincular sensor'),
         ),
       ],
     );
@@ -460,7 +523,7 @@ class _SensorSettingsScreenState extends ConsumerState<SensorSettingsScreen> {
           const GardenIcon(asset: GardenIcons.logroDesbloqueado, size: 64),
           const SizedBox(height: 16),
           Text(
-            'Sensor vinculado',
+            '¡Conexión exitosa!',
             style: GardenTextStyles.title.copyWith(
               fontWeight: FontWeight.w800,
               color: GardenColors.ink,
@@ -468,7 +531,7 @@ class _SensorSettingsScreenState extends ConsumerState<SensorSettingsScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            ssid.isNotEmpty ? 'Conectado a $ssid' : 'Configuración completada',
+            ssid.isNotEmpty ? 'El sensor ahora está conectado a $ssid.' : 'Configuración completada.',
             style: GardenTextStyles.bodySmall.copyWith(color: GardenColors.inkSoft),
             textAlign: TextAlign.center,
           ),
@@ -655,7 +718,13 @@ class _InfoRow extends StatelessWidget {
         'Sin conexión',
         GardenColors.heartRed,
         GardenIcons.sensorOffline,
-        'No recibimos datos del sensor. Puede estar apagado o desvinculado.',
+        'No recibimos datos del sensor. Puede estar apagado o fuera de red.',
+      ),
+    SensorStatus.unlinked => (
+        'Sin sensor vinculado',
+        GardenColors.dust,
+        GardenIcons.sensorOffline,
+        'Esta planta no tiene un sensor configurado.',
       ),
   };
 }
@@ -679,6 +748,10 @@ class _PlantSensorIssueCard extends StatelessWidget {
           'Verifica que el sensor esté encendido y con batería.',
           'Comprueba que el WiFi de tu hogar funcione correctamente.',
           'Reinicia el sensor manteniendo el botón 5 segundos.',
+        ],
+      SensorStatus.unlinked => const [
+          'Toca el botón arriba "Vincular hardware" para empezar.',
+          'Asegúrate de estar cerca del sensor al configurarlo.',
         ],
       SensorStatus.degraded => const [
           'Acerca el sensor al router o usa un repetidor WiFi.',

@@ -63,7 +63,7 @@ class PlantApiDatasource implements PlantDatasource {
     );
 
     final sensors = _buildSensors(sensorResponse);
-    final status = _deriveSensorStatus(sensorResponse);
+    final status = _deriveSensorStatus(sensorResponse, response.macAddress);
 
     String resolvedImage = response.photoUrl ?? '';
     if (resolvedImage.contains('firebasestorage.googleapis.com') && !resolvedImage.contains('token=')) {
@@ -108,6 +108,7 @@ class PlantApiDatasource implements PlantDatasource {
         if (response.specificCareTips != null) 'Tips de IA disponibles'
       ],
       comfortZones: comfortZones,
+      macAddress: response.macAddress,
     );
   }
 
@@ -132,7 +133,8 @@ class PlantApiDatasource implements PlantDatasource {
     );
   }
 
-  SensorStatus _deriveSensorStatus(SensorDataResponse? latest) {
+  SensorStatus _deriveSensorStatus(SensorDataResponse? latest, String? macAddress) {
+    if (macAddress == null || macAddress.isEmpty) return SensorStatus.unlinked;
     if (latest == null) return SensorStatus.offline;
 
     final age = DateTime.now().toUtc().difference(latest.timestamp.toUtc());
@@ -148,12 +150,13 @@ class PlantApiDatasource implements PlantDatasource {
       case SensorStatus.degraded:
         return ConfidenceLevel.medium;
       case SensorStatus.offline:
+      case SensorStatus.unlinked:
         return ConfidenceLevel.low;
     }
   }
 
   PlantMood _deriveMood(SensorStatus status) {
-    if (status == SensorStatus.offline || status == SensorStatus.degraded) return PlantMood.stressed;
+    if (status == SensorStatus.offline || status == SensorStatus.degraded || status == SensorStatus.unlinked) return PlantMood.stressed;
     return PlantMood.happy; // simplified for now
   }
 
@@ -167,7 +170,7 @@ class PlantApiDatasource implements PlantDatasource {
   }
 
   String _estimateLastWatered(Sensors sensors, ComfortZones zones, SensorStatus status) {
-    if (status == SensorStatus.offline) return 'Sin datos';
+    if (status == SensorStatus.offline || status == SensorStatus.unlinked) return 'Sin datos';
     if (sensors.soilMoisture >= zones.soilMoisture.max) return 'Hoy';
     final middle = (zones.soilMoisture.min + zones.soilMoisture.max) / 2;
     if (sensors.soilMoisture >= middle) return '1 día';

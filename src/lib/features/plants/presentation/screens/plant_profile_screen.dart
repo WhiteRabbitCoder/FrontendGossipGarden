@@ -164,21 +164,23 @@ class PlantProfileScreen extends ConsumerWidget {
                 ),
                 const SizedBox(height: 24),
                 
+                // ── Cuidados generales ─────────────────────────────────────
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  child: _CareSection(plant: plant, profile: profile),
+                ),
+                const SizedBox(height: 24),
+                
                 // ── Datos Curiosos ─────────────────────────────────────────
                 if (profile.speciesInfo.funFacts.isNotEmpty) ...[
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: _FunFactsSection(profile: profile),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 120),
+                ] else ...[
+                  const SizedBox(height: 120),
                 ],
-
-                // ── Cuidados generales ─────────────────────────────────────
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: _CareSection(plant: plant, profile: profile),
-                ),
-                const SizedBox(height: 120),
               ],
             ),
           ),
@@ -243,7 +245,14 @@ class _PlantHeroCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: Colors.white,
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: GardenColors.creamPaper),
+        border: Border.all(color: GardenColors.ink, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: GardenColors.ink.withValues(alpha: 0.15),
+            offset: const Offset(0, 5),
+            blurRadius: 0,
+          ),
+        ],
       ),
       child: Column(
         children: [
@@ -486,8 +495,15 @@ class _PersonalitySection extends StatelessWidget {
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: GardenColors.creamPaper),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: GardenColors.ink, width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: GardenColors.ink.withValues(alpha: 0.15),
+                offset: const Offset(0, 5),
+                blurRadius: 0,
+              ),
+            ],
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -566,6 +582,12 @@ class _SensorStatusCard extends StatelessWidget {
           GardenIcons.sensorOffline,
           'No hay datos del sensor',
         ),
+      SensorStatus.unlinked => (
+          'Sin sensor',
+          GardenColors.dust,
+          GardenIcons.sensorOffline,
+          'No tiene sensor configurado',
+        ),
     };
 
     return Column(
@@ -581,16 +603,23 @@ class _SensorStatusCard extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Material(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(16),
+          color: Colors.transparent,
           child: InkWell(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(24),
             onTap: () => _openSensorSettings(context),
             child: Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: color.withValues(alpha: 0.3)),
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+                border: Border.all(color: GardenColors.ink, width: 1.5),
+                boxShadow: [
+                  BoxShadow(
+                    color: GardenColors.ink.withValues(alpha: 0.15),
+                    offset: const Offset(0, 5),
+                    blurRadius: 0,
+                  ),
+                ],
               ),
               child: Row(
                 children: [
@@ -624,8 +653,8 @@ class _SensorStatusCard extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          plant.sensorStatus == SensorStatus.offline
-                              ? 'Toca para reconectar o revisar la falla'
+                          plant.sensorStatus == SensorStatus.offline || plant.sensorStatus == SensorStatus.unlinked
+                              ? 'Toca para vincular o revisar la conexión'
                               : 'Toca para ver detalles y configuración',
                           style: GardenTextStyles.label.copyWith(
                             color: GardenColors.leafDark,
@@ -736,8 +765,15 @@ class _SensorTile extends StatelessWidget {
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: GardenColors.creamPaper),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: GardenColors.ink, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: GardenColors.ink.withValues(alpha: 0.15),
+            offset: const Offset(0, 5),
+            blurRadius: 0,
+          ),
+        ],
       ),
       child: Row(
         children: [
@@ -825,8 +861,15 @@ class _AboutSection extends StatelessWidget {
         Container(
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: GardenColors.creamPaper),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: GardenColors.ink, width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: GardenColors.ink.withValues(alpha: 0.15),
+                offset: const Offset(0, 5),
+                blurRadius: 0,
+              ),
+            ],
           ),
           child: Column(
             children: rows.asMap().entries.map((entry) {
@@ -864,8 +907,8 @@ class _AboutSection extends StatelessWidget {
                   if (i < rows.length - 1)
                     Divider(
                       height: 1,
-                      thickness: 1,
-                      color: GardenColors.creamPaper,
+                      thickness: 1.5,
+                      color: GardenColors.ink.withValues(alpha: 0.1),
                       indent: 16,
                       endIndent: 16,
                     ),
@@ -900,45 +943,60 @@ class _FunFactsSection extends StatelessWidget {
         ),
         const SizedBox(height: 12),
         Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(24),
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: GardenColors.creamPaper),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: GardenColors.ink, width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: GardenColors.ink.withValues(alpha: 0.15),
+                offset: const Offset(0, 5),
+                blurRadius: 0,
+              ),
+            ],
           ),
           child: Column(
             children: profile.speciesInfo.funFacts.asMap().entries.map((entry) {
               final i = entry.key;
               final fact = entry.value;
-              return Column(
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('💡', style: TextStyle(fontSize: 18)),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: Text(
-                            fact,
-                            style: GardenTextStyles.bodySmall.copyWith(
-                              color: GardenColors.inkSoft,
-                              height: 1.4,
-                            ),
+              return Padding(
+                padding: EdgeInsets.only(bottom: i < profile.speciesInfo.funFacts.length - 1 ? 16 : 0),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: GardenColors.ink.withValues(alpha: 0.15), width: 1.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: GardenColors.ink.withValues(alpha: 0.15),
+                            blurRadius: 0,
+                            offset: const Offset(0, 2),
+                          )
+                        ],
+                      ),
+                      child: const GardenIcon(asset: GardenIcons.bulb, size: 18),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Padding(
+                        padding: const EdgeInsets.only(top: 4),
+                        child: Text(
+                          fact,
+                          style: GardenTextStyles.bodySmall.copyWith(
+                            color: GardenColors.ink,
+                            height: 1.4,
                           ),
                         ),
-                      ],
+                      ),
                     ),
-                  ),
-                  if (i < profile.speciesInfo.funFacts.length - 1)
-                    const Divider(
-                      height: 1,
-                      thickness: 1,
-                      color: GardenColors.creamPaper,
-                      indent: 16,
-                      endIndent: 16,
-                    ),
-                ],
+                  ],
+                ),
               );
             }).toList(),
           ),
@@ -969,11 +1027,21 @@ class _CareSection extends StatelessWidget {
         (GardenIcons.humidity, 'HUMEDAD', careTipsMap['humidity']?.toString() ?? ''),
       ];
     } else if (profile.speciesInfo.careTips.isNotEmpty) {
-      items = profile.speciesInfo.careTips.asMap().entries.map((e) => (
-        GardenIcons.notificationAlt, 
-        'TIP ${e.key + 1}', 
-        e.value
-      )).toList();
+      items = profile.speciesInfo.careTips.asMap().entries.map((e) {
+        final tipLower = e.value.toLowerCase();
+        String icon = GardenIcons.notificationAlt;
+        if (tipLower.contains('riega') || tipLower.contains('agua') || tipLower.contains('humedad')) {
+          icon = GardenIcons.water;
+        } else if (tipLower.contains('luz') || tipLower.contains('sol') || tipLower.contains('ilumina')) {
+          icon = GardenIcons.sun;
+        } else if (tipLower.contains('tierra') || tipLower.contains('sustrato') || tipLower.contains('abono')) {
+          icon = GardenIcons.soil;
+        } else if (tipLower.contains('temperatura') || tipLower.contains('frío') || tipLower.contains('calor')) {
+          icon = GardenIcons.thermostat;
+        }
+        
+        return (icon, 'TIP ${e.key + 1}', e.value);
+      }).toList();
     } else {
       items = [(GardenIcons.notificationAlt, 'CUIDADOS', profile.speciesInfo.careSummary ?? 'Pronto tendremos más información.')];
     }
@@ -995,8 +1063,15 @@ class _CareSection extends StatelessWidget {
         Container(
           decoration: BoxDecoration(
             color: Colors.white,
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: GardenColors.creamPaper),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: GardenColors.ink, width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: GardenColors.ink.withValues(alpha: 0.15),
+                offset: const Offset(0, 5),
+                blurRadius: 0,
+              ),
+            ],
           ),
           child: Column(
             children: items.asMap().entries.map((entry) {
@@ -1010,13 +1085,16 @@ class _CareSection extends StatelessWidget {
                     child: Row(
                       children: [
                         Container(
-                          width: 36,
-                          height: 36,
+                          width: 48,
+                          height: 48,
                           decoration: BoxDecoration(
-                            color: GardenColors.creamLight,
-                            shape: BoxShape.circle,
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: GardenColors.ink.withValues(alpha: 0.15), width: 1.5),
                           ),
-                          child: GardenIcon(asset: item.$1, size: 18),
+                          child: Center(
+                            child: GardenIcon(asset: item.$1, size: 24),
+                          ),
                         ),
                         const SizedBox(width: 12),
                         Expanded(
@@ -1036,6 +1114,7 @@ class _CareSection extends StatelessWidget {
                                 style: GardenTextStyles.bodySmall.copyWith(
                                   color: GardenColors.ink,
                                   fontWeight: FontWeight.w500,
+                                  height: 1.4,
                                 ),
                               ),
                             ],
@@ -1047,8 +1126,8 @@ class _CareSection extends StatelessWidget {
                   if (i < items.length - 1)
                     Divider(
                       height: 1,
-                      thickness: 1,
-                      color: GardenColors.creamPaper,
+                      thickness: 1.5,
+                      color: GardenColors.ink.withValues(alpha: 0.1),
                       indent: 16,
                       endIndent: 16,
                     ),
@@ -1060,16 +1139,23 @@ class _CareSection extends StatelessWidget {
         if (tip != null) ...[
           const SizedBox(height: 12),
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: const Color(0xFFFFEDED),
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: const Color(0xFFFFCDD2)),
+              color: GardenColors.golden.withValues(alpha: 0.05),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: GardenColors.golden, width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: GardenColors.golden.withValues(alpha: 0.2),
+                  offset: const Offset(0, 4),
+                  blurRadius: 0,
+                ),
+              ],
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const GardenIcon(asset: GardenIcons.bulb, size: 18),
+                const GardenIcon(asset: GardenIcons.bulb, size: 20, color: GardenColors.golden),
                 const SizedBox(width: 10),
                 Expanded(
                   child: RichText(

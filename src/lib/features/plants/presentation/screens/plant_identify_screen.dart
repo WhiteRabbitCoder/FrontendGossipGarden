@@ -1035,20 +1035,91 @@ class _ResultView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // ── NUEVO PROTAGONISTA: EL NOMBRE ──
+          Text(
+            '¡Es una ${completed?.profile?.commonName ?? 'planta hermosa'}!',
+            style: GardenTextStyles.display.copyWith(
+              color: GardenColors.ink,
+              fontWeight: FontWeight.w800,
+              fontSize: 24,
+              height: 1.2,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            '¿Cómo la vas a llamar? Ponle un apodo para tu jardín.',
+            style: GardenTextStyles.bodySmall.copyWith(
+              color: GardenColors.inkSoft,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 20),
+          
+          TextField(
+            controller: nicknameController,
+            style: GardenTextStyles.title.copyWith(
+              color: GardenColors.ink,
+              fontWeight: FontWeight.w700,
+              fontSize: 22,
+            ),
+            decoration: InputDecoration(
+              hintText: 'Ej. Señor Ficus',
+              hintStyle: GardenTextStyles.title.copyWith(
+                color: GardenColors.dust,
+                fontWeight: FontWeight.w700,
+                fontSize: 22,
+              ),
+              filled: true,
+              fillColor: Colors.white,
+              contentPadding: const EdgeInsets.symmetric(horizontal: 24, vertical: 22),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+                borderSide: const BorderSide(color: GardenColors.dustLight, width: 2),
+              ),
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+                borderSide: const BorderSide(color: GardenColors.dustLight, width: 2),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(20),
+                borderSide: const BorderSide(color: GardenColors.leafDark, width: 3),
+              ),
+            ),
+          ),
+
+          if (errorMessage != null)
+             Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Text(errorMessage!, style: const TextStyle(color: Colors.red, fontWeight: FontWeight.w600)),
+             ),
+             
+          const SizedBox(height: 32),
+
+          // ── INFO BOTÁNICA ──
+          Text(
+            'Ficha botánica',
+            style: GardenTextStyles.title.copyWith(
+              color: GardenColors.ink,
+              fontWeight: FontWeight.w800,
+              fontSize: 18,
+            ),
+          ),
+          const SizedBox(height: 12),
+          
           // Tarjeta de identificación
           Container(
             decoration: BoxDecoration(
               color: GardenColors.creamLight,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: GardenColors.dustLight, width: 1.2),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: GardenColors.ink.withOpacity(0.1), width: 1.5),
               boxShadow: [
                 BoxShadow(
-                  color: GardenColors.ink.withOpacity(0.06),
-                  blurRadius: 18,
+                  color: GardenColors.ink.withOpacity(0.04),
+                  blurRadius: 16,
                   offset: const Offset(0, 8),
                 ),
               ],
@@ -1057,31 +1128,31 @@ class _ResultView extends StatelessWidget {
             child: Row(
               children: [
                 Container(
-                  width: 64,
-                  height: 64,
+                  width: 72,
+                  height: 72,
                   decoration: BoxDecoration(
-                    color: GardenColors.creamLight,
-                    borderRadius: BorderRadius.circular(12),
+                    color: GardenColors.creamPaper,
+                    borderRadius: BorderRadius.circular(16),
                   ),
                   child: imageFile != null
                       ? ClipRRect(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(16),
                           child: Image.file(imageFile!, fit: BoxFit.cover),
                         )
                       : const Center(
-                          child: GardenIcon(asset: GardenIcons.plantEco, size: 32),
+                          child: GardenIcon(asset: GardenIcons.plantEco, size: 36),
                         ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 16),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                            horizontal: 8, vertical: 3),
+                            horizontal: 10, vertical: 4),
                         decoration: BoxDecoration(
-                          color: GardenColors.leafDark.withOpacity(0.08),
+                          color: GardenColors.leafDark.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Row(
@@ -1095,39 +1166,22 @@ class _ResultView extends StatelessWidget {
                                 style: GardenTextStyles.label.copyWith(
                                     color: GardenColors.leafDark,
                                     fontSize: 10,
-                                    fontWeight: FontWeight.w700,
-                                    letterSpacing: 0.6)),
+                                    fontWeight: FontWeight.w800,
+                                    letterSpacing: 0.5)),
                           ],
                         ),
                       ),
-                      const SizedBox(height: 6),
-                      Text(completed?.profile?.commonName ?? 'Planta',
+                      const SizedBox(height: 8),
+                      Text(completed?.profile?.scientificName ?? 'Especie desconocida',
                           style: GardenTextStyles.title.copyWith(
                               color: GardenColors.ink,
                               fontWeight: FontWeight.w800,
-                              fontSize: 18)),
-                      Text(completed?.profile?.scientificName ?? '',
-                          style: GardenTextStyles.bodySmall.copyWith(
-                              color: GardenColors.inkSoft, fontSize: 12)),
-                      const SizedBox(height: 6),
+                              fontSize: 16)),
+                      const SizedBox(height: 4),
                       RichText(
                         text: TextSpan(
                           style: GardenTextStyles.bodySmall
-                              .copyWith(color: GardenColors.ink, fontSize: 13),
-                          children: const [
-                            TextSpan(
-                                text: 'Origen: ',
-                                style: TextStyle(fontWeight: FontWeight.w700)),
-                            TextSpan(
-                                text: 'Bosques tropicales del sur de México'),
-                          ],
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      RichText(
-                        text: TextSpan(
-                          style: GardenTextStyles.bodySmall
-                              .copyWith(color: GardenColors.ink, fontSize: 13),
+                              .copyWith(color: GardenColors.inkSoft, fontSize: 13),
                           children: [
                             const TextSpan(
                                 text: 'Familia: ',
@@ -1143,7 +1197,7 @@ class _ResultView extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: 28),
 
           Text('Cuidados generales',
               style: GardenTextStyles.title.copyWith(
@@ -1156,8 +1210,8 @@ class _ResultView extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(14),
-              border: Border.all(color: GardenColors.creamPaper),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: GardenColors.ink.withOpacity(0.08), width: 1.5),
             ),
             child: Column(
               children: (completed?.profile?.careTips ?? []).take(3).toList().asMap().entries.map((entry) {
@@ -1168,32 +1222,34 @@ class _ResultView extends StatelessWidget {
                   children: [
                     Padding(
                       padding: const EdgeInsets.symmetric(
-                          horizontal: 16, vertical: 12),
+                          horizontal: 16, vertical: 14),
                       child: Row(
                         children: [
                           Container(
-                            width: 38,
-                            height: 38,
+                            width: 40,
+                            height: 40,
                             decoration: const BoxDecoration(
                                 color: GardenColors.creamLight,
                                 shape: BoxShape.circle),
-                            child: GardenIcon(asset: icon, size: 18),
+                            child: GardenIcon(asset: icon, size: 20),
                           ),
-                          const SizedBox(width: 12),
+                          const SizedBox(width: 14),
                           Expanded(
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text('TIP DE CUIDADO',
                                     style: GardenTextStyles.label.copyWith(
-                                        color: GardenColors.inkSoft,
+                                        color: GardenColors.inkSoft.withOpacity(0.7),
                                         fontSize: 10,
+                                        fontWeight: FontWeight.w800,
                                         letterSpacing: 0.8)),
+                                const SizedBox(height: 2),
                                 Text(tip,
                                     style: GardenTextStyles.bodySmall.copyWith(
                                         color: GardenColors.ink,
-                                        fontWeight: FontWeight.w500,
-                                        fontSize: 13)),
+                                        fontWeight: FontWeight.w600,
+                                        fontSize: 14)),
                               ],
                             ),
                           ),
@@ -1201,10 +1257,10 @@ class _ResultView extends StatelessWidget {
                       ),
                     ),
                     if (i < 2 && i < (completed?.profile?.careTips.length ?? 0) - 1)
-                      const Divider(
+                      Divider(
                           height: 1,
                           thickness: 1,
-                          color: GardenColors.creamPaper,
+                          color: GardenColors.ink.withOpacity(0.05),
                           indent: 16,
                           endIndent: 16),
                   ],
@@ -1213,36 +1269,36 @@ class _ResultView extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
 
           // Tip de oro
           Container(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: GardenColors.creamPaper,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: GardenColors.creamPaper),
+              color: GardenColors.potOrange.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: GardenColors.potOrange.withOpacity(0.3), width: 1.5),
             ),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('✨', style: TextStyle(fontSize: 14)),
-                const SizedBox(width: 8),
+                const Text('✨', style: TextStyle(fontSize: 16)),
+                const SizedBox(width: 10),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Concejo jardinero',
+                      Text('Consejo jardinero',
                           style: GardenTextStyles.label.copyWith(
-                              color: GardenColors.leafDark,
-                              fontSize: 10,
+                              color: GardenColors.potOrange,
+                              fontSize: 11,
                               fontWeight: FontWeight.w800,
                               letterSpacing: 0.8)),
-                      const SizedBox(height: 2),
+                      const SizedBox(height: 4),
                       Text(
                           'Limpia sus hojas con un paño húmedo cada 2 semanas.',
                           style: GardenTextStyles.bodySmall
-                              .copyWith(color: GardenColors.ink, fontSize: 13)),
+                              .copyWith(color: GardenColors.ink, fontSize: 13, fontWeight: FontWeight.w600)),
                     ],
                   ),
                 ),
@@ -1250,58 +1306,22 @@ class _ResultView extends StatelessWidget {
             ),
           ),
 
-          const SizedBox(height: 24),
-
-          // Campo de apodo
-          Text('Dale un nombre',
-              style: GardenTextStyles.title.copyWith(
-                  color: GardenColors.ink,
-                  fontWeight: FontWeight.w800,
-                  fontSize: 18)),
-          const SizedBox(height: 12),
-          TextField(
-            controller: nicknameController,
-            decoration: InputDecoration(
-              hintText: 'Ej. Planta de la suerte',
-              filled: true,
-              fillColor: Colors.white,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: GardenColors.dustLight),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: GardenColors.dustLight),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: GardenColors.leafDark, width: 2),
-              ),
-            ),
-          ),
-          
-          if (errorMessage != null)
-             Padding(
-                padding: const EdgeInsets.only(top: 12),
-                child: Text(errorMessage!, style: const TextStyle(color: Colors.red)),
-             ),
-
-          const SizedBox(height: 24),
+          const SizedBox(height: 32),
 
           // Botón agregar
           SizedBox(
             width: double.infinity,
             child: ElevatedButton.icon(
               onPressed: onAdd,
-              icon: const GardenIcon(asset: GardenIcons.addPlant, size: 18),
-              label: const Text('Agregar a mi jardín',
-                  style: TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
+              icon: const GardenIcon(asset: GardenIcons.addPlant, size: 20),
+              label: const Text('Guardar en mi jardín',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
               style: ElevatedButton.styleFrom(
                 backgroundColor: GardenColors.leafDark,
                 foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 16),
+                padding: const EdgeInsets.symmetric(vertical: 20),
                 shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(14)),
+                    borderRadius: BorderRadius.circular(20)),
                 elevation: 0,
               ),
             ),

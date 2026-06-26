@@ -194,7 +194,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
         ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.connected;
         ref.read(achievementStatsProvider.notifier).recordSensorSetup();
       } else {
-        ref.read(wifiErrorProvider.notifier).state = 'No se pudo vincular. Verifica la red y contraseña.';
+        ref.read(wifiErrorProvider.notifier).state = 'Contraseña incorrecta o red fuera de alcance.';
         ref.read(wifiSetupPhaseProvider.notifier).state = _WifiPhase.error;
       }
     } catch (e) {
@@ -274,7 +274,85 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
 
   void _selectNetwork(WifiNetworkOption net) {
     _ssidController.text = net.ssid;
-    setState(() => _showPasswordField = true);
+    _passwordController.clear();
+    _passwordVisible = false;
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            return Padding(
+              padding: EdgeInsets.only(
+                  bottom: MediaQuery.of(context).viewInsets.bottom),
+              child: Container(
+                decoration: const BoxDecoration(
+                  color: GardenColors.creamPaper,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                ),
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      net.ssid.isEmpty ? 'Conectar a red oculta' : 'Conectar a ${net.ssid}',
+                      style: const TextStyle(
+                        fontSize: 22,
+                        fontWeight: FontWeight.w800,
+                        color: GardenColors.ink,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    if (net.ssid.isEmpty) ...[
+                      _wifiTextField(
+                        controller: _ssidController,
+                        label: 'Nombre de la red (SSID)',
+                        hint: 'Escribe el nombre de la red',
+                        iconAsset: GardenIcons.wifi,
+                        obscure: false,
+                      ),
+                      const SizedBox(height: 16),
+                    ],
+                    _wifiTextField(
+                      controller: _passwordController,
+                      label: 'Contraseña',
+                      hint: '••••••••',
+                      iconAsset: GardenIcons.lock,
+                      obscure: !_passwordVisible,
+                      suffixIcon: IconButton(
+                        icon: GardenIcon(
+                          asset: _passwordVisible
+                              ? GardenIcons.eyeClose
+                              : GardenIcons.eyeOpen,
+                          size: 20,
+                          opacity: 0.6,
+                        ),
+                        onPressed: () => setModalState(
+                            () => _passwordVisible = !_passwordVisible),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    SizedBox(
+                      width: double.infinity,
+                      child: _primaryButton(
+                        'Conectar al sensor',
+                        () {
+                          Navigator.pop(context);
+                          _startWifiConnection();
+                        },
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -1172,60 +1250,24 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
               ),
             ),
           const SizedBox(height: 20),
-
-          // ── Campo SSID manual ────────────────────────────────────────
-          _wifiTextField(
-            controller: _ssidController,
-            label: 'Nombre de la red',
-            hint: 'O escribe el nombre manualmente',
-            iconAsset: GardenIcons.wifi,
-            obscure: false,
-            onChanged: (_) => setState(() => _showPasswordField = true),
-          ),
-          const SizedBox(height: 12),
-
-          // Campo contraseña (se muestra al seleccionar red o escribir)
-          if (_showPasswordField) ...[
-            _wifiTextField(
-              controller: _passwordController,
-              label: 'Contraseña',
-              hint: '••••••••',
-              iconAsset: GardenIcons.lock,
-              obscure: !_passwordVisible,
-              suffixIcon: IconButton(
-                icon: GardenIcon(
-                  asset: _passwordVisible
-                      ? GardenIcons.eyeClose
-                      : GardenIcons.eyeOpen,
-                  size: 20,
-                  opacity: 0.6,
-                ),
-                onPressed: () =>
-                    setState(() => _passwordVisible = !_passwordVisible),
-              ),
-            ),
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                Icon(Icons.security_rounded,
-                    size: 13, color: GardenColors.inkSoft),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: Text(
-                    'Tu contraseña se envía únicamente al sensor. Nunca pasa por nuestros servidores.',
-                    style: TextStyle(fontSize: 11, color: GardenColors.inkSoft),
-                  ),
-                ),
-              ],
-            ),
-          ],
-          const SizedBox(height: 24),
-
-          ValueListenableBuilder(
-            valueListenable: _ssidController,
-            builder: (_, val, __) => _primaryButton(
-              'Conectar sensor',
-              val.text.trim().isEmpty ? null : () => _startWifiConnection(),
+          OutlinedButton.icon(
+            onPressed: scanning
+                ? null
+                : () {
+                    _selectNetwork(const WifiNetworkOption(
+                        ssid: 'Ingresar red oculta',
+                        signal: 0,
+                        secured: true));
+                  },
+            icon: const GardenIcon(asset: GardenIcons.addPlant, size: 18),
+            label: const Text('Conectarse a red oculta'),
+            style: OutlinedButton.styleFrom(
+              foregroundColor: GardenColors.leafDark,
+              side: const BorderSide(color: GardenColors.leafDark),
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16)),
+              minimumSize: const Size.fromHeight(54),
             ),
           ),
           const SizedBox(height: 8),
@@ -1498,7 +1540,7 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen>
           ),
           const SizedBox(height: 32),
           const Text(
-            '¡Chip en línea!',
+            '¡Conexión exitosa!',
             style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.w700,

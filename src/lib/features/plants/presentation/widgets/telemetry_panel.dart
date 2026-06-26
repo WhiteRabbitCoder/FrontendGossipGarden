@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/garden_icons.dart';
+import '../../../../core/theme/garden_colors.dart';
 import '../../../../core/widgets/garden_icon.dart';
 
 class TelemetryData {
@@ -127,14 +128,16 @@ class _TelemetryPanelState extends State<TelemetryPanel> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: data.color.withOpacity(0.05),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: data.isInRange
-              ? data.color.withOpacity(0.2)
-              : Colors.red.withOpacity(0.3),
-          width: 1,
-        ),
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: GardenColors.ink, width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: GardenColors.ink.withValues(alpha: 0.15),
+            offset: const Offset(0, 5),
+            blurRadius: 0,
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

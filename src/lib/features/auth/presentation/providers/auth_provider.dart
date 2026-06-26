@@ -220,6 +220,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
         displayName: googleUser.displayName,
         email: googleUser.email,
         photoUrl: googleUser.photoUrl,
+        // TODO: Consultar el perfil del backend para verificar si el usuario ya había completado el onboarding en lugar de forzar false
         onboardingCompleted: false,
         favoritePlantIds: const [],
         useGridView: true,
@@ -306,7 +307,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
           uid: email,
           displayName: name,
           email: email,
-          onboardingCompleted: true,
+          onboardingCompleted: false, // <-- Los usuarios nuevos por correo deben ver el onboarding
           favoritePlantIds: const [],
           useGridView: true,
           notificationPreference: 'important',
@@ -317,7 +318,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
           AuthSession(
             profile: profile,
             firebaseEnabled: false,
-            onboardingCompleted: true,
+            onboardingCompleted: false,
           ),
         );
       }
