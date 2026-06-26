@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../../../core/theme/garden_colors.dart';
 import '../../../../../core/theme/garden_text_styles.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'voice_note_bubble.dart';
 
 // ── Modelos ───────────────────────────────────────────────────────────────────
@@ -143,13 +144,21 @@ class _Bubble extends StatelessWidget {
           ),
         ],
       ),
-      child: Text(
-        message.content,
-        style: GardenTextStyles.bodySmall.copyWith(
-          color: const Color(0xFF2E382E), // Gris oscuro botánico
-          fontSize: 15,
-          height: 1.4,
-          fontWeight: FontWeight.w500,
+      child: MarkdownBody(
+        data: message.content,
+        styleSheet: MarkdownStyleSheet(
+          p: GardenTextStyles.bodySmall.copyWith(
+            color: const Color(0xFF2E382E), // Gris oscuro botánico
+            fontSize: 15,
+            height: 1.4,
+            fontWeight: FontWeight.w500,
+          ),
+          strong: GardenTextStyles.bodySmall.copyWith(
+            color: const Color(0xFF2E382E),
+            fontSize: 15,
+            height: 1.4,
+            fontWeight: FontWeight.w800,
+          ),
         ),
       ),
     );
