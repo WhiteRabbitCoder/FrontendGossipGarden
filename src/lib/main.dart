@@ -41,6 +41,7 @@ class _AppGate extends ConsumerStatefulWidget {
 
 class _AppGateState extends ConsumerState<_AppGate> {
   StreamSubscription? _unauthorizedSub;
+  bool _initialized = false;
 
   @override
   void initState() {
@@ -60,21 +61,25 @@ class _AppGateState extends ConsumerState<_AppGate> {
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
 
-    return authState.when(
-      data: (session) {
-        if (session.profile == null) {
-          return const LoginScreen();
-        }
+    if (authState.hasValue) {
+      _initialized = true;
+    }
 
-        if (!session.onboardingCompleted) {
-          return const OnboardingScreen();
-        }
+    if (!_initialized) {
+      return const _SplashScreen();
+    }
 
-        return const MainScreen();
-      },
-      loading: () => const _SplashScreen(),
-      error: (error, _) => LoginScreen(errorMessage: error.toString()),
-    );
+    final session = authState.valueOrNull;
+
+    if (session == null || session.profile == null) {
+      return const LoginScreen();
+    }
+
+    if (!session.onboardingCompleted) {
+      return const OnboardingScreen();
+    }
+
+    return const MainScreen();
   }
 }
 

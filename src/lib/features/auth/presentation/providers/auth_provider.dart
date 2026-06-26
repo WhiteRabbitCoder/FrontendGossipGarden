@@ -73,14 +73,7 @@ class AuthNotifier extends StateNotifier<AsyncValue<AuthSession>> {
          clientId: kIsWeb && AppConfig.googleClientId.isNotEmpty ? AppConfig.googleClientId : null,
          serverClientId: !kIsWeb && AppConfig.googleClientId.isNotEmpty ? AppConfig.googleClientId : null,
        ),
-       super(
-          AsyncValue.data(
-            AuthSession(
-              profile: null,
-              firebaseEnabled: FirebaseEnvironment.isConfigured,
-            ),
-          ),
-        ) {
+       super(const AsyncValue.loading()) {
     _bootstrap();
   }
 
