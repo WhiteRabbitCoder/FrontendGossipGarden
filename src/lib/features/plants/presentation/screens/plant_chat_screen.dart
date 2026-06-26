@@ -1,15 +1,17 @@
+import 'dart:math' as math;
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:gossip_garden/core/services/audio_helper.dart';
 import '../providers/plant_providers.dart';
 import '../providers/chat_providers.dart';
 import '../providers/achievement_providers.dart';
-import '../../../auth/presentation/providers/auth_provider.dart';
 import '../widgets/message_bubble.dart';
 import '../widgets/telemetry_panel.dart';
 import '../../data/models/plant.dart';
 import '../../data/models/plant_enums.dart';
 import '../../../../../core/theme/garden_colors.dart';
 import '../../../../../core/theme/garden_icons.dart';
+import '../../../../../core/theme/garden_text_styles.dart';
 import '../../../../../core/widgets/garden_icon.dart';
 
 class PlantChatScreen extends ConsumerStatefulWidget {
@@ -26,16 +28,40 @@ class PlantChatScreen extends ConsumerStatefulWidget {
   ConsumerState<PlantChatScreen> createState() => _PlantChatScreenState();
 }
 
-class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
+class _PlantChatScreenState extends ConsumerState<PlantChatScreen>
+    with TickerProviderStateMixin {
   final TextEditingController _textController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
   bool _waitingForPlant = false;
+  bool _isRecording = false;
+  bool _showTelemetry = false;
+  bool _hasText = false;
+
+  late final AnimationController _floatController;
+  late final AnimationController _micPulseController;
+  late final AudioHelper _audioHelper;
 
   Plant? _plant;
 
   @override
   void initState() {
     super.initState();
+    _audioHelper = AudioHelper();
+    _floatController = AnimationController(
+      vsync: this,
+      duration: const Duration(seconds: 6),
+    )..repeat(reverse: true);
+
+    _micPulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 800),
+    );
+
+    _textController.addListener(() {
+      final hasText = _textController.text.trim().isNotEmpty;
+      if (hasText != _hasText) setState(() => _hasText = hasText);
+    });
+
     WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
   }
 
@@ -43,6 +69,8 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
   void dispose() {
     _textController.dispose();
     _scrollController.dispose();
+    _floatController.dispose();
+    _micPulseController.dispose();
     super.dispose();
   }
 
@@ -50,35 +78,131 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
     if (_scrollController.hasClients) {
       _scrollController.animateTo(
         _scrollController.position.maxScrollExtent,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeOut,
+        duration: const Duration(milliseconds: 350),
+        curve: Curves.easeOutCubic,
       );
     }
   }
 
-  Future<void> _sendMessage() async {
-    final text = _textController.text.trim();
-    if (text.isEmpty || _plant == null || _waitingForPlant) return;
+  Future<void> _sendMessage({String? text, String? audioUrl}) async {
+    final messageText = text ?? _textController.text.trim();
+    if (messageText.isEmpty || _plant == null || _waitingForPlant) return;
 
-    _textController.clear();
+    if (text == null) _textController.clear();
     setState(() => _waitingForPlant = true);
 
     try {
-      await ref.read(chatMessagesProvider(widget.plantId).notifier).sendMessage(text);
+      await ref
+          .read(chatMessagesProvider(widget.plantId).notifier)
+          .sendMessage(
+            messageText,
+            responseFormat: audioUrl != null ? 'audio' : 'text',
+            audioUrl: audioUrl,
+          );
       ref.read(achievementStatsProvider.notifier).recordChatMessage();
-    } catch (e) {
+    } catch (_) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error al enviar el mensaje')),
+          SnackBar(
+            content: const Text('Error al enviar el mensaje'),
+            backgroundColor: GardenColors.heartRed,
+            behavior: SnackBarBehavior.floating,
+            shape:
+                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+          ),
         );
       }
     } finally {
       if (mounted) {
         setState(() => _waitingForPlant = false);
-        WidgetsBinding.instance
-            .addPostFrameCallback((_) => _scrollToBottom());
+        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
       }
     }
+  }
+
+  void _toggleRecording() async {
+    if (_isRecording) {
+      // Detener grabación y procesar audio
+      setState(() {
+        _isRecording = false;
+        _waitingForPlant = true;
+      });
+      _micPulseController.stop();
+      _micPulseController.reset();
+
+      try {
+        final result = await _audioHelper.stopRecording();
+        if (mounted) {
+          _textController.clear();
+          if (result.audioUrl.isNotEmpty) {
+            await _sendMessage(
+              text: result.transcription,
+              audioUrl: result.audioUrl,
+            );
+          } else {
+            setState(() => _waitingForPlant = false);
+          }
+        }
+      } catch (e) {
+        print('Error al detener la grabación: $e');
+        if (mounted) {
+          setState(() => _waitingForPlant = false);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('Error al procesar la grabación de voz'),
+              backgroundColor: GardenColors.heartRed,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+          );
+        }
+      }
+    } else {
+      // Iniciar grabación real
+      try {
+        setState(() => _isRecording = true);
+        _micPulseController.repeat(reverse: true);
+        
+        await _audioHelper.startRecording(
+          onTranscriptionUpdated: (interimText) {
+            if (mounted) {
+              setState(() {
+                _textController.text = interimText;
+              });
+            }
+          },
+        );
+      } catch (e) {
+        print('Error al iniciar la grabación: $e');
+        if (mounted) {
+          setState(() {
+            _isRecording = false;
+            _micPulseController.stop();
+            _micPulseController.reset();
+          });
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: const Text('No se pudo acceder al micrófono. Verifica los permisos.'),
+              backgroundColor: GardenColors.heartRed,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+            ),
+          );
+        }
+      }
+    }
+  }
+
+  void _toggleTelemetry() {
+    setState(() => _showTelemetry = !_showTelemetry);
+  }
+
+  void _showChatSettings(Plant plant) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (_) => _ChatSettingsSheet(plant: plant),
+    );
   }
 
   @override
@@ -92,27 +216,16 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
     return plantsAsync.when(
       data: (plants) {
         if (plants.isEmpty) {
-          _plant = null;
           return Scaffold(
-            backgroundColor: const Color(0xFFFDFCF8),
-            appBar: AppBar(
-              leading: IconButton(
-                icon: const GardenIcon(asset: GardenIcons.back, size: 22),
-                onPressed: widget.onBack,
-              ),
-              title: const Text('Chat de planta'),
-            ),
-            body: const Center(
-              child: Text(
-                'Aun no hay plantas disponibles.',
-                style: TextStyle(fontSize: 16),
-              ),
-            ),
+            backgroundColor: GardenColors.creamPaper,
+            appBar: _buildAppBar(null),
+            body: const Center(child: Text('Aún no hay plantas disponibles.')),
           );
         }
 
         _plant = plants.firstWhere((p) => p.id == widget.plantId,
             orElse: () => plants.first);
+
         final realtime = realtimeAsync.value;
         final soilMoisture =
             realtime?.soilMoisture ?? _plant!.sensors.soilMoisture;
@@ -122,91 +235,35 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
         final humidity = realtime?.humidity ?? _plant!.sensors.humidity;
 
         return Scaffold(
-          backgroundColor: const Color(0xFFFDFCF8),
-          appBar: AppBar(
-            leading: IconButton(
-              icon: const GardenIcon(asset: GardenIcons.back, size: 22),
-              onPressed: widget.onBack,
-            ),
-            title: Row(
-              children: [
-                CircleAvatar(
-                  backgroundColor: GardenColors.creamLight, // GardenColors.creamLight
-                  child: _plant?.image.isNotEmpty == true
-                      ? ClipOval(
-                          child: Image.network(
-                            _plant!.image,
-                            fit: BoxFit.cover,
-                            width: 40,
-                            height: 40,
-                            errorBuilder: (_, __, ___) => GardenIcon(
-                              asset: _getPlantIcon(_plant?.species ?? ''),
-                              size: 20,
-                            ),
-                          ),
-                        )
-                      : GardenIcon(
-                          asset: _getPlantIcon(_plant?.species ?? ''),
-                          size: 20,
-                        ),
-                ),
-                const SizedBox(width: 12),
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+          backgroundColor: GardenColors.creamPaper,
+          appBar: _buildAppBar(_plant),
+          body: Column(
+            children: [
+              // ── Lista de mensajes con fondo animado ─────────────────────
+              Expanded(
+                child: Stack(
                   children: [
-                    Text(
-                      _plant?.name ?? 'Planta',
-                      style: const TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w600),
-                    ),
-                    Text(
-                      _plant?.sensorStatus == SensorStatus.online
-                          ? 'En línea'
-                          : 'Offline',
-                      style: TextStyle(
-                        fontSize: 12,
-                        color: _plant?.sensorStatus == SensorStatus.online
-                            ? Colors.green
-                            : Colors.grey,
-                      ),
+                    // Fondo con figuritas flotantes
+                    _AnimatedChatBackground(controller: _floatController),
+                    // Mensajes
+                    ListView.builder(
+                      controller: _scrollController,
+                      padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),
+                      itemCount:
+                          messages.length + (_waitingForPlant ? 1 : 0),
+                      itemBuilder: (context, index) {
+                        if (index == messages.length && _waitingForPlant) {
+                          return _ThinkingBubble(plant: _plant);
+                        }
+                        return MessageBubble(message: messages[index]);
+                      },
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-          body: Column(
-            children: [
-              Expanded(
-                child: ListView.builder(
-                  controller: _scrollController,
-                  padding: const EdgeInsets.only(bottom: 16),
-                  itemCount: messages.length + (_waitingForPlant ? 1 : 0),
-                  itemBuilder: (context, index) {
-                    if (index == messages.length && _waitingForPlant) {
-                      return const Padding(
-                        padding:
-                            EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        child: Row(
-                          children: [
-                            SizedBox(
-                              width: 20,
-                              height: 20,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            ),
-                            SizedBox(width: 8),
-                            Text('La planta está pensando...',
-                                style: TextStyle(
-                                    color: Colors.grey, fontSize: 13)),
-                          ],
-                        ),
-                      );
-                    }
-                    return MessageBubble(message: messages[index]);
-                  },
-                ),
               ),
-              if (_plant != null) ...[
+
+              // ── Panel telemetría ─────────────────────────────────────────
+              if (_plant != null && _showTelemetry) ...[
                 TelemetryPanel(
                   telemetryData: [
                     TelemetryData(
@@ -216,7 +273,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                       max: _plant!.comfortZones.soilMoisture.max,
                       unit: '%',
                       iconAsset: GardenIcons.soilHumidity,
-                      color: const Color(0xFF4A6741),
+                      color: GardenColors.leafGreen,
                     ),
                     TelemetryData(
                       label: 'Temperatura',
@@ -225,7 +282,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                       max: _plant!.comfortZones.temperature.max,
                       unit: '°C',
                       iconAsset: GardenIcons.thermostat,
-                      color: Colors.orange,
+                      color: GardenColors.potOrange,
                     ),
                     TelemetryData(
                       label: 'Luz',
@@ -234,7 +291,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                       max: _plant!.comfortZones.light.max,
                       unit: 'lux',
                       iconAsset: GardenIcons.sun,
-                      color: Colors.amber,
+                      color: GardenColors.golden,
                     ),
                     TelemetryData(
                       label: 'Humedad aire',
@@ -243,71 +300,731 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen> {
                       max: _plant!.comfortZones.humidity.max,
                       unit: '%',
                       iconAsset: GardenIcons.humidity,
-                      color: Colors.blue,
+                      color: GardenColors.waterBlue,
                     ),
                   ],
-                  initiallyExpanded: false,
+                  initiallyExpanded: true,
                 ),
-                const SizedBox(height: 8),
               ],
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                color: Colors.white,
-                child: Row(
-                  children: [
-                    Expanded(
-                      child: TextField(
-                        controller: _textController,
-                        enabled: !_waitingForPlant,
-                        decoration: InputDecoration(
-                          hintText: 'Escribe un mensaje...',
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(24),
-                            borderSide: BorderSide.none,
-                          ),
-                          filled: true,
-                          fillColor: Colors.grey.shade100,
-                          contentPadding: const EdgeInsets.symmetric(
-                              horizontal: 20, vertical: 12),
-                        ),
-                        onSubmitted: (_) => _sendMessage(),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: _waitingForPlant ? null : _sendMessage,
-                      child: Container(
-                        width: 48,
-                        height: 48,
-                        decoration: BoxDecoration(
-                          color: _waitingForPlant
-                              ? Colors.grey.shade300
-                              : GardenColors.ink,
-                          borderRadius: BorderRadius.circular(24),
-                        ),
-                        child: GardenIcon(
-                          asset: GardenIcons.forward,
-                          size: 22,
-                          color: _waitingForPlant
-                              ? GardenColors.inkSoft
-                              : GardenColors.creamLight,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
+
+              // ── Input bar ────────────────────────────────────────────────
+              _ChatInputBar(
+                controller: _textController,
+                hasText: _hasText,
+                isWaiting: _waitingForPlant,
+                isRecording: _isRecording,
+                micPulseController: _micPulseController,
+                onSend: () => _sendMessage(),
+                onMicToggle: _toggleRecording,
+                onTelemetryToggle: _toggleTelemetry,
+                showTelemetry: _showTelemetry,
               ),
             ],
           ),
         );
       },
-      loading: () =>
-          const Scaffold(body: Center(child: CircularProgressIndicator())),
-      error: (e, _) => Scaffold(body: Center(child: Text('Error: $e'))),
+      loading: () => const Scaffold(
+        backgroundColor: GardenColors.creamPaper,
+        body: Center(
+            child:
+                CircularProgressIndicator(color: GardenColors.leafGreen)),
+      ),
+      error: (e, _) => Scaffold(
+        backgroundColor: GardenColors.creamPaper,
+        body: Center(child: Text('Error: $e')),
+      ),
     );
   }
 
-  String _getPlantIcon(String species) =>
-      GardenIcons.plantAssetForSpecies(species);
+  PreferredSizeWidget _buildAppBar(Plant? plant) {
+    final isOnline = plant?.sensorStatus == SensorStatus.online;
+    return AppBar(
+      backgroundColor: GardenColors.cream,
+      elevation: 0,
+      shadowColor: Colors.transparent,
+      surfaceTintColor: Colors.transparent,
+      iconTheme: const IconThemeData(color: GardenColors.ink), // Botones oscuros
+      leading: IconButton(
+        icon: const GardenIcon(asset: GardenIcons.back, size: 22, color: GardenColors.ink),
+        onPressed: widget.onBack,
+      ),
+      title: GestureDetector(
+        onTap: plant != null ? () => _showChatSettings(plant) : null,
+        behavior: HitTestBehavior.opaque,
+        child: Row(
+          children: [
+            // Avatar
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: GardenColors.creamLight,
+                shape: BoxShape.circle,
+                border: Border.all(color: GardenColors.dustLight, width: 1.5),
+              ),
+              child: ClipOval(
+                child: plant?.image.isNotEmpty == true
+                    ? Image.network(
+                        plant!.image,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => GardenIcon(
+                          asset: GardenIcons.plantAssetForSpecies(
+                              plant.species),
+                          size: 22,
+                        ),
+                      )
+                    : GardenIcon(
+                        asset: GardenIcons.plantAssetForSpecies(
+                            plant?.species ?? ''),
+                        size: 22,
+                      ),
+              ),
+            ),
+            const SizedBox(width: 10),
+            // Nombre + estado
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    plant?.name ?? 'Planta',
+                    style: GardenTextStyles.title.copyWith(
+                      color: GardenColors.ink,
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                    ),
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  Row(
+                    children: [
+                      Container(
+                        width: 6,
+                        height: 6,
+                        decoration: BoxDecoration(
+                          color: isOnline
+                              ? GardenColors.leafGreen
+                              : GardenColors.dustLight,
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                      const SizedBox(width: 5),
+                      Text(
+                        isOnline ? 'En línea' : 'Sin conexión',
+                        style: GardenTextStyles.label.copyWith(
+                          color: GardenColors.inkSoft,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            // Chevron hint
+            if (plant != null)
+              GardenIcon(
+                asset: GardenIcons.forward,
+                size: 14,
+                color: GardenColors.ink.withValues(alpha: 0.5),
+              ),
+          ],
+        ),
+      ),
+      bottom: PreferredSize(
+        preferredSize: const Size.fromHeight(1),
+        child: Container(height: 1, color: GardenColors.dustLight),
+      ),
+    );
+  }
+}
+
+// ── Animated Chat Background (WOW Effect) ───────────────────────────────────
+
+class _AnimatedChatBackground extends StatelessWidget {
+  final AnimationController controller;
+
+  const _AnimatedChatBackground({required this.controller});
+
+  @override
+  Widget build(BuildContext context) {
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (_, __) => CustomPaint(
+        size: Size.infinite,
+        painter: _BotanicalWallpaperPainter(progress: controller.value),
+      ),
+    );
+  }
+}
+
+class _BotanicalWallpaperPainter extends CustomPainter {
+  final double progress;
+
+  _BotanicalWallpaperPainter({required this.progress});
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    // 1. Fondo base verde muy claro (similar a WhatsApp botánico)
+    canvas.drawRect(
+      Offset.zero & size,
+      Paint()..color = const Color(0xFFE8F3E8),
+    );
+
+    // 2. Formas grandes y sutiles (hojas y círculos flotando como marca de agua)
+    _drawWatermarkShapes(canvas, size);
+  }
+
+  void _drawWatermarkShapes(Canvas canvas, Size size) {
+    final rand = math.Random(123); // Semilla fija para posiciones base
+    
+    // Desplazamiento lento
+    final t = progress * math.pi * 2;
+    
+    final int shapeCount = 12; // Formas grandes
+
+    for (int i = 0; i < shapeCount; i++) {
+      final isCircle = rand.nextDouble() > 0.6;
+      final startX = rand.nextDouble() * size.width;
+      final startY = rand.nextDouble() * size.height;
+      final scale = 1.0 + rand.nextDouble() * 2.0;
+      final phase = rand.nextDouble() * math.pi * 2;
+      
+      // Movimiento muy lento
+      final animY = (startY - (progress * size.height * 0.2)) % size.height;
+      final finalY = animY < 0 ? animY + size.height : animY;
+      final finalX = startX + math.sin(t + phase) * 20 * scale;
+
+      canvas.save();
+      canvas.translate(finalX, finalY);
+      canvas.rotate(math.sin(t * 0.5 + phase) * 0.2);
+
+      // Verde translúcido para el efecto de marca de agua
+      final paint = Paint()
+        ..color = const Color(0xFFC8E6C9).withValues(alpha: 0.3)
+        ..style = PaintingStyle.fill;
+
+      if (isCircle) {
+        // Círculos concéntricos sutiles
+        paint.style = PaintingStyle.stroke;
+        paint.strokeWidth = 2;
+        canvas.drawCircle(Offset.zero, 40 * scale, paint);
+        canvas.drawCircle(Offset.zero, 60 * scale, paint..color = paint.color.withValues(alpha: 0.15));
+      } else {
+        // Hoja grande, redondeada
+        paint.style = PaintingStyle.fill;
+        final path = Path()
+          ..moveTo(0, -40 * scale)
+          ..quadraticBezierTo(40 * scale, -40 * scale, 40 * scale, 0)
+          ..quadraticBezierTo(40 * scale, 40 * scale, 0, 40 * scale)
+          ..quadraticBezierTo(-40 * scale, 40 * scale, -40 * scale, 0)
+          ..quadraticBezierTo(-40 * scale, -40 * scale, 0, -40 * scale);
+          
+        canvas.drawPath(path, paint);
+        
+        // Línea central de la hoja
+        final linePaint = Paint()
+          ..color = const Color(0xFFA5D6A7).withValues(alpha: 0.4)
+          ..style = PaintingStyle.stroke
+          ..strokeWidth = 2;
+        canvas.drawLine(Offset(0, -35 * scale), Offset(0, 35 * scale), linePaint);
+      }
+
+      canvas.restore();
+    }
+    
+    // 3. Puntos pequeñitos al azar (semillas/polvo)
+    final dotPaint = Paint()..color = const Color(0xFFA5D6A7).withValues(alpha: 0.5);
+    for (int i = 0; i < 20; i++) {
+      final x = (rand.nextDouble() * size.width + math.cos(t + i) * 10) % size.width;
+      final y = (rand.nextDouble() * size.height + math.sin(t + i) * 10) % size.height;
+      canvas.drawCircle(Offset(x, y), 2.5 + rand.nextDouble() * 2, dotPaint);
+    }
+  }
+
+  @override
+  bool shouldRepaint(_BotanicalWallpaperPainter old) => old.progress != progress;
+}
+
+// ── Thinking bubble ───────────────────────────────────────────────────────────
+
+class _ThinkingBubble extends StatefulWidget {
+  final Plant? plant;
+  const _ThinkingBubble({this.plant});
+
+  @override
+  State<_ThinkingBubble> createState() => _ThinkingBubbleState();
+}
+
+class _ThinkingBubbleState extends State<_ThinkingBubble>
+    with SingleTickerProviderStateMixin {
+  late final AnimationController _dotController;
+
+  @override
+  void initState() {
+    super.initState();
+    _dotController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 1200),
+    )..repeat();
+  }
+
+  @override
+  void dispose() {
+    _dotController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(12, 4, 60, 4),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          Container(
+            width: 30,
+            height: 30,
+            decoration: const BoxDecoration(
+              color: GardenColors.creamLight,
+              shape: BoxShape.circle,
+            ),
+            child: Center(
+              child: Text('🌿', style: TextStyle(fontSize: 15)),
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: GardenColors.creamLight,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(20),
+                topRight: Radius.circular(20),
+                bottomRight: Radius.circular(20),
+                bottomLeft: Radius.circular(4),
+              ),
+              border: Border.all(color: GardenColors.dustLight),
+            ),
+            child: AnimatedBuilder(
+              animation: _dotController,
+              builder: (_, __) {
+                return Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: List.generate(3, (i) {
+                    final delay = i / 3;
+                    final t = (_dotController.value - delay).clamp(0.0, 1.0);
+                    final opacity = math.sin(t * math.pi).clamp(0.3, 1.0);
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 3),
+                      child: Opacity(
+                        opacity: opacity,
+                        child: Container(
+                          width: 7,
+                          height: 7,
+                          decoration: const BoxDecoration(
+                            color: GardenColors.inkSoft,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                    );
+                  }),
+                );
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Chat Input Bar ────────────────────────────────────────────────────────────
+
+class _ChatInputBar extends StatelessWidget {
+  final TextEditingController controller;
+  final bool hasText;
+  final bool isWaiting;
+  final bool isRecording;
+  final AnimationController micPulseController;
+  final VoidCallback onSend;
+  final VoidCallback onMicToggle;
+  final VoidCallback onTelemetryToggle;
+  final bool showTelemetry;
+
+  const _ChatInputBar({
+    required this.controller,
+    required this.hasText,
+    required this.isWaiting,
+    required this.isRecording,
+    required this.micPulseController,
+    required this.onSend,
+    required this.onMicToggle,
+    required this.onTelemetryToggle,
+    required this.showTelemetry,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+          12, 8, 12, MediaQuery.of(context).padding.bottom + 8),
+      decoration: const BoxDecoration(
+        color: GardenColors.cream,
+        border: Border(top: BorderSide(color: GardenColors.dustLight)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.end,
+        children: [
+          // ── Botón Telemetría ───────────────────────────────────────────
+          GestureDetector(
+            onTap: onTelemetryToggle,
+            child: Container(
+              width: 44,
+              height: 44,
+              margin: const EdgeInsets.only(bottom: 2, right: 8),
+              decoration: BoxDecoration(
+                color: showTelemetry ? GardenColors.leafGreen : Colors.transparent,
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.speed_rounded,
+                color: showTelemetry ? Colors.white : GardenColors.inkSoft,
+                size: 24,
+              ),
+            ),
+          ),
+          
+          // ── Campo de texto ───────────────────────────────────────────
+          Expanded(
+            child: Container(
+              constraints: const BoxConstraints(maxHeight: 120),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(24),
+              ),
+              child: TextField(
+                controller: controller,
+                enabled: !isWaiting,
+                maxLines: null,
+                textCapitalization: TextCapitalization.sentences,
+                decoration: InputDecoration(
+                  hintText: isRecording
+                      ? 'Escuchando...'
+                      : 'Escribe algo a tu planta…',
+                  hintStyle: GardenTextStyles.bodySmall.copyWith(
+                    color: GardenColors.inkSoft.withValues(alpha: 0.6),
+                  ),
+                  border: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 18, vertical: 10),
+                ),
+                style: GardenTextStyles.bodySmall.copyWith(
+                  color: GardenColors.ink,
+                  fontSize: 15,
+                ),
+                onSubmitted: (_) => onSend(),
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+
+          // ── Botón: enviar (si hay texto) o micrófono ─────────────────
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 200),
+            transitionBuilder: (child, anim) => ScaleTransition(
+              scale: anim,
+              child: child,
+            ),
+            child: (hasText && !isRecording)
+                ? _SendButton(key: const ValueKey('send'), onTap: onSend)
+                : _MicButton(
+                    key: const ValueKey('mic'),
+                    isRecording: isRecording,
+                    pulseController: micPulseController,
+                    onTap: onMicToggle,
+                  ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SendButton extends StatelessWidget {
+  final VoidCallback onTap;
+  const _SendButton({super.key, required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 44,
+        height: 44,
+        decoration: BoxDecoration(
+          color: GardenColors.leafGreen,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: GardenColors.leafGreen.withValues(alpha: 0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 3),
+            ),
+          ],
+        ),
+        child: const Icon(Icons.send_rounded, color: Colors.white, size: 20),
+      ),
+    );
+  }
+}
+
+class _MicButton extends StatelessWidget {
+  final bool isRecording;
+  final AnimationController pulseController;
+  final VoidCallback onTap;
+
+  const _MicButton({
+    super.key,
+    required this.isRecording,
+    required this.pulseController,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedBuilder(
+        animation: pulseController,
+        builder: (_, child) {
+          final scale = isRecording
+              ? 1.0 + pulseController.value * 0.12
+              : 1.0;
+          return Transform.scale(
+            scale: scale,
+            child: child,
+          );
+        },
+        child: Container(
+          width: 44,
+          height: 44,
+          decoration: BoxDecoration(
+            color: isRecording
+                ? GardenColors.heartRed
+                : GardenColors.creamLight,
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isRecording
+                  ? GardenColors.heartRed
+                  : GardenColors.dustLight,
+            ),
+            boxShadow: isRecording
+                ? [
+                    BoxShadow(
+                      color: GardenColors.heartRed.withValues(alpha: 0.3),
+                      blurRadius: 10,
+                      offset: const Offset(0, 3),
+                    ),
+                  ]
+                : [],
+          ),
+          child: Icon(
+            isRecording ? Icons.stop_rounded : Icons.mic_rounded,
+            color: isRecording ? Colors.white : GardenColors.inkSoft,
+            size: 22,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// ── Chat Settings Sheet ───────────────────────────────────────────────────────
+
+class _ChatSettingsSheet extends StatelessWidget {
+  final Plant plant;
+  const _ChatSettingsSheet({required this.plant});
+
+  @override
+  Widget build(BuildContext context) {
+    final isOnline = plant.sensorStatus == SensorStatus.online;
+
+    return Container(
+      decoration: const BoxDecoration(
+        color: GardenColors.creamPaper,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Handle
+          Container(
+            margin: const EdgeInsets.only(top: 12),
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: GardenColors.dustLight,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Avatar grande
+          Container(
+            width: 72,
+            height: 72,
+            decoration: BoxDecoration(
+              color: GardenColors.creamLight,
+              shape: BoxShape.circle,
+              border: Border.all(color: GardenColors.dustLight, width: 2),
+            ),
+            child: ClipOval(
+              child: plant.image.isNotEmpty
+                  ? Image.network(
+                      plant.image,
+                      fit: BoxFit.cover,
+                      errorBuilder: (_, __, ___) => GardenIcon(
+                        asset: GardenIcons.plantAssetForSpecies(plant.species),
+                        size: 36,
+                      ),
+                    )
+                  : GardenIcon(
+                      asset: GardenIcons.plantAssetForSpecies(plant.species),
+                      size: 36,
+                    ),
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          // Nombre
+          Text(
+            plant.name,
+            style: GardenTextStyles.display.copyWith(
+              color: GardenColors.ink,
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            plant.species,
+            style: GardenTextStyles.bodySmall.copyWith(
+              color: GardenColors.inkSoft,
+            ),
+          ),
+          const SizedBox(height: 20),
+
+          // Info básica en lista
+          Container(
+            margin: const EdgeInsets.symmetric(horizontal: 20),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(color: GardenColors.dustLight),
+            ),
+            child: Column(
+              children: [
+                _SettingsRow(
+                  icon: Icons.circle,
+                  iconColor: isOnline ? GardenColors.leafGreen : GardenColors.dust,
+                  label: 'Sensor',
+                  value: isOnline ? 'En línea' : 'Sin conexión',
+                ),
+                _Divider(),
+                _SettingsRow(
+                  icon: Icons.favorite_rounded,
+                  iconColor: GardenColors.heartRed,
+                  label: 'Salud',
+                  value: '${plant.health.toInt()}%',
+                ),
+                _Divider(),
+                _SettingsRow(
+                  icon: Icons.tag_rounded,
+                  iconColor: GardenColors.potOrange,
+                  label: 'ID de planta',
+                  value: '${plant.id.substring(0, 8)}…',
+                ),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 24),
+          Padding(
+            padding: EdgeInsets.only(
+                bottom: MediaQuery.of(context).padding.bottom + 16),
+            child: GestureDetector(
+              onTap: () => Navigator.pop(context),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                decoration: BoxDecoration(
+                  color: GardenColors.creamLight,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(color: GardenColors.dustLight),
+                ),
+                child: Text(
+                  'Cerrar',
+                  style: GardenTextStyles.label.copyWith(
+                    color: GardenColors.inkSoft,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SettingsRow extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String label;
+  final String value;
+
+  const _SettingsRow({
+    required this.icon,
+    required this.iconColor,
+    required this.label,
+    required this.value,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
+      child: Row(
+        children: [
+          Icon(icon, color: iconColor, size: 16),
+          const SizedBox(width: 12),
+          Text(
+            label,
+            style: GardenTextStyles.bodySmall.copyWith(
+              color: GardenColors.inkSoft,
+            ),
+          ),
+          const Spacer(),
+          Text(
+            value,
+            style: GardenTextStyles.bodySmall.copyWith(
+              color: GardenColors.ink,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Divider extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) => Container(
+        height: 1,
+        color: GardenColors.dustLight,
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+      );
 }

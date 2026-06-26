@@ -57,7 +57,11 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     }
   }
 
-  Future<void> sendMessage(String content) async {
+  Future<void> sendMessage(
+    String content, {
+    String responseFormat = 'text',
+    String? audioUrl,
+  }) async {
     final currentMessages = state.value ?? [];
     
     // Optimistic UI update
@@ -68,11 +72,16 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
       source: 'no-data',
       confidence: 'high',
       timestamp: DateTime.now(),
+      audioUrl: audioUrl,
     );
     state = AsyncValue.data([...currentMessages, newMessage]);
 
     try {
-      final response = await _chatService.chat(plantId: plantId, message: content);
+      final response = await _chatService.chat(
+        plantId: plantId, 
+        message: content, 
+        responseFormat: responseFormat,
+      );
       
       final replyMessage = ChatMessage(
         id: DateTime.now().microsecondsSinceEpoch.toString(),
@@ -81,6 +90,7 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         source: 'backend',
         confidence: 'high',
         timestamp: response.timestamp,
+        audioUrl: response.audioUrl,
       );
 
       final updatedMessages = state.value ?? [];

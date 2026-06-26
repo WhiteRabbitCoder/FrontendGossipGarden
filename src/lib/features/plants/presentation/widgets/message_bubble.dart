@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import '../../../../../core/theme/garden_colors.dart';
+import '../../../../../core/theme/garden_text_styles.dart';
+import 'voice_note_bubble.dart';
+
+// ── Modelos ───────────────────────────────────────────────────────────────────
+
 class ChatMessage {
   final String id;
   final String content;
   final String sender; // user | plant | system
-  final String source; // sensor | ai | no-data
+  final String source; // sensor | ai | backend | no-data
   final String confidence; // high | medium | low
   final DateTime timestamp;
   final List<MessageAction>? actions;
+  final String? audioUrl;
 
   ChatMessage({
     required this.id,
@@ -17,11 +23,11 @@ class ChatMessage {
     required this.confidence,
     required this.timestamp,
     this.actions,
+    this.audioUrl,
   });
 
   factory ChatMessage.fromMap(Map<String, dynamic> json) {
     final timestampRaw = json['timestampMs'] ?? json['timestamp'];
-
     return ChatMessage(
       id: json['id']?.toString() ?? '',
       content: json['content']?.toString() ?? '',
@@ -32,26 +38,19 @@ class ChatMessage {
     );
   }
 
-  Map<String, dynamic> toMap() {
-    return {
-      'id': id,
-      'content': content,
-      'sender': sender,
-      'source': source,
-      'confidence': confidence,
-      'timestampMs': timestamp.millisecondsSinceEpoch,
-    };
-  }
+  Map<String, dynamic> toMap() => {
+        'id': id,
+        'content': content,
+        'sender': sender,
+        'source': source,
+        'confidence': confidence,
+        'timestampMs': timestamp.millisecondsSinceEpoch,
+      };
 
   static DateTime _parseTimestamp(dynamic raw) {
     if (raw is DateTime) return raw;
-    if (raw is int) {
-      return DateTime.fromMillisecondsSinceEpoch(raw);
-    }
-    if (raw is String) {
-      return DateTime.tryParse(raw) ?? DateTime.now();
-    }
-
+    if (raw is int) return DateTime.fromMillisecondsSinceEpoch(raw);
+    if (raw is String) return DateTime.tryParse(raw) ?? DateTime.now();
     return DateTime.now();
   }
 }
@@ -59,20 +58,15 @@ class ChatMessage {
 class MessageAction {
   final String label;
   final VoidCallback onTap;
-
-  MessageAction({
-    required this.label,
-    required this.onTap,
-  });
+  MessageAction({required this.label, required this.onTap});
 }
+
+// ── MessageBubble ─────────────────────────────────────────────────────────────
 
 class MessageBubble extends StatelessWidget {
   final ChatMessage message;
 
-  const MessageBubble({
-    super.key,
-    required this.message,
-  });
+  const MessageBubble({super.key, required this.message});
 
   bool get isUser => message.sender == 'user';
   bool get isPlant => message.sender == 'plant';
@@ -80,24 +74,38 @@ class MessageBubble extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 12),
+      padding: EdgeInsets.fromLTRB(
+        isUser ? 48 : 0,
+        3,
+        isUser ? 0 : 48,
+        3,
+      ),
       child: Row(
         mainAxisAlignment:
             isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        crossAxisAlignment: CrossAxisAlignment.end,
         children: [
-          if (isPlant) _buildAvatar(),
-          if (isPlant) const SizedBox(width: 8),
+          if (isPlant) _PlantAvatar(),
+          if (isPlant) const SizedBox(width: 6),
           Flexible(
             child: Column(
               crossAxisAlignment:
                   isUser ? CrossAxisAlignment.end : CrossAxisAlignment.start,
               children: [
-                _buildBubble(context),
-                const SizedBox(height: 6),
-                if (!isUser) _buildMeta(),
+                if (message.audioUrl != null)
+                  VoiceNoteBubble(
+                    isUser: isUser,
+                    durationSeconds: 15,
+                    timestamp: "${message.timestamp.hour.toString().padLeft(2, '0')}:${message.timestamp.minute.toString().padLeft(2, '0')}",
+                    transcription: message.content,
+                    audioUrl: message.audioUrl,
+                  )
+                else
+                  _Bubble(message: message, isUser: isUser),
+                const SizedBox(height: 3),
+                _TimestampRow(message: message, isUser: isUser),
                 if (message.actions != null && message.actions!.isNotEmpty)
-                  _buildActions(),
+                  _ActionsRow(actions: message.actions!),
               ],
             ),
           ),
@@ -105,152 +113,151 @@ class MessageBubble extends StatelessWidget {
       ),
     );
   }
+}
 
-  Widget _buildAvatar() {
+// ── Burbuja ───────────────────────────────────────────────────────────────────
+
+class _Bubble extends StatelessWidget {
+  final ChatMessage message;
+  final bool isUser;
+  const _Bubble({required this.message, required this.isUser});
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      width: 32,
-      height: 32,
-      decoration: BoxDecoration(
-        color: const Color(0xFFF0F4EF),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: const Center(child: FaIcon(FontAwesomeIcons.seedling, size: 14)),
-    );
-  }
-
-  Widget _buildBubble(BuildContext context) {
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: isUser ? const Color(0xFF4A6741) : Colors.white,
+        color: isUser ? const Color(0xFFB2F29D) : Colors.white,
         borderRadius: BorderRadius.only(
           topLeft: const Radius.circular(20),
           topRight: const Radius.circular(20),
-          bottomLeft: Radius.circular(isUser ? 20 : 4),
-          bottomRight: Radius.circular(isUser ? 4 : 20),
+          bottomLeft: Radius.circular(isUser ? 20 : 0),
+          bottomRight: Radius.circular(isUser ? 0 : 20),
         ),
         boxShadow: [
-          if (!isUser)
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-            )
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.05),
+            blurRadius: 4,
+            offset: const Offset(0, 2),
+          ),
         ],
       ),
       child: Text(
         message.content,
-        style: TextStyle(
-          color: isUser ? Colors.white : Colors.black87,
+        style: GardenTextStyles.bodySmall.copyWith(
+          color: const Color(0xFF2E382E), // Gris oscuro botánico
           fontSize: 15,
+          height: 1.4,
+          fontWeight: FontWeight.w500,
         ),
       ),
     );
   }
+}
 
-  Widget _buildMeta() {
+// ── Avatar planta ─────────────────────────────────────────────────────────────
+
+class _PlantAvatar extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 28,
+      height: 28,
+      decoration: BoxDecoration(
+        color: const Color(0xFFA5D6A7), // Verde claro botánico
+        shape: BoxShape.circle,
+        border: Border.all(color: const Color(0xFF81C784), width: 1.5),
+      ),
+      child: const Center(
+        child: Text('✿', style: TextStyle(fontSize: 14)),
+      ),
+    );
+  }
+}
+
+
+// ── Timestamp + badge de fuente ───────────────────────────────────────────────
+
+class _TimestampRow extends StatelessWidget {
+  final ChatMessage message;
+  final bool isUser;
+  const _TimestampRow({required this.message, required this.isUser});
+
+  @override
+  Widget build(BuildContext context) {
+    if (isUser) return const SizedBox.shrink();
+
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        _buildSourceBadge(),
-        const SizedBox(width: 8),
-        _buildConfidence(),
+        _SourceBadge(source: message.source),
       ],
     );
   }
+}
 
-  Widget _buildSourceBadge() {
-    String label;
-    Color color;
+class _SourceBadge extends StatelessWidget {
+  final String source;
+  const _SourceBadge({required this.source});
 
-    switch (message.source) {
-      case 'sensor':
-        label = 'Sensor';
-        color = Colors.green;
-        break;
-      case 'ai':
-        label = 'IA';
-        color = Colors.blue;
-        break;
-      default:
-        label = 'Sin datos';
-        color = Colors.orange;
-    }
+  @override
+  Widget build(BuildContext context) {
+    final (label, color) = switch (source) {
+      'sensor' => ('Sensor', GardenColors.leafGreen),
+      'ai' || 'backend' => ('IA', GardenColors.waterBlue),
+      _ => ('Sin datos', GardenColors.potOrange),
+    };
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
+        color: color.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(10),
       ),
       child: Text(
         label,
-        style: TextStyle(
-          fontSize: 11,
+        style: GardenTextStyles.label.copyWith(
           color: color,
-          fontWeight: FontWeight.w600,
+          fontSize: 9,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 0.3,
         ),
       ),
     );
   }
+}
 
-  Widget _buildConfidence() {
-    String label;
-    Color color;
+// ── Acciones rápidas ──────────────────────────────────────────────────────────
 
-    switch (message.confidence) {
-      case 'high':
-        label = 'Alta';
-        color = Colors.green;
-        break;
-      case 'medium':
-        label = 'Media';
-        color = Colors.orange;
-        break;
-      default:
-        label = 'Baja';
-        color = Colors.red;
-    }
+class _ActionsRow extends StatelessWidget {
+  final List<MessageAction> actions;
+  const _ActionsRow({required this.actions});
 
-    return Row(
-      children: [
-        Icon(Icons.circle, size: 8, color: color),
-        const SizedBox(width: 4),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 11,
-            color: color,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildActions() {
+  @override
+  Widget build(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(top: 6),
       child: Wrap(
         spacing: 8,
         runSpacing: 6,
-        children: message.actions!
+        children: actions
             .map(
-              (action) => GestureDetector(
-                onTap: action.onTap,
+              (a) => GestureDetector(
+                onTap: a.onTap,
                 child: Container(
                   padding:
-                      const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF4A6741).withOpacity(0.1),
+                    color: GardenColors.creamLight,
                     borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: GardenColors.leafGreen),
                   ),
                   child: Text(
-                    action.label,
-                    style: const TextStyle(
+                    a.label,
+                    style: GardenTextStyles.label.copyWith(
+                      color: GardenColors.leafDark,
+                      fontWeight: FontWeight.w700,
                       fontSize: 12,
-                      color: Color(0xFF4A6741),
-                      fontWeight: FontWeight.w600,
                     ),
                   ),
                 ),

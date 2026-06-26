@@ -11,9 +11,10 @@ class BackendChatService {
   Future<ChatMessageResponse> chat({
     required String plantId,
     required String message,
+    String responseFormat = 'text',
   }) async {
     try {
-      final request = ChatMessageRequest(message: message);
+      final request = ChatMessageRequest(message: message, responseFormat: responseFormat);
       final response = await _apiClient.dio.post(
         '/chat/$plantId',
         data: request.toJson(),

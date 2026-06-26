@@ -41,12 +41,9 @@ class TelemetryPanel extends StatefulWidget {
 }
 
 class _TelemetryPanelState extends State<TelemetryPanel> {
-  bool _expanded = false;
-
   @override
   void initState() {
     super.initState();
-    _expanded = widget.initiallyExpanded;
   }
 
   @override
@@ -62,46 +59,11 @@ class _TelemetryPanelState extends State<TelemetryPanel> {
           )
         ],
       ),
-      child: Column(
-        children: [
-          _buildHeader(),
-          if (_expanded) _buildTelemetryGrid(),
-        ],
-      ),
+      child: _buildTelemetryGrid(),
     );
   }
 
-  Widget _buildHeader() {
-    return GestureDetector(
-      onTap: () => setState(() => _expanded = !_expanded),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
-          color: const Color(0xFFFDFCF8),
-          borderRadius: BorderRadius.circular(24),
-        ),
-        child: Row(
-          children: [
-            const GardenIcon(asset: GardenIcons.telemetry2, size: 22),
-            const SizedBox(width: 12),
-            const Text(
-              'Telemetría',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-              ),
-            ),
-            const Spacer(),
-            AnimatedRotation(
-              duration: const Duration(milliseconds: 300),
-              turns: _expanded ? 0.5 : 0,
-              child: const Icon(Icons.expand_more, color: Colors.black54),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+
 
   Widget _buildTelemetryGrid() {
     return Padding(

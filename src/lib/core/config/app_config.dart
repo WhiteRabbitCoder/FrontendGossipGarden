@@ -16,6 +16,11 @@ class AppConfig {
     defaultValue: 'https://backendgossipgarden-production.up.railway.app',
   );
 
+  static const String qaBackendUrl = String.fromEnvironment(
+    'BACKEND_QA_URL',
+    defaultValue: 'https://backendgossipgarden-qa.up.railway.app',
+  );
+
   static const bool enableFirebase = bool.fromEnvironment(
     'ENABLE_FIREBASE',
     defaultValue: false,
@@ -38,6 +43,10 @@ class AppConfig {
 
   static String get backendBaseUrl {
     final normalizedTarget = backendTarget.toLowerCase();
+
+    if (normalizedTarget == 'qa') {
+      return _normalizeUrl(qaBackendUrl);
+    }
 
     if (normalizedTarget == 'prod' ||
         normalizedTarget == 'production' ||

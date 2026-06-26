@@ -4,11 +4,11 @@ import '../providers/plant_providers.dart';
 import '../providers/chat_providers.dart';
 import '../providers/navigation_provider.dart';
 import '../../data/models/plant.dart';
-import '../../data/models/plant_enums.dart';
 import '../../../../core/theme/garden_colors.dart';
 import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
 import '../../../../core/widgets/garden_icon.dart';
+import '../widgets/plant_badges.dart';
 
 class ChatListScreen extends ConsumerWidget {
   const ChatListScreen({super.key});
@@ -176,7 +176,7 @@ class _ChatCard extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        _MoodBadge(mood: plant.mood),
+                        PlantMoodBadge(mood: plant.mood),
                       ],
                     ),
                     const SizedBox(height: 4),
@@ -198,36 +198,3 @@ class _ChatCard extends StatelessWidget {
   }
 }
 
-class _MoodBadge extends StatelessWidget {
-  final PlantMood mood;
-  const _MoodBadge({required this.mood});
-
-  @override
-  Widget build(BuildContext context) {
-    final (label, bg, fg) = _style(mood);
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 3),
-      decoration:
-          BoxDecoration(color: bg, borderRadius: BorderRadius.circular(20)),
-      child: Text(label,
-          style: TextStyle(
-              color: fg, fontSize: 11, fontWeight: FontWeight.w600)),
-    );
-  }
-
-  static (String, Color, Color) _style(PlantMood m) {
-    switch (m) {
-      case PlantMood.thirsty:
-        return ('Sedienta', const Color(0xFFFFEDED), const Color(0xFFD94040));
-      case PlantMood.stressed:
-        return ('Estresada', const Color(0xFFFFF1E0), const Color(0xFFB85C00));
-      case PlantMood.cold:
-        return ('Fría', const Color(0xFFE0F0FF), const Color(0xFF2563EB));
-      case PlantMood.hot:
-        return ('Acalorada', const Color(0xFFFFF1E0), const Color(0xFFB85C00));
-      case PlantMood.perfect:
-      case PlantMood.happy:
-        return ('Óptimo', const Color(0xFFE6F4EA), const Color(0xFF2E7D32));
-    }
-  }
-}
