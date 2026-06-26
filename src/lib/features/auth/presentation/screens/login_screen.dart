@@ -91,6 +91,12 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
 
   @override
   Widget build(BuildContext context) {
+    ref.listen<AsyncValue<AuthSession>>(authStateProvider, (previous, next) {
+      if (next.hasError && previous?.hasError != true) {
+        _passwordController.clear();
+      }
+    });
+
     final authState = ref.watch(authStateProvider);
     final isLoading = authState.isLoading;
     final themeError = widget.errorMessage ??

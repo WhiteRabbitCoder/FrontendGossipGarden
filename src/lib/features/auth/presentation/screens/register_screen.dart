@@ -139,6 +139,10 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     ref.listen<AsyncValue<AuthSession>>(authStateProvider, (previous, next) {
       if (next.hasError) {
         setState(() => _inlineError = _cleanErrorMessage(next.error!));
+        if (previous?.hasError != true) {
+          _passwordController.clear();
+          _confirmController.clear();
+        }
       } else if (!next.isLoading && next.value?.profile != null) {
         // Redirigir si la autenticación fue exitosa
         Navigator.of(context).popUntil((route) => route.isFirst);
