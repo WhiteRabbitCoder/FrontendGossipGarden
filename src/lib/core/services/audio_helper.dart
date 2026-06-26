@@ -1,4 +1,4 @@
-import 'audio_helper_stub.dart'
+import 'audio_helper_mobile.dart'
     if (dart.library.html) 'audio_helper_web.dart';
 
 abstract class AudioHelper {
