@@ -78,12 +78,23 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         .signInWithEmailAndPassword(email, password);
   }
 
+  String _cleanErrorMessage(Object error) {
+    String msg = error.toString();
+    if (msg.startsWith('Exception: ')) {
+      msg = msg.replaceFirst('Exception: ', '');
+    }
+    if (msg.contains('] ')) {
+      msg = msg.split('] ').last;
+    }
+    return msg;
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
     final isLoading = authState.isLoading;
     final themeError = widget.errorMessage ??
-        (authState.hasError ? authState.error.toString() : null);
+        (authState.hasError ? _cleanErrorMessage(authState.error!) : null);
 
     return Scaffold(
       backgroundColor: GardenColors.creamPaper,

@@ -119,6 +119,17 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
         .registerWithEmailAndPassword(email, password, username);
   }
 
+  String _cleanErrorMessage(Object error) {
+    String msg = error.toString();
+    if (msg.startsWith('Exception: ')) {
+      msg = msg.replaceFirst('Exception: ', '');
+    }
+    if (msg.contains('] ')) {
+      msg = msg.split('] ').last;
+    }
+    return msg;
+  }
+
   @override
   Widget build(BuildContext context) {
     final authState = ref.watch(authStateProvider);
@@ -127,7 +138,7 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     // Escuchar cambios del provider para errores o éxito
     ref.listen<AsyncValue<AuthSession>>(authStateProvider, (previous, next) {
       if (next.hasError) {
-        setState(() => _inlineError = next.error.toString());
+        setState(() => _inlineError = _cleanErrorMessage(next.error!));
       } else if (!next.isLoading && next.value?.profile != null) {
         // Redirigir si la autenticación fue exitosa
         Navigator.of(context).popUntil((route) => route.isFirst);

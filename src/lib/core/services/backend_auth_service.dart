@@ -24,7 +24,7 @@ class BackendAuthService {
       return tokenResponse;
     } on DioException catch (e) {
       final message = e.response?.data?['detail'] ?? 'Error desconocido';
-      throw Exception(message);
+      throw AuthException(message);
     }
   }
 
@@ -38,7 +38,7 @@ class BackendAuthService {
       return response.data['user_id'] as String?;
     } on DioException catch (e) {
       final message = e.response?.data?['detail'] ?? 'Error desconocido';
-      throw Exception(message);
+      throw AuthException(message);
     }
   }
 
@@ -48,7 +48,7 @@ class BackendAuthService {
       return GoogleUrlResponse.fromJson(response.data);
     } on DioException catch (e) {
       final message = e.response?.data?['detail'] ?? 'Error desconocido';
-      throw Exception(message);
+      throw AuthException(message);
     }
   }
 
@@ -77,7 +77,7 @@ class BackendAuthService {
       return token;
     } on DioException catch (e) {
       final message = e.response?.data?['error_description'] ?? e.response?.data?['msg'] ?? 'Error al autenticar con Google';
-      throw Exception(message);
+      throw AuthException(message);
     }
   }
 
@@ -95,7 +95,7 @@ class BackendAuthService {
       return response.data;
     } on DioException catch (e) {
       final message = e.response?.data?['detail'] ?? 'Error al obtener perfil';
-      throw Exception(message);
+      throw AuthException(message);
     }
   }
 
@@ -109,7 +109,14 @@ class BackendAuthService {
       }
     } on DioException catch (e) {
       final message = e.response?.data?['detail'] ?? 'Error al actualizar perfil';
-      throw Exception(message);
+      throw AuthException(message);
     }
   }
+}
+
+class AuthException implements Exception {
+  final String message;
+  AuthException(this.message);
+  @override
+  String toString() => message;
 }
