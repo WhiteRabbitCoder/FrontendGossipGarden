@@ -41,17 +41,13 @@ class _InviteFriendScreenState extends ConsumerState<InviteFriendScreen> {
   Future<void> _copyToClipboard(String text, String feedback) async {
     await Clipboard.setData(ClipboardData(text: text));
     if (!mounted) return;
-    GardenSnackbar.show(context, message: '');.showSnackBar(
-      SnackBar(content: Text(feedback)),
-    );
+    GardenSnackbar.show(context, message: '');
   }
 
   Future<void> _joinWithCode() async {
     final code = _joinCodeController.text.trim().toUpperCase();
     if (code.isEmpty) {
-      GardenSnackbar.show(context, message: '');.showSnackBar(
-        const SnackBar(content: Text('Introduce un código de invitación.')),
-      );
+      GardenSnackbar.show(context, message: 'Introduce un código de invitación.');
       return;
     }
 
@@ -61,15 +57,7 @@ class _InviteFriendScreenState extends ConsumerState<InviteFriendScreen> {
     if (!mounted) return;
     setState(() => _isJoining = false);
 
-    GardenSnackbar.show(context, message: '');.showSnackBar(
-      SnackBar(
-        content: Text(
-          code == _demoInviteCode || code.length >= 6
-              ? '¡Listo! Te uniste al jardín de tu amigo.'
-              : 'Código no válido. Pide uno nuevo a tu amigo.',
-        ),
-      ),
-    );
+    GardenSnackbar.show(context, message: '');
 
     if (code == _demoInviteCode || code.length >= 6) {
       Navigator.pop(context);

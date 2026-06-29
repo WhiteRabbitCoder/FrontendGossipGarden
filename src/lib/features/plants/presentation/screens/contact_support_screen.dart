@@ -33,9 +33,7 @@ class _ContactSupportScreenState extends ConsumerState<ContactSupportScreen> {
     final message = _messageController.text.trim();
 
     if (subject.isEmpty || message.isEmpty) {
-      GardenSnackbar.show(context, message: '');.showSnackBar(
-        const SnackBar(content: Text('Completa el asunto y el mensaje.')),
-      );
+      GardenSnackbar.show(context, message: 'Completa el asunto y el mensaje.');
       return;
     }
 
@@ -45,11 +43,7 @@ class _ContactSupportScreenState extends ConsumerState<ContactSupportScreen> {
     if (!mounted) return;
     setState(() => _isSending = false);
 
-    GardenSnackbar.show(context, message: '');.showSnackBar(
-      const SnackBar(
-        content: Text('Mensaje enviado. Te responderemos en menos de 24 horas.'),
-      ),
-    );
+    GardenSnackbar.show(context, message: 'Mensaje enviado. Te responderemos en menos de 24 horas.');
     Navigator.pop(context);
   }
 

@@ -64,9 +64,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
   Future<void> _saveProfile() async {
     final newName = _usernameController.text.trim();
     if (newName.isEmpty) {
-      GardenSnackbar.show(context, message: '');.showSnackBar(
-        const SnackBar(content: Text('El nombre de usuario no puede estar vacío.')),
-      );
+      GardenSnackbar.show(context, message: 'El nombre de usuario no puede estar vacío.');
       return;
     }
 
@@ -78,9 +76,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
           );
       await ref.read(backendAuthServiceProvider).updateUserProfile(username: newName);
       if (mounted) {
-        GardenSnackbar.show(context, message: '');.showSnackBar(
-          const SnackBar(content: Text('Información personal actualizada con éxito.')),
-        );
+        GardenSnackbar.show(context, message: 'Información personal actualizada con éxito.');
         Navigator.pop(context);
       }
     } catch (e) {
@@ -102,23 +98,17 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     final confirm = _confirmPasswordController.text;
 
     if (current.isEmpty || newPassword.isEmpty || confirm.isEmpty) {
-      GardenSnackbar.show(context, message: '');.showSnackBar(
-        const SnackBar(content: Text('Completa todos los campos de contraseña.')),
-      );
+      GardenSnackbar.show(context, message: 'Completa todos los campos de contraseña.');
       return;
     }
 
     if (newPassword.length < 6) {
-      GardenSnackbar.show(context, message: '');.showSnackBar(
-        const SnackBar(content: Text('La nueva contraseña debe tener al menos 6 caracteres.')),
-      );
+      GardenSnackbar.show(context, message: 'La nueva contraseña debe tener al menos 6 caracteres.');
       return;
     }
 
     if (newPassword != confirm) {
-      GardenSnackbar.show(context, message: '');.showSnackBar(
-        const SnackBar(content: Text('Las contraseñas nuevas no coinciden.')),
-      );
+      GardenSnackbar.show(context, message: 'Las contraseñas nuevas no coinciden.');
       return;
     }
 
@@ -132,9 +122,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     _newPasswordController.clear();
     _confirmPasswordController.clear();
 
-    GardenSnackbar.show(context, message: '');.showSnackBar(
-      const SnackBar(content: Text('Contraseña actualizada correctamente.')),
-    );
+    GardenSnackbar.show(context, message: 'Contraseña actualizada correctamente.');
   }
 
   @override

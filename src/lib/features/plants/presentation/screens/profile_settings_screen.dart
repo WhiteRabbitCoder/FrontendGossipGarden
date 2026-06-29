@@ -10,6 +10,7 @@ import 'package:gossip_garden/features/auth/presentation/providers/auth_provider
 import '../../../../core/theme/garden_colors.dart';
 import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../../../../core/widgets/garden_bottom_sheet_container.dart';
 import '../../../../core/widgets/garden_icon.dart';
 import '../../../../core/utils/garden_transitions.dart';
 import 'personal_info_screen.dart';
@@ -544,11 +545,8 @@ class _AddFavoriteButton extends StatelessWidget {
   void _showModal(BuildContext context, List<Plant> available) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: GardenColors.creamLight,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (_) => Padding(
+      backgroundColor: Colors.transparent,
+      builder: (_) => GardenBottomSheetContainer(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -610,9 +608,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
     final opened = await openPlayStoreListing();
     if (!mounted) return;
     if (!opened) {
-      GardenSnackbar.show(context, message: '');.showSnackBar(
-        const SnackBar(content: Text('No se pudo abrir Google Play Store.')),
-      );
+      GardenSnackbar.show(context, message: 'No se pudo abrir Google Play Store.');
     }
   }
 

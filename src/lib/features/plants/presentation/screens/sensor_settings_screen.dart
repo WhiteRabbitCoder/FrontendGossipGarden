@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/garden_colors.dart';
 import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../../../../core/widgets/garden_bottom_sheet_container.dart';
 import '../../../../core/widgets/garden_icon.dart';
 import '../../data/models/plant.dart';
 import '../../data/models/plant_enums.dart';
@@ -94,11 +95,7 @@ class _SensorSettingsScreenState extends ConsumerState<SensorSettingsScreen> {
             return Padding(
               padding: EdgeInsets.only(
                   bottom: MediaQuery.of(context).viewInsets.bottom),
-              child: Container(
-                decoration: const BoxDecoration(
-                  color: GardenColors.creamPaper,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                ),
+              child: GardenBottomSheetContainer(
                 padding: const EdgeInsets.all(24),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,

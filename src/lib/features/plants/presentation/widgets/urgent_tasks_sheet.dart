@@ -42,12 +42,8 @@ class _UrgentTasksSheetState extends ConsumerState<UrgentTasksSheet> {
     final tasks = ref.watch(urgentTasksProvider);
     final bottomInset = MediaQuery.of(context).viewInsets.bottom;
 
-    return Container(
+    return GardenBottomSheetContainer(
       margin: const EdgeInsets.only(top: 48),
-      decoration: const BoxDecoration(
-        color: GardenColors.creamPaper,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
       child: SafeArea(
         top: false,
         child: Padding(

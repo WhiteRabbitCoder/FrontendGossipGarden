@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gossip_garden/core/theme/garden_colors.dart';
 import 'package:gossip_garden/core/theme/garden_icons.dart';
 import 'package:gossip_garden/core/widgets/garden_icon.dart';
+import 'package:gossip_garden/core/widgets/garden_bottom_sheet_container.dart';
 import 'package:gossip_garden/features/plants/presentation/providers/sensor_setup_providers.dart';
 import 'package:gossip_garden/features/plants/presentation/providers/achievement_providers.dart';
 import 'package:gossip_garden/features/plants/data/datasources/esp32_api_client.dart';
@@ -228,11 +229,7 @@ class _SensorSetupViewState extends ConsumerState<SensorSetupView> {
               return Padding(
                 padding: EdgeInsets.only(
                     bottom: MediaQuery.of(context).viewInsets.bottom),
-                child: Container(
-                  decoration: const BoxDecoration(
-                    color: GardenColors.creamPaper,
-                    borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-                  ),
+                child: GardenBottomSheetContainer(
                   padding: const EdgeInsets.all(24),
                   child: Column(
                     mainAxisSize: MainAxisSize.min,

@@ -101,11 +101,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
             title: 'Descargar mis datos',
             subtitle: 'Recibe una copia de tu información',
             onTap: () {
-              GardenSnackbar.show(context, message: '');.showSnackBar(
-                const SnackBar(
-                  content: Text('Solicitud registrada. Te avisaremos por correo.'),
-                ),
-              );
+              GardenSnackbar.show(context, message: 'Solicitud registrada. Te avisaremos por correo.');
             },
           ),
           const SizedBox(height: 12),
@@ -114,11 +110,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
             title: 'Solicitar eliminación de datos',
             subtitle: 'Borra tu cuenta y toda tu información',
             onTap: () {
-              GardenSnackbar.show(context, message: '');.showSnackBar(
-                const SnackBar(
-                  content: Text('Contacta con soporte para completar esta solicitud.'),
-                ),
-              );
+              GardenSnackbar.show(context, message: 'Contacta con soporte para completar esta solicitud.');
             },
           ),
         ],

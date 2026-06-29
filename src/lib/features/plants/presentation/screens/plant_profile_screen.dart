@@ -311,11 +311,9 @@ class _FavoriteStarState extends State<_FavoriteStar> with SingleTickerProviderS
       _controller.forward(from: 0.0);
     }
     
-    GardenSnackbar.show(context, message: '');.showSnackBar(
-      SnackBar(
-        content: Text(isFavorite ? 'Planta añadida a favoritos ⭐' : 'Planta removida de favoritos'),
-        duration: const Duration(seconds: 2),
-      ),
+    GardenSnackbar.show(
+      context, 
+      message: isFavorite ? 'Planta añadida a favoritos ⭐' : 'Planta removida de favoritos',
     );
   }
 

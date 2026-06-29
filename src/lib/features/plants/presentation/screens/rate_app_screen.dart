@@ -27,9 +27,7 @@ class _RateAppScreenState extends State<RateAppScreen> {
   // TODO(backend): POST /feedback o integrar In-App Review de la tienda.
   Future<void> _submitRating() async {
     if (_rating == 0) {
-      GardenSnackbar.show(context, message: '');.showSnackBar(
-        const SnackBar(content: Text('Selecciona una puntuación antes de enviar.')),
-      );
+      GardenSnackbar.show(context, message: 'Selecciona una puntuación antes de enviar.');
       return;
     }
 
@@ -39,9 +37,7 @@ class _RateAppScreenState extends State<RateAppScreen> {
     if (!mounted) return;
     setState(() => _isSubmitting = false);
 
-    GardenSnackbar.show(context, message: '');.showSnackBar(
-      const SnackBar(content: Text('¡Gracias por tu opinión!')),
-    );
+    GardenSnackbar.show(context, message: '¡Gracias por tu opinión!');
     Navigator.pop(context);
   }
 

@@ -110,9 +110,7 @@ class _ProfileVisibilityScreenState extends State<ProfileVisibilityScreen> {
           const SizedBox(height: 32),
           ElevatedButton(
             onPressed: () {
-              GardenSnackbar.show(context, message: '');.showSnackBar(
-                const SnackBar(content: Text('Preferencias de visibilidad guardadas.')),
-              );
+              GardenSnackbar.show(context, message: 'Preferencias de visibilidad guardadas.');
               Navigator.pop(context);
             },
             style: ElevatedButton.styleFrom(

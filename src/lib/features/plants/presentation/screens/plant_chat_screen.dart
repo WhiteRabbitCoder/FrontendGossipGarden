@@ -18,6 +18,7 @@ import '../../data/models/plant_enums.dart';
 import '../../../../../core/theme/garden_colors.dart';
 import '../../../../../core/theme/garden_icons.dart';
 import '../../../../../core/theme/garden_text_styles.dart';
+import '../../../../../core/widgets/garden_bottom_sheet_container.dart';
 import '../../../../../core/widgets/garden_icon.dart';
 
 class PlantChatScreen extends ConsumerStatefulWidget {
@@ -846,11 +847,7 @@ class _ChatSettingsSheet extends ConsumerWidget {
     final temperature = realtime?.temperature ?? plant.sensors.temperature;
     final humidity = realtime?.humidity ?? plant.sensors.humidity;
 
-    return Container(
-      decoration: const BoxDecoration(
-        color: GardenColors.creamPaper,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
+    return GardenBottomSheetContainer(
       child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -1087,12 +1084,8 @@ class _AttachmentSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return GardenBottomSheetContainer(
       padding: EdgeInsets.fromLTRB(20, 12, 20, MediaQuery.of(context).padding.bottom + 20),
-      decoration: const BoxDecoration(
-        color: GardenColors.creamPaper,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -1190,11 +1183,7 @@ class _VoiceSelectorSheet extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final voicesAsync = ref.watch(plantVoicesProvider(plant.id));
     
-    return Container(
-      decoration: const BoxDecoration(
-        color: GardenColors.creamPaper,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-      ),
+    return GardenBottomSheetContainer(
       padding: const EdgeInsets.fromLTRB(24, 12, 24, 40),
       child: Column(
         mainAxisSize: MainAxisSize.min,
