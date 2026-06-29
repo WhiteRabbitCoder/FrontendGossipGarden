@@ -73,12 +73,19 @@ class MainScreen extends ConsumerWidget {
             AnimatedSwitcher(
               duration: const Duration(milliseconds: 300),
               transitionBuilder: (child, animation) {
-                return SharedAxisTransition(
-                  animation: animation,
-                  secondaryAnimation: ReverseAnimation(animation),
-                  transitionType: SharedAxisTransitionType.scaled,
-                  fillColor: Colors.transparent,
-                  child: child,
+                return SlideTransition(
+                  position: Tween<Offset>(
+                    begin: const Offset(1, 0),
+                    end: Offset.zero,
+                  ).animate(CurvedAnimation(
+                    parent: animation,
+                    curve: Curves.easeOutQuart,
+                    reverseCurve: Curves.easeInQuart,
+                  )),
+                  child: FadeTransition(
+                    opacity: animation,
+                    child: child,
+                  ),
                 );
               },
               child: _buildOverlay(nav, notifier),
