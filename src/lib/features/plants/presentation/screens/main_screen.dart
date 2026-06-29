@@ -50,8 +50,10 @@ class MainScreen extends ConsumerWidget {
       child: Scaffold(
         body: Stack(
           children: [
-            SafeArea(
-              child: IndexedStack(
+            Offstage(
+              offstage: hasOverlay,
+              child: SafeArea(
+                child: IndexedStack(
                 index: nav.activeTab.index,
                 children: [
                   DashboardScreen(

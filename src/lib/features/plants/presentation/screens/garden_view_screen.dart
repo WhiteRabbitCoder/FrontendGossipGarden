@@ -33,7 +33,7 @@ class _GardenViewScreenState extends ConsumerState<GardenViewScreen> {
     final navNotifier = ref.read(navigationProvider.notifier);
 
     return Scaffold(
-      backgroundColor: GardenColors.creamPaper,
+      backgroundColor: Colors.transparent,
       body: plantsAsync.when(
         data: (plants) => CustomScrollView(
           slivers: [
@@ -246,26 +246,31 @@ class _FriendPlantCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: GardenColors.creamPaper),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: GardenColors.creamSolid,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: GardenColors.ink, width: 2),
+          boxShadow: const [
+            BoxShadow(
+              color: GardenColors.ink,
+              blurRadius: 0,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
               Container(
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: GardenColors.creamLight,
+                  color: GardenColors.creamPaper,
                   shape: BoxShape.circle,
+                  border: Border.all(color: GardenColors.ink, width: 1.5),
                 ),
                 child: const GardenIcon(
                   asset: GardenIcons.plantEco,
@@ -343,7 +348,6 @@ class _FriendPlantCard extends StatelessWidget {
             ],
           ),
         ),
-      ),
     );
   }
 }

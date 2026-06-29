@@ -12,6 +12,7 @@ import '../providers/chat_providers.dart';
 import '../providers/achievement_providers.dart';
 import '../widgets/message_bubble.dart';
 import '../../data/models/plant.dart';
+import '../../data/models/chat_dto.dart';
 import '../../data/models/plant_enums.dart';
 import '../../../../../core/theme/garden_colors.dart';
 import '../../../../../core/theme/garden_icons.dart';
@@ -975,6 +976,47 @@ class _ChatSettingsSheet extends ConsumerWidget {
             ),
           ),
 
+          const SizedBox(height: 20),
+          // Botón de Voz
+          GestureDetector(
+            onTap: () {
+              Navigator.pop(context);
+              _showVoiceSelector(context, ref, plant);
+            },
+            child: Container(
+              margin: const EdgeInsets.symmetric(horizontal: 20),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: GardenColors.ink, width: 1.5),
+                boxShadow: const [
+                  BoxShadow(
+                    color: GardenColors.ink,
+                    blurRadius: 0,
+                    offset: Offset(0, 3),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.record_voice_over, color: GardenColors.ink),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      'Voz de la Planta',
+                      style: GardenTextStyles.title.copyWith(
+                        color: GardenColors.ink,
+                        fontSize: 16,
+                      ),
+                    ),
+                  ),
+                  const Icon(Icons.arrow_forward_ios, size: 16, color: GardenColors.ink),
+                ],
+              ),
+            ),
+          ),
+
           const SizedBox(height: 24),
           Padding(
             padding: EdgeInsets.only(
@@ -1144,6 +1186,150 @@ class _AttachmentOption extends StatelessWidget {
             style: GardenTextStyles.bodySmall.copyWith(
               color: GardenColors.ink,
               fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+void _showVoiceSelector(BuildContext context, WidgetRef ref, Plant plant) {
+  showModalBottomSheet(
+    context: context,
+    backgroundColor: Colors.transparent,
+    isScrollControlled: true,
+    builder: (_) => _VoiceSelectorSheet(plant: plant),
+  );
+}
+
+class _VoiceSelectorSheet extends ConsumerWidget {
+  final Plant plant;
+  const _VoiceSelectorSheet({required this.plant});
+
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final voicesAsync = ref.watch(plantVoicesProvider(plant.id));
+    
+    return Container(
+      decoration: const BoxDecoration(
+        color: GardenColors.creamPaper,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+      ),
+      padding: const EdgeInsets.fromLTRB(24, 12, 24, 40),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: GardenColors.dustLight,
+              borderRadius: BorderRadius.circular(4),
+            ),
+          ),
+          const SizedBox(height: 24),
+          Text(
+            'Voz de la Planta',
+            style: GardenTextStyles.display.copyWith(
+              color: GardenColors.ink,
+              fontSize: 22,
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            'Elige cómo quieres que suene ${plant.name}.',
+            textAlign: TextAlign.center,
+            style: GardenTextStyles.bodySmall.copyWith(
+              color: GardenColors.inkSoft,
+            ),
+          ),
+          const SizedBox(height: 24),
+          voicesAsync.when(
+            data: (data) {
+              return Column(
+                children: data.options.map((option) {
+                  final isSelected = data.currentVoiceId == option.voiceId;
+                  return GestureDetector(
+                    onTap: () {
+                      ref.read(plantVoicesProvider(plant.id).notifier).setVoice(option.voiceId);
+                    },
+                    child: Container(
+                      margin: const EdgeInsets.only(bottom: 12),
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: isSelected ? GardenColors.leafDark : Colors.white,
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(
+                          color: GardenColors.ink, 
+                          width: isSelected ? 2 : 1.5
+                        ),
+                        boxShadow: isSelected ? [
+                          const BoxShadow(
+                            color: GardenColors.ink,
+                            blurRadius: 0,
+                            offset: Offset(0, 4),
+                          )
+                        ] : [],
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            isSelected ? Icons.check_circle : Icons.circle_outlined,
+                            color: isSelected ? Colors.white : GardenColors.dust,
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  option.name,
+                                  style: GardenTextStyles.title.copyWith(
+                                    color: isSelected ? Colors.white : GardenColors.ink,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                                Text(
+                                  option.style,
+                                  style: GardenTextStyles.bodySmall.copyWith(
+                                    color: isSelected ? GardenColors.creamLight : GardenColors.inkSoft,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          if (option.recommended)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: GardenColors.potOrange,
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: GardenColors.ink),
+                              ),
+                              child: Text(
+                                'Recomendada',
+                                style: GardenTextStyles.label.copyWith(
+                                  fontSize: 10,
+                                  color: GardenColors.ink,
+                                ),
+                              ),
+                            ),
+                        ],
+                      ),
+                    ),
+                  );
+                }).toList(),
+              );
+            },
+            loading: () => const Padding(
+              padding: EdgeInsets.all(40),
+              child: CircularProgressIndicator(color: GardenColors.leafDark),
+            ),
+            error: (e, _) => Padding(
+              padding: const EdgeInsets.all(20),
+              child: Text('Error al cargar voces', style: GardenTextStyles.bodySmall),
             ),
           ),
         ],

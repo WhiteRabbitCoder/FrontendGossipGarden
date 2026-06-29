@@ -21,18 +21,22 @@ class GardenPlantCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final isOnline = plant.sensorStatus == SensorStatus.online;
 
-    return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: onTap,
-        child: Container(
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: GardenColors.creamPaper),
-          ),
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        decoration: BoxDecoration(
+          color: GardenColors.creamSolid,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: GardenColors.ink, width: 2),
+          boxShadow: const [
+            BoxShadow(
+              color: GardenColors.ink,
+              blurRadius: 0,
+              offset: Offset(0, 4),
+            ),
+          ],
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           child: Row(
             children: [
               Stack(
@@ -41,9 +45,10 @@ class GardenPlantCard extends StatelessWidget {
                   Container(
                     width: 52,
                     height: 52,
-                    decoration: const BoxDecoration(
+                    decoration: BoxDecoration(
                       shape: BoxShape.circle,
-                      color: GardenColors.creamLight,
+                      color: GardenColors.creamPaper,
+                      border: Border.all(color: GardenColors.ink, width: 1.5),
                     ),
                     child: plant.image.isNotEmpty
                         ? ClipOval(
@@ -68,10 +73,10 @@ class GardenPlantCard extends StatelessWidget {
                       width: 18,
                       height: 18,
                       decoration: BoxDecoration(
-                        color: Colors.white,
+                        color: isOnline ? GardenColors.leafGreen : GardenColors.dust,
                         shape: BoxShape.circle,
                         border: Border.all(
-                          color: GardenColors.creamPaper,
+                          color: GardenColors.ink,
                           width: 1.5,
                         ),
                       ),
@@ -158,7 +163,6 @@ class GardenPlantCard extends StatelessWidget {
             ],
           ),
         ),
-      ),
     );
   }
 

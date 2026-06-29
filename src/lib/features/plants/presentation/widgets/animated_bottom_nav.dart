@@ -29,34 +29,34 @@ class AnimatedBottomNav extends StatelessWidget {
     return Container(
       height: 76,
       margin: const EdgeInsets.fromLTRB(24, 0, 24, 32),
-      child: ClipRRect(
+      decoration: BoxDecoration(
+        color: GardenColors.creamPaper,
+        image: const DecorationImage(
+          image: AssetImage('images/PaperTexture.png'),
+          fit: BoxFit.cover,
+          opacity: 0.3,
+        ),
         borderRadius: BorderRadius.circular(38),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
-          child: Container(
-            decoration: BoxDecoration(
-              color: GardenColors.creamPaper.withOpacity(0.85),
-              image: const DecorationImage(
-                image: AssetImage('images/PaperTexture.png'),
-                fit: BoxFit.cover,
-                opacity: 0.4,
-              ),
-              borderRadius: BorderRadius.circular(38),
-              border: Border.all(
-                color: GardenColors.ink,
-                width: 1.8,
-              ),
-              boxShadow: [
-                BoxShadow(
-                  color: GardenColors.ink,
-                  blurRadius: 0,
-                  offset: const Offset(0, 6),
-                ),
-              ],
-            ),
-            padding: const EdgeInsets.symmetric(horizontal: 8),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+        border: Border.all(
+          color: GardenColors.ink,
+          width: 1.8,
+        ),
+        boxShadow: const [
+          BoxShadow(
+            color: GardenColors.ink,
+            blurRadius: 0,
+            offset: Offset(0, 6),
+          ),
+        ],
+      ),
+      child: Container(
+        decoration: BoxDecoration(
+          color: GardenColors.creamLight,
+          borderRadius: BorderRadius.circular(36),
+        ),
+        padding: const EdgeInsets.symmetric(horizontal: 8),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: _tabs.map((tab) {
                 final isActive = activeTab == tab.$1;
                 return Expanded(
@@ -112,8 +112,6 @@ class AnimatedBottomNav extends StatelessWidget {
               }).toList(),
             ),
           ),
-        ),
-      ),
     );
   }
 }

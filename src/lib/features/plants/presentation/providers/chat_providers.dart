@@ -31,6 +31,48 @@ final chatMessagesProvider = StateNotifierProvider.family<ChatMessagesNotifier,
   ),
 );
 
+final plantVoicesProvider = StateNotifierProvider.family<PlantVoicesNotifier, AsyncValue<dto.VoicesResponse>, String>(
+  (ref, plantId) => PlantVoicesNotifier(plantId, ref.read(backendChatServiceProvider)),
+);
+
+class PlantVoicesNotifier extends StateNotifier<AsyncValue<dto.VoicesResponse>> {
+  final String plantId;
+  final BackendChatService _chatService;
+
+  PlantVoicesNotifier(this.plantId, this._chatService) : super(const AsyncValue.loading()) {
+    _fetchVoices();
+  }
+
+  Future<void> _fetchVoices() async {
+    try {
+      final response = await _chatService.getVoices(plantId);
+      state = AsyncValue.data(response);
+    } catch (e, st) {
+      state = AsyncValue.error(e, st);
+    }
+  }
+
+  Future<void> setVoice(String voiceId) async {
+    final currentData = state.value;
+    if (currentData == null) return;
+    
+    // Optimistic update
+    state = AsyncValue.data(dto.VoicesResponse(
+      plantId: currentData.plantId,
+      currentVoiceId: voiceId,
+      options: currentData.options,
+    ));
+
+    try {
+      final response = await _chatService.setVoice(plantId, voiceId);
+      state = AsyncValue.data(response);
+    } catch (e) {
+      state = AsyncValue.data(currentData);
+      rethrow;
+    }
+  }
+}
+
 class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> {
   final String plantId;
   final BackendChatService _chatService;

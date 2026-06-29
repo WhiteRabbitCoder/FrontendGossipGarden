@@ -18,10 +18,10 @@ PROD_BACKEND_URL = https://backendgossipgarden-production.up.railway.app
 help:
 	@echo "GossipGarden Flutter — comandos disponibles"
 	@echo ""
-	@echo "  make dev-web       → Chrome,  backend local  (http://localhost:8000)"
+	@echo "  make dev-web       → Chrome,  backend local  (http://127.0.0.1:8001)"
 	@echo "  make prod-web      → Chrome,  backend Railway (prod)"
 	@echo "  make qa-web        → Chrome,  backend Railway (QA)"
-	@echo "  make dev-android   → Android, backend local  (10.0.2.2:8000)"
+	@echo "  make dev-android   → Android, backend local  (10.0.2.2:8001)"
 	@echo "  make prod-android  → Android, backend Railway"
 	@echo "  make samsung       → Samsung SM S721B, backend Railway (prod)"
 	@echo "  make samsung-qa    → Samsung SM S721B, backend Railway (QA)"
@@ -35,7 +35,7 @@ help:
 	@echo "  Copia .env.example → .env y rellena SUPABASE_ANON_KEY y GOOGLE_CLIENT_ID"
 
 dev-web:
-	cd src && flutter run -d chrome $(_DEFINES) --dart-define=BACKEND_TARGET=local
+	cd src && flutter run -d chrome $(_DEFINES) --dart-define=BACKEND_TARGET=local --dart-define=BACKEND_LOCAL_URL=http://127.0.0.1:8002
 
 prod-web:
 	cd src && flutter run -d chrome $(_DEFINES) --dart-define=BACKEND_TARGET=prod --dart-define=BACKEND_DEPLOY_URL=$(PROD_BACKEND_URL)

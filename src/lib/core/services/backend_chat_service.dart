@@ -55,4 +55,28 @@ class BackendChatService {
       throw Exception('Error transcribiendo audio: $detail');
     }
   }
+
+  Future<VoicesResponse> getVoices(String plantId) async {
+    try {
+      final response = await _apiClient.dio.get('/chat/$plantId/voices');
+      return VoicesResponse.fromJson(response.data);
+    } on DioException catch (e) {
+      final detail = e.response?.data?['detail'] ?? 'Error desconocido';
+      throw Exception('Error obteniendo voces: $detail');
+    }
+  }
+
+  Future<VoicesResponse> setVoice(String plantId, String voiceId) async {
+    try {
+      final request = SetVoiceRequest(voiceId: voiceId);
+      final response = await _apiClient.dio.patch(
+        '/chat/$plantId/voice',
+        data: request.toJson(),
+      );
+      return VoicesResponse.fromJson(response.data);
+    } on DioException catch (e) {
+      final detail = e.response?.data?['detail'] ?? 'Error desconocido';
+      throw Exception('Error estableciendo voz: $detail');
+    }
+  }
 }

@@ -39,15 +39,9 @@ class PlantFeedCard extends ConsumerWidget {
           onTap: onTap,
           child: Container(
             decoration: BoxDecoration(
-              color: GardenColors.creamPaper,
+              color: GardenColors.creamLight,
               borderRadius: BorderRadius.circular(18),
               border: Border.all(color: GardenColors.ink, width: 1.5),
-              boxShadow: const [
-                BoxShadow(
-                  color: GardenColors.ink,
-                  offset: Offset(0, 4),
-                ),
-              ],
             ),
             padding: const EdgeInsets.all(8),
             child: Row(
@@ -60,7 +54,7 @@ class PlantFeedCard extends ConsumerWidget {
                     width: 90,
                     height: 90,
                     decoration: BoxDecoration(
-                      color: GardenColors.creamLight,
+                      color: GardenColors.creamPaper,
                       borderRadius: BorderRadius.circular(14),
                       border: Border.all(color: GardenColors.ink, width: 1.2),
                     ),
@@ -179,15 +173,9 @@ class PlantFeedGridCard extends ConsumerWidget {
         onTap: onTap,
         child: Container(
           decoration: BoxDecoration(
-            color: GardenColors.creamPaper,
+            color: GardenColors.creamLight,
             borderRadius: BorderRadius.circular(18),
             border: Border.all(color: GardenColors.ink, width: 1.5),
-            boxShadow: const [
-              BoxShadow(
-                color: GardenColors.ink,
-                offset: Offset(0, 4),
-              ),
-            ],
           ),
           padding: const EdgeInsets.all(8),
           child: Column(

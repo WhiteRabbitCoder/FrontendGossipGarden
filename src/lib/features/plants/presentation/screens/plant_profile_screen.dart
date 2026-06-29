@@ -1,3 +1,4 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/plant_providers.dart';
@@ -67,7 +68,7 @@ class PlantProfileScreen extends ConsumerWidget {
         return profileAsync.when(
           data: (profile) {
             return Scaffold(
-              backgroundColor: GardenColors.creamPaper,
+              backgroundColor: Colors.transparent,
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
@@ -111,7 +112,7 @@ class PlantProfileScreen extends ConsumerWidget {
               Container(
                 margin: const EdgeInsets.only(right: 16),
                 decoration: BoxDecoration(
-                  color: GardenColors.creamLight,
+                  color: GardenColors.creamSolid,
                   shape: BoxShape.circle,
                 ),
                 child: IconButton(
@@ -297,7 +298,7 @@ class _FavoriteStarState extends State<_FavoriteStar> with SingleTickerProviderS
         child: Container(
           padding: const EdgeInsets.all(8),
           decoration: BoxDecoration(
-            color: GardenColors.creamLight.withOpacity(0.9),
+            color: GardenColors.creamSolid,
             shape: BoxShape.circle,
             border: Border.all(color: GardenColors.ink, width: 1.5),
           ),
@@ -325,7 +326,7 @@ class _PlantHeroCard extends StatelessWidget {
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 4, 20, 0),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: GardenColors.creamSolid,
         borderRadius: BorderRadius.circular(28),
         border: Border.all(color: GardenColors.ink, width: 1.5),
         boxShadow: const [
@@ -345,21 +346,40 @@ class _PlantHeroCard extends StatelessWidget {
               ClipRRect(
                 borderRadius: const BorderRadius.vertical(top: Radius.circular(26.5)),
                 child: plant.image.isNotEmpty
-                    ? Image.network(
-                        plant.image,
-                        height: 280,
-                        width: double.infinity,
-                        fit: BoxFit.cover,
-                        errorBuilder: (_, __, ___) => Container(
-                          height: 280,
-                          width: double.infinity,
-                          color: bgColor,
-                          alignment: Alignment.center,
-                          child: GardenIcon(
-                            asset: _getPlantIcon(plant.species),
-                            size: 80,
+                    ? Stack(
+                        children: [
+                          // 1. Fondo borroso (cover) para rellenar el espacio
+                          Positioned.fill(
+                            child: Image.network(
+                              plant.image,
+                              fit: BoxFit.cover,
+                            ),
                           ),
-                        ),
+                          // 2. Filtro de desenfoque
+                          Positioned.fill(
+                            child: BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 12, sigmaY: 12),
+                              child: Container(color: GardenColors.creamPaper.withOpacity(0.3)),
+                            ),
+                          ),
+                          // 3. Imagen real completa (contain)
+                          Image.network(
+                            plant.image,
+                            height: 280,
+                            width: double.infinity,
+                            fit: BoxFit.contain,
+                            errorBuilder: (_, __, ___) => Container(
+                              height: 280,
+                              width: double.infinity,
+                              color: bgColor,
+                              alignment: Alignment.center,
+                              child: GardenIcon(
+                                asset: _getPlantIcon(plant.species),
+                                size: 80,
+                              ),
+                            ),
+                          ),
+                        ],
                       )
                     : Container(
                         height: 280,
@@ -476,7 +496,7 @@ class _PersonalitySection extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(16),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: GardenColors.creamSolid,
             borderRadius: BorderRadius.circular(24),
             border: Border.all(color: GardenColors.ink, width: 1.5),
             boxShadow: [
@@ -506,7 +526,7 @@ class _PersonalitySection extends StatelessWidget {
                         padding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 5),
                         decoration: BoxDecoration(
-                          color: GardenColors.creamLight,
+                          color: GardenColors.creamSolid,
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
@@ -592,7 +612,7 @@ class _SensorStatusCard extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: GardenColors.creamSolid,
                 borderRadius: BorderRadius.circular(24),
                 border: Border.all(color: GardenColors.ink, width: 1.5),
                 boxShadow: [
@@ -746,7 +766,7 @@ class _SensorTile extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: GardenColors.creamSolid,
         borderRadius: BorderRadius.circular(24),
         border: Border.all(color: GardenColors.ink, width: 1.5),
         boxShadow: [
