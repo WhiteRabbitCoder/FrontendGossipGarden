@@ -1,4 +1,5 @@
 import 'dart:ui';
+import '../../../../core/utils/garden_snackbar.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/plant_providers.dart';
@@ -310,7 +311,7 @@ class _FavoriteStarState extends State<_FavoriteStar> with SingleTickerProviderS
       _controller.forward(from: 0.0);
     }
     
-    ScaffoldMessenger.of(context).showSnackBar(
+    GardenSnackbar.show(context, message: '');.showSnackBar(
       SnackBar(
         content: Text(isFavorite ? 'Planta añadida a favoritos ⭐' : 'Planta removida de favoritos'),
         duration: const Duration(seconds: 2),

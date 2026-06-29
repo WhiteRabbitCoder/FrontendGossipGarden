@@ -1,4 +1,5 @@
 import 'dart:typed_data';
+import '../../../../core/utils/garden_snackbar.dart';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -609,7 +610,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
     final opened = await openPlayStoreListing();
     if (!mounted) return;
     if (!opened) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      GardenSnackbar.show(context, message: '');.showSnackBar(
         const SnackBar(content: Text('No se pudo abrir Google Play Store.')),
       );
     }

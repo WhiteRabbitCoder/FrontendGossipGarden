@@ -1,4 +1,5 @@
 import 'dart:math' as math;
+import '../../../../core/utils/garden_snackbar.dart';
 import 'dart:io';
 import 'dart:typed_data';
 import 'dart:convert';
@@ -123,15 +124,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen>
       ref.read(achievementStatsProvider.notifier).recordChatMessage();
     } catch (_) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text('Error al enviar el mensaje'),
-            backgroundColor: GardenColors.heartRed,
-            behavior: SnackBarBehavior.floating,
-            shape:
-                RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          ),
-        );
+        GardenSnackbar.show(context, message: 'Error al enviar el mensaje', isError: true);
       }
     } finally {
       if (mounted) {
@@ -170,14 +163,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen>
         print('Error al detener la grabación: $e');
         if (mounted) {
           setState(() => _waitingForPlant = false);
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('Error al procesar la grabación de voz'),
-              backgroundColor: GardenColors.heartRed,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            ),
-          );
+          GardenSnackbar.show(context, message: 'Error al procesar la grabación de voz', isError: true);
         }
       }
     } else {
@@ -203,14 +189,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen>
             _micPulseController.stop();
             _micPulseController.reset();
           });
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: const Text('No se pudo acceder al micrófono. Verifica los permisos.'),
-              backgroundColor: GardenColors.heartRed,
-              behavior: SnackBarBehavior.floating,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-            ),
-          );
+          GardenSnackbar.show(context, message: 'No se pudo acceder al micrófono. Verifica los permisos.', isError: true);
         }
       }
     }

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/garden_snackbar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gossip_garden/features/auth/presentation/providers/auth_provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -63,7 +64,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
   Future<void> _saveProfile() async {
     final newName = _usernameController.text.trim();
     if (newName.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      GardenSnackbar.show(context, message: '');.showSnackBar(
         const SnackBar(content: Text('El nombre de usuario no puede estar vacío.')),
       );
       return;
@@ -77,16 +78,14 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
           );
       await ref.read(backendAuthServiceProvider).updateUserProfile(username: newName);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
+        GardenSnackbar.show(context, message: '');.showSnackBar(
           const SnackBar(content: Text('Información personal actualizada con éxito.')),
         );
         Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error al actualizar: $e')),
-        );
+        GardenSnackbar.show(context, message: 'Error al actualizar: $e');
       }
     } finally {
       if (mounted) {
@@ -103,21 +102,21 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     final confirm = _confirmPasswordController.text;
 
     if (current.isEmpty || newPassword.isEmpty || confirm.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      GardenSnackbar.show(context, message: '');.showSnackBar(
         const SnackBar(content: Text('Completa todos los campos de contraseña.')),
       );
       return;
     }
 
     if (newPassword.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      GardenSnackbar.show(context, message: '');.showSnackBar(
         const SnackBar(content: Text('La nueva contraseña debe tener al menos 6 caracteres.')),
       );
       return;
     }
 
     if (newPassword != confirm) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      GardenSnackbar.show(context, message: '');.showSnackBar(
         const SnackBar(content: Text('Las contraseñas nuevas no coinciden.')),
       );
       return;
@@ -133,7 +132,7 @@ class _PersonalInfoScreenState extends ConsumerState<PersonalInfoScreen> {
     _newPasswordController.clear();
     _confirmPasswordController.clear();
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    GardenSnackbar.show(context, message: '');.showSnackBar(
       const SnackBar(content: Text('Contraseña actualizada correctamente.')),
     );
   }

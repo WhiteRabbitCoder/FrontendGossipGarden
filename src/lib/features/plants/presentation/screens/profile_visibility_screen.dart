@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/garden_snackbar.dart';
 import '../../../../core/theme/garden_colors.dart';
 import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
@@ -109,7 +110,7 @@ class _ProfileVisibilityScreenState extends State<ProfileVisibilityScreen> {
           const SizedBox(height: 32),
           ElevatedButton(
             onPressed: () {
-              ScaffoldMessenger.of(context).showSnackBar(
+              GardenSnackbar.show(context, message: '');.showSnackBar(
                 const SnackBar(content: Text('Preferencias de visibilidad guardadas.')),
               );
               Navigator.pop(context);

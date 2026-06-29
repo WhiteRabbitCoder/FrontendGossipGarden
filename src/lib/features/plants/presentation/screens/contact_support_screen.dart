@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/garden_snackbar.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gossip_garden/features/auth/presentation/providers/auth_provider.dart';
 import '../../../../core/theme/garden_colors.dart';
@@ -32,7 +33,7 @@ class _ContactSupportScreenState extends ConsumerState<ContactSupportScreen> {
     final message = _messageController.text.trim();
 
     if (subject.isEmpty || message.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      GardenSnackbar.show(context, message: '');.showSnackBar(
         const SnackBar(content: Text('Completa el asunto y el mensaje.')),
       );
       return;
@@ -44,7 +45,7 @@ class _ContactSupportScreenState extends ConsumerState<ContactSupportScreen> {
     if (!mounted) return;
     setState(() => _isSending = false);
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    GardenSnackbar.show(context, message: '');.showSnackBar(
       const SnackBar(
         content: Text('Mensaje enviado. Te responderemos en menos de 24 horas.'),
       ),

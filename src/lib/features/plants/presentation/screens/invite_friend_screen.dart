@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/garden_snackbar.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gossip_garden/features/auth/presentation/providers/auth_provider.dart';
@@ -40,7 +41,7 @@ class _InviteFriendScreenState extends ConsumerState<InviteFriendScreen> {
   Future<void> _copyToClipboard(String text, String feedback) async {
     await Clipboard.setData(ClipboardData(text: text));
     if (!mounted) return;
-    ScaffoldMessenger.of(context).showSnackBar(
+    GardenSnackbar.show(context, message: '');.showSnackBar(
       SnackBar(content: Text(feedback)),
     );
   }
@@ -48,7 +49,7 @@ class _InviteFriendScreenState extends ConsumerState<InviteFriendScreen> {
   Future<void> _joinWithCode() async {
     final code = _joinCodeController.text.trim().toUpperCase();
     if (code.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      GardenSnackbar.show(context, message: '');.showSnackBar(
         const SnackBar(content: Text('Introduce un código de invitación.')),
       );
       return;
@@ -60,7 +61,7 @@ class _InviteFriendScreenState extends ConsumerState<InviteFriendScreen> {
     if (!mounted) return;
     setState(() => _isJoining = false);
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    GardenSnackbar.show(context, message: '');.showSnackBar(
       SnackBar(
         content: Text(
           code == _demoInviteCode || code.length >= 6

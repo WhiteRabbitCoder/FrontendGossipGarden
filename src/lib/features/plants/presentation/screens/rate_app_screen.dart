@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/garden_snackbar.dart';
 import '../../../../core/theme/garden_colors.dart';
 import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
@@ -26,7 +27,7 @@ class _RateAppScreenState extends State<RateAppScreen> {
   // TODO(backend): POST /feedback o integrar In-App Review de la tienda.
   Future<void> _submitRating() async {
     if (_rating == 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
+      GardenSnackbar.show(context, message: '');.showSnackBar(
         const SnackBar(content: Text('Selecciona una puntuación antes de enviar.')),
       );
       return;
@@ -38,7 +39,7 @@ class _RateAppScreenState extends State<RateAppScreen> {
     if (!mounted) return;
     setState(() => _isSubmitting = false);
 
-    ScaffoldMessenger.of(context).showSnackBar(
+    GardenSnackbar.show(context, message: '');.showSnackBar(
       const SnackBar(content: Text('¡Gracias por tu opinión!')),
     );
     Navigator.pop(context);

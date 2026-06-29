@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../../core/utils/garden_snackbar.dart';
 import '../../../../core/theme/garden_colors.dart';
 import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
@@ -100,7 +101,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
             title: 'Descargar mis datos',
             subtitle: 'Recibe una copia de tu información',
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
+              GardenSnackbar.show(context, message: '');.showSnackBar(
                 const SnackBar(
                   content: Text('Solicitud registrada. Te avisaremos por correo.'),
                 ),
@@ -113,7 +114,7 @@ class _DataPrivacyScreenState extends State<DataPrivacyScreen> {
             title: 'Solicitar eliminación de datos',
             subtitle: 'Borra tu cuenta y toda tu información',
             onTap: () {
-              ScaffoldMessenger.of(context).showSnackBar(
+              GardenSnackbar.show(context, message: '');.showSnackBar(
                 const SnackBar(
                   content: Text('Contacta con soporte para completar esta solicitud.'),
                 ),
