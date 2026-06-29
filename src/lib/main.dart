@@ -30,14 +30,14 @@ Future<void> main() async {
                   border: Border.all(color: GardenColors.heartRed, width: 2),
                 ),
                 child: const Icon(
-                  Icons.wifi_off_rounded,
+                  Icons.warning_rounded,
                   color: GardenColors.heartRed,
                   size: 48,
                 ),
               ),
               const SizedBox(height: 24),
               Text(
-                '¡Se nos cayó la maceta!',
+                '¡La maceta se ha roto!',
                 style: GardenTextStyles.display.copyWith(
                   color: GardenColors.ink,
                   fontSize: 28,
@@ -47,7 +47,7 @@ Future<void> main() async {
               ),
               const SizedBox(height: 12),
               Text(
-                'Parece que perdimos la conexión con el jardín.',
+                'Algo salió mal al dibujar esta pantalla.\nIntenta volver atrás o reiniciar.',
                 style: GardenTextStyles.body.copyWith(
                   color: GardenColors.inkSoft,
                   fontWeight: FontWeight.w600,

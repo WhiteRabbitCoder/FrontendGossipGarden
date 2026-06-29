@@ -49,9 +49,39 @@ class ApiClient {
       onResponse: (response, handler) {
         return handler.next(response);
       },
-      onError: (DioException e, handler) {
+      onError: (DioException e, handler) async {
         if (e.response?.statusCode == 401) {
-          _unauthorizedController.add(null);
+          final refreshToken = await tokenStorage.getRefreshToken();
+          if (refreshToken != null) {
+            try {
+              final refreshDio = Dio();
+              final response = await refreshDio.post(
+                '${AppConfig.backendBaseUrl}/auth/refresh',
+                data: {'refresh_token': refreshToken},
+                options: Options(headers: {'Content-Type': 'application/json'}),
+              );
+              final newToken = response.data['access_token'] as String;
+              final newRefresh = response.data['refresh_token'] as String?;
+              await tokenStorage.saveToken(newToken, refreshToken: newRefresh);
+              
+              final opts = e.requestOptions;
+              opts.headers['Authorization'] = 'Bearer $newToken';
+              final cloneReq = await refreshDio.request(
+                opts.path,
+                options: Options(
+                  method: opts.method,
+                  headers: opts.headers,
+                ),
+                data: opts.data,
+                queryParameters: opts.queryParameters,
+              );
+              return handler.resolve(cloneReq);
+            } catch (_) {
+              _unauthorizedController.add(null);
+            }
+          } else {
+            _unauthorizedController.add(null);
+          }
         }
         return handler.next(e);
       },

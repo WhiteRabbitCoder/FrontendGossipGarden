@@ -42,7 +42,7 @@ class PlantApiDatasource implements PlantDatasource {
               .map((e) => PlantResponse.fromJson(e as Map<String, dynamic>))
               .toList();
 
-          final futures = plantResponses.map((pr) => _toPlant(pr));
+          final futures = plantResponses.map((pr) => _toPlant(pr, isOffline: true));
           return Future.wait(futures);
         }
       } catch (_) {}
@@ -68,8 +68,8 @@ class PlantApiDatasource implements PlantDatasource {
     }
   }
 
-  Future<Plant> _toPlant(PlantResponse response) async {
-    final sensorResponse = await _getSensorSnapshot(response.plantId);
+  Future<Plant> _toPlant(PlantResponse response, {bool isOffline = false}) async {
+    final sensorResponse = isOffline ? null : await _getSensorSnapshot(response.plantId);
     
     // As the new backend doesn't provide min/max ranges directly on the /plants/ endpoint,
     // we use fallback comfort zones or could fetch the profile. (Using fallback to prevent N+1 requests, UI will load real ranges in profile screen)

@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'dart:isolate';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -165,15 +166,17 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
 
   Future<File> _processImage(String path) async {
     final bytes = await File(path).readAsBytes();
-    final original = img.decodeImage(bytes)!;
-    final oriented = img.bakeOrientation(original);
-    final w = oriented.width;
-    final h = oriented.height;
-    final side = w < h ? w : h;
-    final cropped = img.copyCrop(oriented, x: (w - side) ~/ 2, y: (h - side) ~/ 2, width: side, height: side);
-    final resized = img.copyResize(cropped, width: 1024, height: 1024);
     final outPath = '${Directory.systemTemp.path}/plant_${DateTime.now().millisecondsSinceEpoch}.jpg';
-    await File(outPath).writeAsBytes(img.encodeJpg(resized, quality: 92));
+    await Isolate.run(() {
+      final original = img.decodeImage(bytes)!;
+      final oriented = img.bakeOrientation(original);
+      final w = oriented.width;
+      final h = oriented.height;
+      final side = w < h ? w : h;
+      final cropped = img.copyCrop(oriented, x: (w - side) ~/ 2, y: (h - side) ~/ 2, width: side, height: side);
+      final resized = img.copyResize(cropped, width: 1024, height: 1024);
+      File(outPath).writeAsBytesSync(img.encodeJpg(resized, quality: 92));
+    });
     return File(outPath);
   }
 

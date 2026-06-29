@@ -38,7 +38,7 @@ class MainScreen extends ConsumerWidget {
         nav.showChat || nav.showPlantProfile || nav.selectedFriendId != null;
 
     return PopScope(
-      canPop: false,
+      canPop: !hasOverlay && nav.activeTab == TabId.dashboard,
       onPopInvokedWithResult: (didPop, _) async {
         if (didPop) return;
         if (hasOverlay) {

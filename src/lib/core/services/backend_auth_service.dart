@@ -20,7 +20,10 @@ class BackendAuthService {
       );
       
       final tokenResponse = TokenResponse.fromJson(response.data);
-      await _tokenStorage.saveToken(tokenResponse.accessToken);
+      await _tokenStorage.saveToken(
+        tokenResponse.accessToken,
+        refreshToken: tokenResponse.refreshToken,
+      );
       return tokenResponse;
     } on DioException catch (e) {
       final message = e.response?.data?['detail'] ?? 'Error desconocido';
@@ -38,6 +41,28 @@ class BackendAuthService {
       return response.data['user_id'] as String?;
     } on DioException catch (e) {
       final message = e.response?.data?['detail'] ?? 'Error desconocido';
+      throw AuthException(message);
+    }
+  }
+
+  Future<TokenResponse> refreshToken(String refreshToken) async {
+    try {
+      final response = await Dio().post(
+        '${AppConfig.backendBaseUrl}/auth/refresh',
+        data: {'refresh_token': refreshToken},
+        options: Options(
+          headers: {'Content-Type': 'application/json'},
+        ),
+      );
+      
+      final tokenResponse = TokenResponse.fromJson(response.data);
+      await _tokenStorage.saveToken(
+        tokenResponse.accessToken,
+        refreshToken: tokenResponse.refreshToken,
+      );
+      return tokenResponse;
+    } on DioException catch (e) {
+      final message = e.response?.data?['detail'] ?? 'Error renovando sesión';
       throw AuthException(message);
     }
   }
@@ -71,9 +96,11 @@ class BackendAuthService {
       );
 
       final token = response.data['access_token'] as String?;
+      final refreshToken = response.data['refresh_token'] as String?;
       if (token == null) {
         throw Exception('Respuesta de Supabase inválida');
       }
+      await _tokenStorage.saveToken(token, refreshToken: refreshToken);
       return token;
     } on DioException catch (e) {
       final message = e.response?.data?['error_description'] ?? e.response?.data?['msg'] ?? 'Error al autenticar con Google';

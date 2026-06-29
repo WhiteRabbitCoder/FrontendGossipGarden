@@ -33,6 +33,9 @@ class BackendChatService {
       // Actualizar historial local después de enviar un mensaje (Opcional, pero para mantener coherencia en caché si se puede, aunque por ahora solo confiamos en getHistory).
       return ChatMessageResponse.fromJson(response.data);
     } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionError || e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.unknown) {
+        throw Exception('Sin conexión al jardín. Revisa tu internet.');
+      }
       final detail = e.response?.data?['detail'] ?? 'Error desconocido';
       throw Exception('Error en chat: $detail');
     }
@@ -57,6 +60,9 @@ class BackendChatService {
         }
       } catch (_) {}
 
+      if (e.type == DioExceptionType.connectionError || e.type == DioExceptionType.connectionTimeout || e.type == DioExceptionType.unknown) {
+        throw Exception('Sin conexión al jardín. Revisa tu internet.');
+      }
       final detail = e.response?.data?['detail'] ?? 'Error desconocido';
       throw Exception('Error obteniendo historial: $detail');
     }

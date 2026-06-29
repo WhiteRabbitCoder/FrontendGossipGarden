@@ -38,16 +38,19 @@ class UserLogin {
 class TokenResponse {
   final String accessToken;
   final String tokenType;
+  final String? refreshToken;
 
   TokenResponse({
     required this.accessToken,
     required this.tokenType,
+    this.refreshToken,
   });
 
   factory TokenResponse.fromJson(Map<String, dynamic> json) {
     return TokenResponse(
       accessToken: json['access_token'],
       tokenType: json['token_type'],
+      refreshToken: json['refresh_token'],
     );
   }
 }
