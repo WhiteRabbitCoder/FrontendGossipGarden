@@ -9,6 +9,7 @@ import '../../../../core/theme/garden_colors.dart';
 import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
 import '../../../../core/widgets/garden_icon.dart';
+import '../../../../core/utils/garden_transitions.dart';
 
 // HARDCODE(demo): consume friendGardenProvider (datos de Mateo). TODO(backend): jardín por friendId real.
 class FriendGardenScreen extends ConsumerWidget {
@@ -194,8 +195,8 @@ class FriendGardenScreen extends ConsumerWidget {
                           progress: progress,
                           onTap: () {
                             Navigator.of(context).push(
-                              MaterialPageRoute(
-                                builder: (_) => AchievementDetailScreen(
+                              GardenTransitions.sharedAxis(
+                                AchievementDetailScreen(
                                   progress: progress,
                                 ),
                               ),

@@ -10,6 +10,7 @@ import '../../../../core/theme/garden_colors.dart';
 import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
 import '../../../../core/widgets/garden_icon.dart';
+import '../../../../core/utils/garden_transitions.dart';
 import 'personal_info_screen.dart';
 import 'help_center_screen.dart';
 import 'contact_support_screen.dart';
@@ -62,8 +63,8 @@ class ProfileSettingsScreen extends ConsumerWidget {
                       localAvatarBytes: localAvatarBytes,
                       onSettingsTap: () {
                         Navigator.of(context).push(
-                          MaterialPageRoute(
-                            builder: (_) => const _SettingsScreen(),
+                          GardenTransitions.sharedAxis(
+                            const _SettingsScreen(),
                           ),
                         );
                       },
@@ -97,8 +98,8 @@ class ProfileSettingsScreen extends ConsumerWidget {
             ],
           );
         },
-        loading: () =>
-            const Center(child: CircularProgressIndicator(color: GardenColors.leafGreen)),
+        loading: () => const Center(
+            child: CircularProgressIndicator(color: GardenColors.leafGreen)),
         error: (e, _) =>
             Center(child: Text('Error: $e', style: GardenTextStyles.bodySmall)),
       ),
@@ -204,7 +205,8 @@ class AchievementsSection extends ConsumerStatefulWidget {
   const AchievementsSection({super.key});
 
   @override
-  ConsumerState<AchievementsSection> createState() => _AchievementsSectionState();
+  ConsumerState<AchievementsSection> createState() =>
+      _AchievementsSectionState();
 }
 
 class _AchievementsSectionState extends ConsumerState<AchievementsSection> {
@@ -242,7 +244,8 @@ class _AchievementsSectionState extends ConsumerState<AchievementsSection> {
           error: (e, _) => SizedBox(
             height: 132,
             child: Center(
-              child: Text('Error al cargar logros', style: GardenTextStyles.bodySmall),
+              child: Text('Error al cargar logros',
+                  style: GardenTextStyles.bodySmall),
             ),
           ),
           data: (achievements) => SizedBox(
@@ -256,8 +259,8 @@ class _AchievementsSectionState extends ConsumerState<AchievementsSection> {
                   progress: achievements[index],
                   onTap: () {
                     Navigator.of(context).push(
-                      MaterialPageRoute(
-                        builder: (_) => AchievementDetailScreen(
+                      GardenTransitions.sharedAxis(
+                        AchievementDetailScreen(
                           progress: achievements[index],
                         ),
                       ),
@@ -508,11 +511,10 @@ class _AddFavoriteButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final available = allPlants.where((p) => !favorites.contains(p.id)).toList();
+    final available =
+        allPlants.where((p) => !favorites.contains(p.id)).toList();
     return GestureDetector(
-      onTap: available.isEmpty
-          ? null
-          : () => _showModal(context, available),
+      onTap: available.isEmpty ? null : () => _showModal(context, available),
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
@@ -545,15 +547,15 @@ class _AddFavoriteButton extends StatelessWidget {
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
-      builder: (_) => Padding(
+      Padding(
         padding: const EdgeInsets.all(24),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text('Selecciona una planta',
-                style: GardenTextStyles.title.copyWith(
-                    fontWeight: FontWeight.w800)),
+                style: GardenTextStyles.title
+                    .copyWith(fontWeight: FontWeight.w800)),
             const SizedBox(height: 16),
             ...available.map((plant) => ListTile(
                   leading: Container(
@@ -633,8 +635,8 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
                   fontWeight: FontWeight.w800,
                 )),
             Text('Personaliza tu experiencia',
-                style:
-                    GardenTextStyles.label.copyWith(color: GardenColors.inkSoft)),
+                style: GardenTextStyles.label
+                    .copyWith(color: GardenColors.inkSoft)),
           ],
         ),
       ),
@@ -651,8 +653,8 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
                 subtitle: 'Nombre, bio, avatar, contraseña',
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const PersonalInfoScreen(),
+                    GardenTransitions.sharedAxis(
+                      const PersonalInfoScreen(),
                     ),
                   );
                 },
@@ -704,8 +706,8 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
                 subtitle: 'Estado, vinculación y configuración WiFi',
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const SensorSettingsScreen(),
+                    GardenTransitions.sharedAxis(
+                      const SensorSettingsScreen(),
                     ),
                   );
                 },
@@ -725,8 +727,8 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
                 subtitle: 'Gestiona cómo usamos tu información',
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const DataPrivacyScreen(),
+                    GardenTransitions.sharedAxis(
+                      const DataPrivacyScreen(),
                     ),
                   );
                 },
@@ -738,8 +740,8 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
                 subtitle: 'Quién puede ver tu jardín',
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const ProfileVisibilityScreen(),
+                    GardenTransitions.sharedAxis(
+                      const ProfileVisibilityScreen(),
                     ),
                   );
                 },
@@ -759,8 +761,8 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
                 subtitle: 'Preguntas frecuentes y guías',
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const HelpCenterScreen(),
+                    GardenTransitions.sharedAxis(
+                      const HelpCenterScreen(),
                     ),
                   );
                 },
@@ -772,8 +774,8 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
                 subtitle: 'Escríbenos, respondemos en 24h',
                 onTap: () {
                   Navigator.of(context).push(
-                    MaterialPageRoute(
-                      builder: (_) => const ContactSupportScreen(),
+                    GardenTransitions.sharedAxis(
+                      const ContactSupportScreen(),
                     ),
                   );
                 },

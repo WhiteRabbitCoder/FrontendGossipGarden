@@ -190,38 +190,73 @@ class PlantProfileScreen extends ConsumerWidget {
       loading: () => const Scaffold(
         body: Center(child: CircularProgressIndicator(color: GardenColors.leafGreen)),
       ),
-      error: (e, _) => Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const GardenIcon(asset: GardenIcons.back, size: 20),
-            onPressed: onBack,
-          ),
-          title: const Text('Error de perfil'),
-        ),
-        body: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Text('Error cargando el perfil completo:\n$e', style: GardenTextStyles.bodySmall),
-          ),
-        ),
-      ),
+      error: (e, _) => _buildErrorState(context, 'No pudimos cargar la información adicional de esta planta. Revisa tu conexión.'),
     );
       },
       loading: () => const Scaffold(
         body: Center(child: CircularProgressIndicator(color: GardenColors.leafGreen)),
       ),
-      error: (e, _) => Scaffold(
-        appBar: AppBar(
-          leading: IconButton(
-            icon: const GardenIcon(asset: GardenIcons.back, size: 20),
-            onPressed: onBack,
-          ),
-          title: const Text('Error'),
+      error: (e, _) => _buildErrorState(context, 'No pudimos conectar con el jardín. Verifica tu conexión a internet o intenta de nuevo.'),
+    );
+  }
+
+  Widget _buildErrorState(BuildContext context, String message) {
+    return Scaffold(
+      backgroundColor: GardenColors.creamLight,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: const GardenIcon(asset: GardenIcons.back, size: 20),
+          onPressed: () {
+            Navigator.of(context).pop();
+            // Fallback si no hay ruta atrás
+            ref.read(navigationProvider.notifier).handleBack();
+          },
         ),
-        body: Center(
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.all(20),
-            child: Text('Detalle del error:\n$e', style: GardenTextStyles.bodySmall),
+      ),
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: GardenColors.soilBrown.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: const GardenIcon(asset: GardenIcons.wrongConexion, size: 64),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                '¡Ups! Algo salió mal',
+                style: GardenTextStyles.headingSmall.copyWith(color: GardenColors.ink),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                message,
+                style: GardenTextStyles.bodyMedium.copyWith(color: GardenColors.grey),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              ElevatedButton(
+                onPressed: () {
+                  ref.invalidate(plantSingleProvider(widget.plantId));
+                  ref.invalidate(plantProfileProvider(widget.plantId));
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: GardenColors.leafGreen,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                  elevation: 0,
+                ),
+                child: Text('Reintentar', style: GardenTextStyles.bodyMedium.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
+              ),
+              const SizedBox(height: 60),
+            ],
           ),
         ),
       ),

@@ -10,6 +10,7 @@ import '../../../../core/widgets/garden_icon.dart';
 import '../widgets/garden_plant_card.dart';
 import 'invite_friend_screen.dart';
 import 'plant_identify_screen.dart';
+import '../../../../core/utils/garden_transitions.dart';
 
 class GardenViewScreen extends ConsumerStatefulWidget {
   const GardenViewScreen({super.key});
@@ -71,9 +72,7 @@ class _GardenViewScreenState extends ConsumerState<GardenViewScreen> {
                         tooltip: 'Agregar nueva planta',
                         onTap: () {
                           Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const PlantIdentifyScreen(),
-                            ),
+                            GardenTransitions.sharedAxis(const PlantIdentifyScreen()),
                           );
                         },
                       ),
@@ -83,9 +82,7 @@ class _GardenViewScreenState extends ConsumerState<GardenViewScreen> {
                         tooltip: 'Invitar amigo jardinero',
                         onTap: () {
                           Navigator.of(context).push(
-                            MaterialPageRoute(
-                              builder: (_) => const InviteFriendScreen(),
-                            ),
+                            GardenTransitions.sharedAxis(const InviteFriendScreen()),
                           );
                         },
                       ),
