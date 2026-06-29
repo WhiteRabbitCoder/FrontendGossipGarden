@@ -7,8 +7,8 @@ class GardenIcons {
   // Navegación principal
   static const home = '$_base/house_icon.png';
   static const garden = '$_base/Icons.eco.png';
-  static const chat = 'assets/icons/settings/icon_chat.png';
-  static const profile = 'assets/icons/settings/icon_profile.png';
+  static const chat = '$_base/Icons.chat_bubble.png';
+  static const profile = '$_base/Icons.person.png';
   static const profileAlt = '$_base/Icons_perfil.png';
 
   // Acciones
@@ -28,12 +28,12 @@ class GardenIcons {
   static const viewGrid = '$_base/Icons_view_square.png';
 
   // Notificaciones
-  static const notification = 'assets/icons/settings/icon_notification.png';
+  static const notification = '$_base/Icons_plant_alert.png';
   static const notificationAlt = '$_base/Icons_bolbillo.png';
 
   // Sensores / conectividad
   static const wifi = '$_base/Icons_wifi.png';
-  static const signal = 'assets/icons/settings/icon_signal.png';
+  static const signal = '$_base/Icons_senal.png';
   static const wifiConnect = '$_base/Icons_add_wifi_connect.png';
   static const wrongConexion = '$_base/Icons_wrong_conexion.png';
   static const sensorOffline = wrongConexion;
@@ -57,20 +57,32 @@ class GardenIcons {
 
   // Formularios / auth
   static const google = '$_base/Icons_google.png';
-  static const email = 'assets/icons/settings/icon_email.png';
+  static const email = '$_base/Icons.email_email_outlined.png';
   static const lock = '$_base/Icons_lock.png';
-  static const eyeOpen = 'assets/icons/settings/icon_eye.png';
+  static const eyeOpen = '$_base/Icons_visibility_outlined_eye_open.png';
   static const eyeClose = '$_base/Icons_visibility_outlined_eye _close.png';
-  static const phone = 'assets/icons/settings/icon_phone.png';
+  static const phone = '$_base/Icons_celphone.png';
 
   // Ajustes / soporte
-  static const shield = 'assets/icons/settings/icon_shield.png';
+  static const shield = '$_base/Icons_shield.png';
   static const shieldAlt = '$_base/Icons_shield_2.png';
+  
+  // Iconos exclusivos para Settings Screen
+  static const settingProfile = 'assets/icons/settings/icon_profile.png';
+  static const settingPhone = 'assets/icons/settings/icon_phone.png';
+  static const settingEmail = 'assets/icons/settings/icon_email.png';
+  static const settingNotification = 'assets/icons/settings/icon_notification.png';
+  static const settingSignal = 'assets/icons/settings/icon_signal.png';
+  static const settingShield = 'assets/icons/settings/icon_shield.png';
+  static const settingEye = 'assets/icons/settings/icon_eye.png';
+  static const settingBooks = 'assets/icons/settings/icon_books.png';
+  static const settingChat = 'assets/icons/settings/icon_chat.png';
+  static const settingStar = 'assets/icons/settings/icon_star.png';
   static const info = '$_base/Icons_info.png';
   static const bulb = '$_base/Icons_bombillo_2.png';
   static const starOutline = '$_base/icons_start_outline.png';
-  static const starFilled = 'assets/icons/settings/icon_star.png';
-  static const helpBooks = 'assets/icons/settings/icon_books.png';
+  static const starFilled = '$_base/Icons_start_fully.png';
+  static const helpBooks = '$_base/Icons_add_books.png';
 
   // Perfil de planta
   static const map = '$_base/Icons_mapa.png';

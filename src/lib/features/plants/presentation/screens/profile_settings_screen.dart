@@ -646,7 +646,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
           _SettingsGroup(
             children: [
               _SettingsTile(
-                iconAsset: GardenIcons.profile,
+                iconAsset: GardenIcons.settingProfile,
                 title: 'Información personal',
                 subtitle: 'Nombre, bio, avatar, contraseña',
                 onTap: () {
@@ -667,7 +667,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
           _SettingsGroup(
             children: [
               _SettingsToggleTile(
-                iconAsset: GardenIcons.phone,
+                iconAsset: GardenIcons.settingPhone,
                 title: 'Notificaciones push',
                 subtitle: 'Avisos en este dispositivo',
                 value: _pushNotifications,
@@ -675,7 +675,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
               ),
               _SettingsDivider(),
               _SettingsToggleTile(
-                iconAsset: GardenIcons.email,
+                iconAsset: GardenIcons.settingEmail,
                 title: 'Correo',
                 subtitle: 'Resumen semanal por email',
                 value: _emailNotifications,
@@ -683,7 +683,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
               ),
               _SettingsDivider(),
               _SettingsToggleTile(
-                iconAsset: GardenIcons.notification,
+                iconAsset: GardenIcons.settingNotification,
                 title: 'Recordatorios de cuidado',
                 subtitle: 'Cuando una planta necesita atención',
                 value: _careReminders,
@@ -699,7 +699,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
           _SettingsGroup(
             children: [
               _SettingsTile(
-                iconAsset: GardenIcons.signal,
+                iconAsset: GardenIcons.settingSignal,
                 title: 'Mis sensores',
                 subtitle: 'Estado, vinculación y configuración WiFi',
                 onTap: () {
@@ -720,7 +720,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
           _SettingsGroup(
             children: [
               _SettingsTile(
-                iconAsset: GardenIcons.shield,
+                iconAsset: GardenIcons.settingShield,
                 title: 'Privacidad de datos',
                 subtitle: 'Gestiona cómo usamos tu información',
                 onTap: () {
@@ -733,7 +733,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
               ),
               _SettingsDivider(),
               _SettingsTile(
-                iconAsset: GardenIcons.eyeOpen,
+                iconAsset: GardenIcons.settingEye,
                 title: 'Visibilidad del perfil',
                 subtitle: 'Quién puede ver tu jardín',
                 onTap: () {
@@ -754,7 +754,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
           _SettingsGroup(
             children: [
               _SettingsTile(
-                iconAsset: GardenIcons.helpBooks,
+                iconAsset: GardenIcons.settingBooks,
                 title: 'Centro de ayuda',
                 subtitle: 'Preguntas frecuentes y guías',
                 onTap: () {
@@ -767,7 +767,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
               ),
               _SettingsDivider(),
               _SettingsTile(
-                iconAsset: GardenIcons.chat,
+                iconAsset: GardenIcons.settingChat,
                 title: 'Contactar soporte',
                 subtitle: 'Escríbenos, respondemos en 24h',
                 onTap: () {
@@ -780,7 +780,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
               ),
               _SettingsDivider(),
               _SettingsTile(
-                iconAsset: GardenIcons.starFilled,
+                iconAsset: GardenIcons.settingStar,
                 title: 'Calificar la app',
                 subtitle: 'Abre Google Play Store para valorarnos',
                 onTap: _openPlayStore,
@@ -902,7 +902,7 @@ class _SettingsTile extends StatelessWidget {
                 color: GardenColors.creamLight,
                 borderRadius: BorderRadius.circular(10),
               ),
-              child: Center(child: GardenIcon(asset: iconAsset, size: 18)),
+              child: Center(child: GardenIcon(asset: iconAsset, size: 24)),
             ),
             const SizedBox(width: 14),
             Expanded(
