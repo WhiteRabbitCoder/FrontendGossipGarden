@@ -1,12 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../data/models/plant.dart';
 import '../../../../core/theme/garden_colors.dart';
 import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
 import '../../../../core/widgets/garden_icon.dart';
+import '../providers/chat_providers.dart';
 import 'plant_badges.dart';
 
-class PlantFeedCard extends StatelessWidget {
+class PlantFeedCard extends ConsumerWidget {
   final Plant plant;
   final VoidCallback onTap;
   final bool isCelebrating;
@@ -19,11 +21,17 @@ class PlantFeedCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final messagesAsync = ref.watch(chatMessagesProvider(plant.id));
+    final messages = messagesAsync.value ?? [];
+    final lastMessage = messages.isNotEmpty 
+        ? messages.last.content 
+        : '¡Envía tu primer mensaje!';
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 12),
       child: Material(
-        color: Colors.white,
+        color: Colors.transparent,
         borderRadius: BorderRadius.circular(18),
         elevation: 0,
         child: InkWell(
@@ -31,45 +39,51 @@ class PlantFeedCard extends StatelessWidget {
           onTap: onTap,
           child: Container(
             decoration: BoxDecoration(
+              color: GardenColors.creamPaper,
               borderRadius: BorderRadius.circular(18),
-              border: Border.all(color: GardenColors.dustLight, width: 1.2),
-              boxShadow: [
+              border: Border.all(color: GardenColors.ink, width: 1.5),
+              boxShadow: const [
                 BoxShadow(
-                  color: GardenColors.ink.withOpacity(0.06),
-                  blurRadius: 18,
-                  offset: const Offset(0, 8),
+                  color: GardenColors.ink,
+                  offset: Offset(0, 4),
                 ),
               ],
             ),
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            padding: const EdgeInsets.all(8),
             child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 // ── Ícono de planta ────────────────────────────────────────
                 Hero(
                   tag: 'plantHero_${plant.id}',
                   child: Container(
-                    width: 52,
-                    height: 52,
+                    width: 90,
+                    height: 90,
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
                       color: GardenColors.creamLight,
-                      border: Border.all(color: GardenColors.dustLight),
+                      borderRadius: BorderRadius.circular(14),
+                      border: Border.all(color: GardenColors.ink, width: 1.2),
                     ),
-                    child: plant.image.isNotEmpty
-                        ? ClipOval(
-                            child: Image.network(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(13),
+                      child: plant.image.isNotEmpty
+                          ? Image.network(
                               plant.image,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => GardenIcon(
+                              errorBuilder: (_, __, ___) => Center(
+                                child: GardenIcon(
+                                  asset: GardenIcons.plantAssetForSpecies(plant.species),
+                                  size: 44,
+                                ),
+                              ),
+                            )
+                          : Center(
+                              child: GardenIcon(
                                 asset: GardenIcons.plantAssetForSpecies(plant.species),
-                                size: 26,
+                                size: 44,
                               ),
                             ),
-                          )
-                        : GardenIcon(
-                            asset: GardenIcons.plantAssetForSpecies(plant.species),
-                            size: 26,
-                          ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 14),
@@ -77,35 +91,53 @@ class PlantFeedCard extends StatelessWidget {
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
+                      Text(
+                        plant.name,
+                        style: GardenTextStyles.title.copyWith(
+                          color: GardenColors.ink,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                        maxLines: 1,
+                      ),
+                      const SizedBox(height: 6),
                       Row(
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Flexible(
-                            child: Text(
-                              plant.name,
-                              style: GardenTextStyles.title.copyWith(
-                                color: GardenColors.ink,
-                                fontSize: 16,
-                                fontWeight: FontWeight.w700,
-                              ),
-                              overflow: TextOverflow.ellipsis,
-                            ),
+                          Transform.translate(
+                            offset: const Offset(-10, 0),
+                            child: PlantMoodBadge(mood: plant.mood),
                           ),
-                          const SizedBox(width: 8),
-                          PlantMoodBadge(mood: plant.mood),
+                          if (plant.health != null)
+                            Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const Text('💚', style: TextStyle(fontSize: 12)),
+                                const SizedBox(width: 4),
+                                Text(
+                                  '${plant.health!.toInt()}%',
+                                  style: GardenTextStyles.label.copyWith(
+                                    color: GardenColors.inkSoft,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ],
+                            ),
                         ],
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 6),
                       Text(
-                        plant.insights.isNotEmpty
-                            ? plant.insights.first
-                            : 'Todo está bien.',
+                        lastMessage,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: GardenTextStyles.bodySmall.copyWith(
                           color: GardenColors.inkSoft,
                           fontSize: 13,
+                          height: 1.2,
                         ),
                       ),
                     ],
@@ -121,7 +153,7 @@ class PlantFeedCard extends StatelessWidget {
 }
 
 /// Tarjeta compacta para la vista en cuadrícula del dashboard.
-class PlantFeedGridCard extends StatelessWidget {
+class PlantFeedGridCard extends ConsumerWidget {
   final Plant plant;
   final VoidCallback onTap;
 
@@ -132,84 +164,103 @@ class PlantFeedGridCard extends StatelessWidget {
   });
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final messagesAsync = ref.watch(chatMessagesProvider(plant.id));
+    final messages = messagesAsync.value ?? [];
+    final lastMessage = messages.isNotEmpty 
+        ? messages.last.content 
+        : '¡Envía tu primer mensaje!';
+
     return Material(
-      color: Colors.white,
+      color: Colors.transparent,
       borderRadius: BorderRadius.circular(18),
       child: InkWell(
         borderRadius: BorderRadius.circular(18),
         onTap: onTap,
         child: Container(
           decoration: BoxDecoration(
+            color: GardenColors.creamPaper,
             borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: GardenColors.dustLight, width: 1.2),
-            boxShadow: [
+            border: Border.all(color: GardenColors.ink, width: 1.5),
+            boxShadow: const [
               BoxShadow(
-                color: GardenColors.ink.withOpacity(0.06),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
+                color: GardenColors.ink,
+                offset: Offset(0, 4),
               ),
             ],
           ),
-          padding: const EdgeInsets.all(14),
+          padding: const EdgeInsets.all(8),
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Center(
+              Expanded(
                 child: Hero(
                   tag: 'plantHero_${plant.id}',
                   child: Container(
-                    width: 56,
-                    height: 56,
                     decoration: BoxDecoration(
-                      shape: BoxShape.circle,
                       color: GardenColors.creamLight,
-                      border: Border.all(color: GardenColors.dustLight),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: GardenColors.ink, width: 1.2),
                     ),
-                    child: plant.image.isNotEmpty
-                        ? ClipOval(
-                            child: Image.network(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(11),
+                      child: plant.image.isNotEmpty
+                          ? Image.network(
                               plant.image,
                               fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => GardenIcon(
+                              errorBuilder: (_, __, ___) => Center(
+                                child: GardenIcon(
+                                  asset: GardenIcons.plantAssetForSpecies(plant.species),
+                                  size: 40,
+                                ),
+                              ),
+                            )
+                          : Center(
+                              child: GardenIcon(
                                 asset: GardenIcons.plantAssetForSpecies(plant.species),
-                                size: 28,
+                                size: 40,
                               ),
                             ),
-                          )
-                        : GardenIcon(
-                            asset: GardenIcons.plantAssetForSpecies(plant.species),
-                            size: 28,
-                          ),
+                    ),
                   ),
                 ),
               ),
-              const SizedBox(height: 12),
-              Text(
-                plant.name,
-                style: GardenTextStyles.title.copyWith(
-                  color: GardenColors.ink,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w700,
-                ),
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-              ),
-              const SizedBox(height: 6),
-              PlantMoodBadge(mood: plant.mood, horizontalPadding: 10, fontSize: 11),
               const SizedBox(height: 8),
-              Expanded(
-                child: Text(
-                  plant.insights.isNotEmpty
-                      ? plant.insights.first
-                      : 'Todo está bien.',
-                  maxLines: 2,
-                  overflow: TextOverflow.ellipsis,
-                  style: GardenTextStyles.bodySmall.copyWith(
-                    color: GardenColors.inkSoft,
-                    fontSize: 12,
-                    height: 1.35,
-                  ),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      children: [
+                        Expanded(
+                          child: Text(
+                            plant.name,
+                            style: GardenTextStyles.title.copyWith(
+                              color: GardenColors.ink,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w800,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        const SizedBox(width: 4),
+                        PlantMoodBadge(mood: plant.mood, horizontalPadding: 6, fontSize: 10),
+                      ],
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      lastMessage,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: GardenTextStyles.bodySmall.copyWith(
+                        color: GardenColors.inkSoft,
+                        fontSize: 12,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                  ],
                 ),
               ),
             ],

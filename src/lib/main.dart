@@ -24,9 +24,22 @@ class MyApp extends StatelessWidget {
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         useMaterial3: true,
-        scaffoldBackgroundColor: const Color(0xFFFDFCF8),
+        scaffoldBackgroundColor: Colors.transparent,
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xFF4A6741)),
       ),
+      builder: (context, child) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: GardenColors.creamPaper,
+            image: DecorationImage(
+              image: AssetImage('images/PaperTexture.png'),
+              fit: BoxFit.cover,
+              opacity: 0.4, // Aumentado a petición del usuario
+            ),
+          ),
+          child: child!,
+        );
+      },
       home: const _AppGate(),
     );
   }

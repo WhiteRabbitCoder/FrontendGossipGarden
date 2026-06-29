@@ -134,7 +134,7 @@ class GardenPlantCard extends StatelessWidget {
                           child: ClipRRect(
                             borderRadius: BorderRadius.circular(4),
                             child: LinearProgressIndicator(
-                              value: plant.health / 100,
+                              value: plant.health != null ? plant.health! / 100 : 0.0,
                               minHeight: 6,
                               backgroundColor: _healthBgColor(plant.health),
                               color: _healthColor(plant.health),
@@ -143,7 +143,7 @@ class GardenPlantCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Text(
-                          '${plant.health.toInt()}%',
+                          plant.health != null ? '${plant.health!.toInt()}%' : 'N/A',
                           style: GardenTextStyles.label.copyWith(
                             color: GardenColors.inkSoft,
                             fontSize: 11,
@@ -162,13 +162,15 @@ class GardenPlantCard extends StatelessWidget {
     );
   }
 
-  static Color _healthColor(double health) {
+  static Color _healthColor(double? health) {
+    if (health == null) return GardenColors.dust;
     if (health >= 90) return GardenColors.leafDark;
     if (health >= 70) return GardenColors.leafGreen;
     return GardenColors.heartRed;
   }
 
-  static Color _healthBgColor(double health) {
+  static Color _healthBgColor(double? health) {
+    if (health == null) return GardenColors.dustLight;
     if (health >= 70) return GardenColors.creamLight;
     return const Color(0xFFF6E8E8);
   }

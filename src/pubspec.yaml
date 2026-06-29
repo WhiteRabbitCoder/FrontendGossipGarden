@@ -56,7 +56,7 @@ dependencies:
   speech_to_text: ^7.4.0
   audioplayers: ^6.7.1
   path_provider: ^2.1.6
-  flutter_markdown: ^0.7.3
+  flutter_markdown: ^0.7.7+1
 
 dev_dependencies:
   flutter_test:
@@ -68,6 +68,8 @@ dev_dependencies:
   # package. See that file for information about deactivating specific lint
   # rules and activating additional ones.
   flutter_lints: ^6.0.0
+  mockito: ^5.6.4
+  build_runner: ^2.15.0
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec
@@ -82,6 +84,7 @@ flutter:
 
   assets:
     - images/
+    - assets/icons/sensor_icons/
 
   # An image asset can refer to one or more resolution-specific "variants", see
   # https://flutter.dev/to/resolution-aware-images

@@ -42,4 +42,17 @@ class BackendChatService {
       throw Exception('Error obteniendo historial: $detail');
     }
   }
+
+  Future<String> transcribeAudio(String base64Audio) async {
+    try {
+      final response = await _apiClient.dio.post(
+        '/chat/transcribe',
+        data: {'user_audio_base64': base64Audio},
+      );
+      return response.data['transcription'] as String;
+    } on DioException catch (e) {
+      final detail = e.response?.data?['detail'] ?? 'Error desconocido';
+      throw Exception('Error transcribiendo audio: $detail');
+    }
+  }
 }

@@ -29,12 +29,14 @@ class ChatMessageResponse {
   final String plantId;
   final DateTime timestamp;
   final String? audioUrl;
+  final String? userImageUrl;
 
   ChatMessageResponse({
     required this.reply,
     required this.plantId,
     required this.timestamp,
     this.audioUrl,
+    this.userImageUrl,
   });
 
   factory ChatMessageResponse.fromJson(Map<String, dynamic> json) {
@@ -43,6 +45,7 @@ class ChatMessageResponse {
       plantId: json['plant_id'],
       timestamp: DateTime.parse(json['timestamp']),
       audioUrl: json['audio_url'],
+      userImageUrl: json['user_image_url'],
     );
   }
 }
@@ -70,11 +73,15 @@ class ChatMessage {
   final String role; // 'user', 'assistant'
   final String content;
   final DateTime timestamp;
+  final String? userImageUrl;
+  final String? audioUrl;
 
   ChatMessage({
     required this.role,
     required this.content,
     required this.timestamp,
+    this.userImageUrl,
+    this.audioUrl,
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
@@ -82,6 +89,8 @@ class ChatMessage {
       role: json['role'],
       content: json['content'],
       timestamp: DateTime.parse(json['timestamp']),
+      userImageUrl: json['user_image_url'],
+      audioUrl: json['audio_url'],
     );
   }
 }

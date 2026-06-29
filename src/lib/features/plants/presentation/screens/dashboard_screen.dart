@@ -58,7 +58,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           crossAxisCount: 2,
           crossAxisSpacing: 12,
           mainAxisSpacing: 12,
-          childAspectRatio: 0.82,
+          childAspectRatio: 1.05,
         ),
         delegate: SliverChildBuilderDelegate(
           (context, index) => PlantFeedGridCard(
@@ -83,7 +83,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         : (authSession?.profile?.email?.split('@').first ?? 'Usuario');
 
     return Scaffold(
-      backgroundColor: GardenColors.creamPaper,
+      backgroundColor: Colors.transparent,
       body: CustomScrollView(
         slivers: [
           // ── Header ──────────────────────────────────────────────────────────
@@ -107,8 +107,13 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           const SizedBox(height: 2),
                           Row(
                             children: [
-                              const Text('🪴', style: TextStyle(fontSize: 26)),
-                              const SizedBox(width: 6),
+                              Image.asset(
+                                'images/logo_no_text.png',
+                                width: 32,
+                                height: 32,
+                                fit: BoxFit.contain,
+                              ),
+                              const SizedBox(width: 8),
                               Text(
                                 'Tu Jardín',
                                 style: GardenTextStyles.display.copyWith(

@@ -32,13 +32,18 @@ class SummaryBanner extends ConsumerWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(24, 24, 24, 24),
       decoration: BoxDecoration(
-        color: GardenColors.leafDark,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: [
+        color: GardenColors.leafGreen,
+        borderRadius: const BorderRadius.only(
+          topLeft: Radius.circular(24),
+          topRight: Radius.circular(32),
+          bottomLeft: Radius.circular(28),
+          bottomRight: Radius.circular(24),
+        ),
+        border: Border.all(color: GardenColors.ink, width: 1.8),
+        boxShadow: const [
           BoxShadow(
-            color: GardenColors.ink.withOpacity(0.18),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            color: GardenColors.ink,
+            offset: Offset(0, 4),
           ),
         ],
       ),
@@ -70,8 +75,8 @@ class SummaryBanner extends ConsumerWidget {
             style: OutlinedButton.styleFrom(
               backgroundColor: Colors.white,
               foregroundColor: GardenColors.ink,
-              side: BorderSide.none,
-              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+              side: const BorderSide(color: GardenColors.ink, width: 1.2),
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(24),
               ),

@@ -119,7 +119,7 @@ Plant applyUrgentTaskCompletion(Plant plant, UrgentPlantTask task) {
       return plant.copyWith(
         mood: PlantMood.happy,
         lastWatered: 'Hoy',
-        health: (plant.health + 12).clamp(0, 100),
+        health: plant.health != null ? (plant.health! + 12).clamp(0.0, 100.0) : null,
         insights: ['Acabo de recibir agua, ¡me siento mucho mejor!'],
         sensors: plant.sensors.copyWith(
           soilMoisture: targetMoisture.clamp(
@@ -132,7 +132,7 @@ Plant applyUrgentTaskCompletion(Plant plant, UrgentPlantTask task) {
       final targetLight = plant.comfortZones.light.min * 1.2;
       return plant.copyWith(
         mood: PlantMood.happy,
-        health: (plant.health + 10).clamp(0, 100),
+        health: plant.health != null ? (plant.health! + 10).clamp(0.0, 100.0) : null,
         insights: ['La luz ya es suficiente, ¡gracias por cuidarme!'],
         sensors: plant.sensors.copyWith(
           light: targetLight.clamp(
@@ -156,7 +156,7 @@ Plant applyUrgentTaskCompletion(Plant plant, UrgentPlantTask task) {
       final isCold = plant.mood == PlantMood.cold;
       return plant.copyWith(
         mood: PlantMood.happy,
-        health: (plant.health + 8).clamp(0, 100),
+        health: plant.health != null ? (plant.health! + 8).clamp(0.0, 100.0) : null,
         insights: [
           isCold
               ? 'Ya estoy más calentita, gracias.'

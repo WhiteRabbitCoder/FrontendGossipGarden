@@ -38,7 +38,6 @@ class PlantProfileScreen extends ConsumerWidget {
       data: (plants) {
         if (plants.isEmpty) {
           return Scaffold(
-            backgroundColor: GardenColors.creamPaper,
             appBar: AppBar(
               leading: IconButton(
                 icon: const GardenIcon(asset: GardenIcons.back, size: 20),
@@ -229,6 +228,89 @@ class PlantProfileScreen extends ConsumerWidget {
   }
 }
 
+// ── Botón de Favorito Interactivo ──────────────────────────────────────────
+
+class _FavoriteStar extends StatefulWidget {
+  const _FavoriteStar();
+
+  @override
+  State<_FavoriteStar> createState() => _FavoriteStarState();
+}
+
+class _FavoriteStarState extends State<_FavoriteStar> with SingleTickerProviderStateMixin {
+  bool isFavorite = false;
+  late AnimationController _controller;
+  late Animation<double> _scaleAnimation;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 500),
+    );
+
+    _scaleAnimation = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 1.0, end: 0.7).chain(CurveTween(curve: Curves.easeOut)), weight: 20),
+      TweenSequenceItem(tween: Tween(begin: 0.7, end: 1.3).chain(CurveTween(curve: Curves.elasticOut)), weight: 60),
+      TweenSequenceItem(tween: Tween(begin: 1.3, end: 1.0).chain(CurveTween(curve: Curves.easeIn)), weight: 20),
+    ]).animate(_controller);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  void _toggleFavorite() {
+    if (_controller.isAnimating) return;
+    
+    setState(() {
+      isFavorite = !isFavorite;
+    });
+    
+    if (isFavorite) {
+      _controller.forward(from: 0.0);
+    }
+    
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(isFavorite ? 'Planta añadida a favoritos ⭐' : 'Planta removida de favoritos'),
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: _toggleFavorite,
+      child: AnimatedBuilder(
+        animation: _scaleAnimation,
+        builder: (context, child) {
+          return Transform.scale(
+            scale: _scaleAnimation.value,
+            child: child,
+          );
+        },
+        child: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: GardenColors.creamLight.withOpacity(0.9),
+            shape: BoxShape.circle,
+            border: Border.all(color: GardenColors.ink, width: 1.5),
+          ),
+          child: GardenIcon(
+            asset: isFavorite ? GardenIcons.starFilled : GardenIcons.starOutline,
+            size: 22,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 // ── Plant Hero Card ───────────────────────────────────────────────────────────
 
 class _PlantHeroCard extends StatelessWidget {
@@ -242,102 +324,81 @@ class _PlantHeroCard extends StatelessWidget {
 
     return Container(
       margin: const EdgeInsets.fromLTRB(20, 4, 20, 0),
-      padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(28),
         border: Border.all(color: GardenColors.ink, width: 1.5),
-        boxShadow: [
+        boxShadow: const [
           BoxShadow(
-            color: GardenColors.ink.withValues(alpha: 0.15),
-            offset: const Offset(0, 5),
+            color: GardenColors.ink,
+            offset: Offset(0, 6),
             blurRadius: 0,
           ),
         ],
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          // owner tag + mood badge
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          // Imagen superior gigante
+          Stack(
             children: [
-              Container(
-                padding:
-                    const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: GardenColors.creamLight,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    const GardenIcon(
-                      asset: GardenIcons.logroFavorita,
-                      size: 12,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Montse', // TODO(backend): conectar nombre del dueño desde perfil
-                      style: GardenTextStyles.label.copyWith(
-                        color: GardenColors.leafDark,
-                        fontWeight: FontWeight.w600,
+              ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(26.5)),
+                child: plant.image.isNotEmpty
+                    ? Image.network(
+                        plant.image,
+                        height: 280,
+                        width: double.infinity,
+                        fit: BoxFit.cover,
+                        errorBuilder: (_, __, ___) => Container(
+                          height: 280,
+                          width: double.infinity,
+                          color: bgColor,
+                          alignment: Alignment.center,
+                          child: GardenIcon(
+                            asset: _getPlantIcon(plant.species),
+                            size: 80,
+                          ),
+                        ),
+                      )
+                    : Container(
+                        height: 280,
+                        width: double.infinity,
+                        color: bgColor,
+                        alignment: Alignment.center,
+                        child: GardenIcon(
+                          asset: _getPlantIcon(plant.species),
+                          size: 80,
+                        ),
                       ),
-                    ),
-                  ],
-                ),
               ),
-              PlantMoodBadge(mood: plant.mood),
+              // Icono de estrella
+              const Positioned(
+                top: 16,
+                right: 16,
+                child: _FavoriteStar(),
+              ),
             ],
           ),
-          const SizedBox(height: 16),
-          // Imagen circular con fondo de color mood
-          Container(
-            width: 160,
-            height: 160,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: bgColor,
-            ),
-            child: plant.image.isNotEmpty
-                ? ClipOval(
-                    child: Image.network(
-                      plant.image,
-                      fit: BoxFit.cover,
-                      errorBuilder: (_, __, ___) => GardenIcon(
-                        asset: _getPlantIcon(plant.species),
-                        size: 64,
-                      ),
-                    ),
-                  )
-                : GardenIcon(
-                    asset: _getPlantIcon(plant.species),
-                    size: 64,
+          const Divider(height: 1, thickness: 1.5, color: GardenColors.ink),
+          // Info Inferior
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 16),
+            child: Column(
+              children: [
+                PlantPersonalityTag(personality: plant.personality, horizontalPadding: 14, fontSize: 12),
+                const SizedBox(height: 12),
+                Text(
+                  plant.health != null ? '${plant.health!.toInt()}% Salud' : 'Salud N/A',
+                  style: GardenTextStyles.display.copyWith(
+                    color: GardenColors.ink,
+                    fontSize: 26,
+                    fontWeight: FontWeight.w800,
                   ),
-          ),
-          const SizedBox(height: 16),
-          // Personality tag
-          PlantPersonalityTag(personality: plant.personality, horizontalPadding: 14, fontSize: 12),
-          const SizedBox(height: 12),
-          // Salud
-          Text(
-            '${plant.health.toInt()}% Salud',
-            style: GardenTextStyles.display.copyWith(
-              color: GardenColors.ink,
-              fontSize: 26,
-              fontWeight: FontWeight.w800,
+                ),
+              ],
             ),
           ),
-          const SizedBox(height: 6),
-          // Quote
-          if (profile.specificCareTips?['general_tip'] != null || plant.insights.isNotEmpty)
-            Text(
-              '"${profile.specificCareTips?['general_tip'] ?? plant.insights.first}"',
-              textAlign: TextAlign.center,
-              style: GardenTextStyles.bodySmall.copyWith(
-                color: GardenColors.inkSoft,
-                fontStyle: FontStyle.italic,
-              ),
-            ),
         ],
       ),
     );
@@ -644,7 +705,7 @@ class _SensorGrid extends StatelessWidget {
             ),
             _SensorTile(
               label: 'LUZ',
-              value: '${light.toInt()}%',
+              value: '${light.toInt()} Lux',
               iconAsset: GardenIcons.sun,
               subLabel: 'Ideal: ${profile.speciesInfo.careRanges?.minLightLux ?? 250}-${profile.speciesInfo.careRanges?.maxLightLux ?? 1100} lux',
             ),

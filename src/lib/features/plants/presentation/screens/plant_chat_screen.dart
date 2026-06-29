@@ -1,5 +1,6 @@
 import 'dart:math' as math;
 import 'dart:io';
+import 'dart:typed_data';
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
@@ -38,6 +39,8 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen>
   bool _waitingForPlant = false;
   bool _isRecording = false;
   bool _hasText = false;
+  Uint8List? _selectedImageBytes;
+  String? _selectedImageBase64;
 
   late final AnimationController _floatController;
   late final AnimationController _micPulseController;
@@ -87,21 +90,33 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen>
   }
 
   Future<void> _sendMessage({String? text, String? audioUrl, String? imageBase64, String? userAudioBase64}) async {
-    final messageText = text ?? _textController.text.trim();
-    if (messageText.isEmpty && imageBase64 == null && userAudioBase64 == null) return;
+    final String messageText = text ?? _textController.text.trim();
+    final String? finalImageBase64 = imageBase64 ?? _selectedImageBase64;
+    
+    if (messageText.isEmpty && finalImageBase64 == null && userAudioBase64 == null) return;
     if (_plant == null || _waitingForPlant) return;
 
-    if (text == null && imageBase64 == null && userAudioBase64 == null) _textController.clear();
-    setState(() => _waitingForPlant = true);
+    if (text == null) _textController.clear();
+    
+    setState(() {
+      _waitingForPlant = true;
+      _selectedImageBytes = null;
+      _selectedImageBase64 = null;
+    });
 
     try {
+      String fallbackText = '';
+      if (finalImageBase64 != null) {
+        fallbackText = 'Te envío esta foto de la planta.';
+      }
+      
       await ref
           .read(chatMessagesProvider(widget.plantId).notifier)
           .sendMessage(
-            messageText.isNotEmpty ? messageText : 'Te envío esta foto de la planta.',
+            messageText.isNotEmpty ? messageText : fallbackText,
             responseFormat: audioUrl != null ? 'audio' : 'text',
             audioUrl: audioUrl,
-            imageBase64: imageBase64,
+            imageBase64: finalImageBase64,
             userAudioBase64: userAudioBase64,
           );
       ref.read(achievementStatsProvider.notifier).recordChatMessage();
@@ -140,6 +155,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen>
         if (mounted) {
           _textController.clear();
           if (result.audioUrl.isNotEmpty) {
+            setState(() => _waitingForPlant = false);
             await _sendMessage(
               text: result.transcription,
               audioUrl: result.audioUrl,
@@ -200,32 +216,30 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen>
   }
 
   Future<void> _pickImage(ImageSource source) async {
-    File? file;
+    Uint8List? bytes;
     if (source == ImageSource.camera) {
-      file = await Navigator.push<File?>(
+      final Uint8List? cameraBytes = await Navigator.push<Uint8List?>(
         context,
         MaterialPageRoute(builder: (_) => const InAppCameraScreen()),
       );
+      if (cameraBytes != null) {
+        bytes = cameraBytes;
+      }
     } else {
       final picker = ImagePicker();
       final pickedFile = await picker.pickImage(source: source);
       if (pickedFile != null) {
-        file = File(pickedFile.path);
+        bytes = await pickedFile.readAsBytes();
       }
     }
 
-    if (file != null && mounted) {
-      final bytes = await file.readAsBytes();
+    if (bytes != null && mounted) {
       final base64String = base64Encode(bytes);
       
-      // Enviar la foto con un mensaje predeterminado si el usuario no escribe nada
-      final currentText = _textController.text.trim();
-      _textController.clear();
-      
-      await _sendMessage(
-        text: currentText.isNotEmpty ? currentText : 'Aquí tienes una foto de mi planta, ¿cómo la ves?',
-        imageBase64: base64String,
-      );
+      setState(() {
+        _selectedImageBytes = bytes;
+        _selectedImageBase64 = base64String;
+      });
     }
   }
 
@@ -259,6 +273,8 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen>
     final plantsAsync = ref.watch(plantsProvider);
     final messagesAsync = ref.watch(chatMessagesProvider(widget.plantId));
     final messages = messagesAsync.value ?? [];
+    final hasError = messagesAsync.hasError;
+    final errorText = messagesAsync.error?.toString();
     final realtimeAsync =
         ref.watch(plantRealtimeSensorProvider(widget.plantId));
 
@@ -299,6 +315,32 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen>
                       ),
                     ),
                     // Mensajes
+
+                    if (hasError && messages.isEmpty)
+                      Center(
+                        child: Container(
+                          margin: const EdgeInsets.all(24),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: GardenColors.heartRed.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(color: GardenColors.heartRed.withValues(alpha: 0.3)),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.wifi_off_rounded, color: GardenColors.heartRed, size: 32),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Error de conexión\n${errorText ?? ""}',
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(color: GardenColors.heartRed, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                        ),
+                      )
+                    else
                     ListView.builder(
                       controller: _scrollController,
                       padding: const EdgeInsets.fromLTRB(12, 16, 12, 16),
@@ -318,11 +360,25 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen>
               // ── Input bar ────────────────────────────────────────────────
               _ChatInputBar(
                 controller: _textController,
-                hasText: _hasText,
+                hasText: _hasText || _selectedImageBytes != null,
                 isWaiting: _waitingForPlant,
                 isRecording: _isRecording,
                 micPulseController: _micPulseController,
-                onSend: () => _sendMessage(),
+                selectedImageBytes: _selectedImageBytes,
+                onClearImage: () {
+                  setState(() {
+                    _selectedImageBytes = null;
+                    _selectedImageBase64 = null;
+                  });
+                },
+                onSend: () {
+                  final text = _textController.text.trim();
+                  if (text.isEmpty && _selectedImageBytes != null) {
+                    _sendMessage(text: 'Aquí tienes una foto, ¿cómo la ves?');
+                  } else {
+                    _sendMessage();
+                  }
+                },
                 onMicToggle: _toggleRecording,
                 onAttachmentTap: _showAttachmentOptions,
               ),
@@ -402,20 +458,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen>
                     ),
                     overflow: TextOverflow.ellipsis,
                   ),
-                  if (soilMoisture != null && temperature != null && humidity != null)
-                    Row(
-                      children: [
-                        Text(
-                          '💧 ${soilMoisture.toStringAsFixed(0)}%  🌡️ ${temperature.toStringAsFixed(1)}°C  🌧️ ${humidity.toStringAsFixed(0)}%',
-                          style: GardenTextStyles.label.copyWith(
-                            color: GardenColors.inkSoft,
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                      ],
-                    )
-                  else
+
                     Row(
                       children: [
                         Container(
@@ -496,33 +539,41 @@ class _ThinkingBubbleState extends State<_ThinkingBubble>
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(12, 4, 60, 4),
+      padding: const EdgeInsets.fromLTRB(0, 3, 48, 3),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.end,
         children: [
           Container(
-            width: 30,
-            height: 30,
-            decoration: const BoxDecoration(
-              color: GardenColors.creamLight,
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              color: GardenColors.leafGreen.withValues(alpha: 0.3),
               shape: BoxShape.circle,
+              border: Border.all(color: GardenColors.ink, width: 1.5),
             ),
-            child: Center(
+            child: const Center(
               child: Text('🌿', style: TextStyle(fontSize: 15)),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 6),
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
             decoration: BoxDecoration(
-              color: GardenColors.creamLight,
+              color: Colors.white.withValues(alpha: 0.85),
+              border: Border.all(color: GardenColors.ink, width: 1.5),
               borderRadius: const BorderRadius.only(
                 topLeft: Radius.circular(20),
                 topRight: Radius.circular(20),
+                bottomLeft: Radius.circular(0),
                 bottomRight: Radius.circular(20),
-                bottomLeft: Radius.circular(4),
               ),
-              border: Border.all(color: GardenColors.dustLight),
+              boxShadow: [
+                BoxShadow(
+                  color: GardenColors.ink.withValues(alpha: 0.15),
+                  offset: const Offset(0, 3),
+                  blurRadius: 0,
+                ),
+              ],
             ),
             child: AnimatedBuilder(
               animation: _dotController,
@@ -531,8 +582,8 @@ class _ThinkingBubbleState extends State<_ThinkingBubble>
                   mainAxisSize: MainAxisSize.min,
                   children: List.generate(3, (i) {
                     final delay = i / 3;
-                    final t = (_dotController.value - delay).clamp(0.0, 1.0);
-                    final opacity = math.sin(t * math.pi).clamp(0.3, 1.0);
+                    final t = _dotController.value * 2 * math.pi - (delay * 2 * math.pi);
+                    final opacity = ((math.sin(t) + 1) / 2).clamp(0.3, 1.0);
                     return Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 3),
                       child: Opacity(
@@ -566,6 +617,8 @@ class _ChatInputBar extends StatelessWidget {
   final bool isWaiting;
   final bool isRecording;
   final AnimationController micPulseController;
+  final Uint8List? selectedImageBytes;
+  final VoidCallback onClearImage;
   final VoidCallback onSend;
   final VoidCallback onMicToggle;
   final VoidCallback onAttachmentTap;
@@ -576,6 +629,8 @@ class _ChatInputBar extends StatelessWidget {
     required this.isWaiting,
     required this.isRecording,
     required this.micPulseController,
+    this.selectedImageBytes,
+    required this.onClearImage,
     required this.onSend,
     required this.onMicToggle,
     required this.onAttachmentTap,
@@ -590,10 +645,47 @@ class _ChatInputBar extends StatelessWidget {
         color: GardenColors.cream,
         border: Border(top: BorderSide(color: GardenColors.dustLight)),
       ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.end,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Botón Adjuntar Foto ───────────────────────────────────────────
+          if (selectedImageBytes != null)
+            Padding(
+              padding: const EdgeInsets.only(bottom: 8.0, left: 48.0),
+              child: Stack(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.memory(
+                      selectedImageBytes!,
+                      height: 100,
+                      width: 100,
+                      fit: BoxFit.cover,
+                      cacheWidth: 300,
+                      cacheHeight: 300,
+                    ),
+                  ),
+                  Positioned(
+                    right: 4,
+                    top: 4,
+                    child: GestureDetector(
+                      onTap: onClearImage,
+                      child: Container(
+                        padding: const EdgeInsets.all(4),
+                        decoration: const BoxDecoration(
+                          color: Colors.black54,
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.close, color: Colors.white, size: 16),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              // ── Botón Adjuntar Foto ───────────────────────────────────────────
           GestureDetector(
             onTap: onAttachmentTap,
             child: Container(
@@ -662,6 +754,8 @@ class _ChatInputBar extends StatelessWidget {
                     onTap: onMicToggle,
                   ),
           ),
+        ],
+      ),
         ],
       ),
     );
@@ -759,21 +853,27 @@ class _MicButton extends StatelessWidget {
 
 // ── Chat Settings Sheet ───────────────────────────────────────────────────────
 
-class _ChatSettingsSheet extends StatelessWidget {
+class _ChatSettingsSheet extends ConsumerWidget {
   final Plant plant;
   const _ChatSettingsSheet({required this.plant});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final isOnline = plant.sensorStatus == SensorStatus.online;
+    final realtime = ref.watch(plantRealtimeSensorProvider(plant.id)).value;
+    
+    final soilMoisture = realtime?.soilMoisture ?? plant.sensors.soilMoisture;
+    final temperature = realtime?.temperature ?? plant.sensors.temperature;
+    final humidity = realtime?.humidity ?? plant.sensors.humidity;
 
     return Container(
       decoration: const BoxDecoration(
         color: GardenColors.creamPaper,
         borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
+      child: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
         children: [
           // Handle
           Container(
@@ -843,24 +943,33 @@ class _ChatSettingsSheet extends StatelessWidget {
             child: Column(
               children: [
                 _SettingsRow(
-                  icon: Icons.circle,
-                  iconColor: isOnline ? GardenColors.leafGreen : GardenColors.dust,
+                  assetPath: 'assets/icons/sensor_icons/matera.png',
                   label: 'Sensor',
                   value: isOnline ? 'En línea' : 'Sin conexión',
                 ),
                 _Divider(),
                 _SettingsRow(
-                  icon: Icons.favorite_rounded,
-                  iconColor: GardenColors.heartRed,
-                  label: 'Salud',
-                  value: '${plant.health.toInt()}%',
+                  assetPath: 'assets/icons/sensor_icons/water.png',
+                  label: 'Humedad de suelo',
+                  value: '${soilMoisture.toStringAsFixed(0)}%',
                 ),
                 _Divider(),
                 _SettingsRow(
-                  icon: Icons.tag_rounded,
-                  iconColor: GardenColors.potOrange,
-                  label: 'ID de planta',
-                  value: '${plant.id.substring(0, 8)}…',
+                  assetPath: 'assets/icons/sensor_icons/thermometer.png',
+                  label: 'Temperatura',
+                  value: '${temperature.toStringAsFixed(1)}°C',
+                ),
+                _Divider(),
+                _SettingsRow(
+                  assetPath: 'assets/icons/sensor_icons/cloud.png',
+                  label: 'Humedad ambiente',
+                  value: '${humidity.toStringAsFixed(0)}%',
+                ),
+                _Divider(),
+                _SettingsRow(
+                  assetPath: 'assets/icons/sensor_icons/heart.png',
+                  label: 'Salud',
+                  value: plant.health != null ? '${plant.health!.toInt()}%' : 'N/A',
                 ),
               ],
             ),
@@ -891,19 +1000,18 @@ class _ChatSettingsSheet extends StatelessWidget {
           ),
         ],
       ),
+      ),
     );
   }
 }
 
 class _SettingsRow extends StatelessWidget {
-  final IconData icon;
-  final Color iconColor;
+  final String assetPath;
   final String label;
   final String value;
 
   const _SettingsRow({
-    required this.icon,
-    required this.iconColor,
+    required this.assetPath,
     required this.label,
     required this.value,
   });
@@ -914,7 +1022,7 @@ class _SettingsRow extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
       child: Row(
         children: [
-          Icon(icon, color: iconColor, size: 16),
+          Image.asset(assetPath, width: 24, height: 24, fit: BoxFit.contain),
           const SizedBox(width: 12),
           Text(
             label,

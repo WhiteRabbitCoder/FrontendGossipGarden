@@ -19,7 +19,6 @@ class ChatListScreen extends ConsumerWidget {
     final navNotifier = ref.read(navigationProvider.notifier);
 
     return Scaffold(
-      backgroundColor: GardenColors.creamPaper,
       body: CustomScrollView(
         slivers: [
           SliverToBoxAdapter(

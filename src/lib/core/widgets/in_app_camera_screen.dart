@@ -71,8 +71,9 @@ class _InAppCameraScreenState extends State<InAppCameraScreen> with WidgetsBindi
     if (controller == null || !controller.value.isInitialized) return;
     try {
       final xFile = await controller.takePicture();
+      final bytes = await xFile.readAsBytes();
       if (mounted) {
-        Navigator.pop(context, File(xFile.path));
+        Navigator.pop(context, bytes);
       }
     } catch (e) {
       debugPrint("Error capturing image: $e");

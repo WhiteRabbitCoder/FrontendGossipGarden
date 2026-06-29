@@ -42,7 +42,7 @@ class ProfileSettingsScreen extends ConsumerWidget {
         : (authSession?.profile?.email?.split('@').first ?? 'Usuario');
 
     return Scaffold(
-      backgroundColor: GardenColors.creamPaper,
+      backgroundColor: Colors.transparent,
       body: plantsAsync.when(
         data: (plants) {
           final favPlants =
@@ -188,9 +188,9 @@ class _IconCircleButton extends StatelessWidget {
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: GardenColors.creamLight,
           shape: BoxShape.circle,
-          border: Border.all(color: GardenColors.creamPaper),
+          border: Border.all(color: GardenColors.ink, width: 1.5),
         ),
         child: Center(child: GardenIcon(asset: asset, size: 18)),
       ),
@@ -293,12 +293,11 @@ class AchievementCard extends StatelessWidget {
         width: 100,
         padding: const EdgeInsets.fromLTRB(10, 6, 10, 6),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: GardenColors.creamLight,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: progress.unlocked
-                ? GardenColors.golden.withOpacity(0.5)
-                : GardenColors.dustLight,
+            color: GardenColors.ink,
+            width: 1.5,
           ),
         ),
         child: Column(
@@ -416,9 +415,10 @@ class _FavoritePlantRow extends StatelessWidget {
     }
   }
 
-  Color _healthColor(double h) {
-    if (h > 70) return GardenColors.okGreen;
-    if (h > 40) return GardenColors.golden;
+  Color _healthColor(double? h) {
+    if (h == null) return GardenColors.dust;
+    if (h >= 90) return GardenColors.leafDark;
+    if (h >= 70) return GardenColors.leafGreen;
     return GardenColors.heartRed;
   }
 
@@ -427,9 +427,9 @@ class _FavoritePlantRow extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: GardenColors.creamLight,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: GardenColors.creamPaper),
+        border: Border.all(color: GardenColors.ink, width: 1.5),
       ),
       child: Row(
         children: [
@@ -472,7 +472,7 @@ class _FavoritePlantRow extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Text(
-                '${plant.health.toInt()}%',
+                plant.health != null ? '${plant.health!.toInt()}%' : 'N/A',
                 style: TextStyle(
                   color: _healthColor(plant.health),
                   fontSize: 20,
@@ -516,9 +516,9 @@ class _AddFavoriteButton extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 14),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: GardenColors.creamLight,
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: GardenColors.creamLight, width: 2),
+          border: Border.all(color: GardenColors.ink, width: 1.5),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -541,7 +541,7 @@ class _AddFavoriteButton extends StatelessWidget {
   void _showModal(BuildContext context, List<Plant> available) {
     showModalBottomSheet(
       context: context,
-      backgroundColor: Colors.white,
+      backgroundColor: GardenColors.creamLight,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -616,7 +616,7 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: GardenColors.creamPaper,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
@@ -801,13 +801,13 @@ class _SettingsScreenState extends ConsumerState<_SettingsScreen> {
               decoration: BoxDecoration(
                 color: const Color(0xFFFFEDED),
                 borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: const Color(0xFFFFCDD2)),
+                border: Border.all(color: GardenColors.heartRed, width: 1.5),
               ),
               child: const Center(
                 child: Text(
                   'Cerrar sesión',
                   style: TextStyle(
-                    color: Color(0xFFD94040),
+                    color: GardenColors.heartRed,
                     fontWeight: FontWeight.w700,
                     fontSize: 15,
                   ),
@@ -852,9 +852,9 @@ class _SettingsGroup extends StatelessWidget {
   Widget build(BuildContext context) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: GardenColors.creamLight,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: GardenColors.creamPaper),
+        border: Border.all(color: GardenColors.ink, width: 1.5),
       ),
       child: Column(children: children),
     );

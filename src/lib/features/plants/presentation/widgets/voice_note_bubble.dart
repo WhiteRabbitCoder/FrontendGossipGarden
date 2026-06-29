@@ -3,6 +3,8 @@ import 'dart:math';
 import 'package:flutter/material.dart';
 import 'package:gossip_garden/core/services/audio_helper.dart';
 import '../../../../core/theme/garden_colors.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
+import '../../../../../core/theme/garden_text_styles.dart';
 
 class VoiceNoteBubble extends StatefulWidget {
   final bool isUser;
@@ -142,7 +144,7 @@ class _VoiceNoteBubbleState extends State<VoiceNoteBubble>
     final isUser = widget.isUser;
     final progress = _progress;
 
-    final bgColor = isUser ? GardenColors.leafGreen.withValues(alpha: 0.2) : Colors.white;
+    final bgColor = isUser ? GardenColors.leafGreen.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.85);
     final fgColor = const Color(0xFF2E382E); // Gris oscuro botánico
     final subColor = GardenColors.inkSoft.withValues(alpha: 0.7);
     final unplayedColor = isUser
@@ -210,14 +212,23 @@ class _VoiceNoteBubbleState extends State<VoiceNoteBubble>
             const SizedBox(height: 8),
             Align(
               alignment: Alignment.centerLeft,
-              child: Text(
-                widget.transcription!,
-                style: const TextStyle(
-                  fontSize: 14,
-                  color: Color(0xFF2E382E),
-                  height: 1.35,
-                  fontWeight: FontWeight.w500,
-                  fontStyle: FontStyle.italic,
+              child: MarkdownBody(
+                data: widget.transcription!,
+                styleSheet: MarkdownStyleSheet(
+                  p: GardenTextStyles.bodySmall.copyWith(
+                    color: const Color(0xFF2E382E),
+                    fontSize: 14,
+                    height: 1.35,
+                    fontWeight: FontWeight.w500,
+                    fontStyle: FontStyle.italic,
+                  ),
+                  strong: GardenTextStyles.bodySmall.copyWith(
+                    color: const Color(0xFF2E382E),
+                    fontSize: 14,
+                    height: 1.35,
+                    fontWeight: FontWeight.w800,
+                    fontStyle: FontStyle.italic,
+                  ),
                 ),
               ),
             ),

@@ -103,7 +103,7 @@ class _LoginScreenState extends ConsumerState<LoginScreen>
         (authState.hasError ? _cleanErrorMessage(authState.error!) : null);
 
     return Scaffold(
-      backgroundColor: GardenColors.creamPaper,
+      backgroundColor: Colors.transparent,
       body: Stack(
         children: [
           SafeArea(

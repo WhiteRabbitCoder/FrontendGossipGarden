@@ -150,7 +150,6 @@ class _RegisterScreenState extends ConsumerState<RegisterScreen>
     });
 
     return Scaffold(
-      backgroundColor: GardenColors.creamPaper,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,

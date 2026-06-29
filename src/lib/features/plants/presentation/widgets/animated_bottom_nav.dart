@@ -36,16 +36,21 @@ class AnimatedBottomNav extends StatelessWidget {
           child: Container(
             decoration: BoxDecoration(
               color: GardenColors.creamPaper.withOpacity(0.85),
+              image: const DecorationImage(
+                image: AssetImage('images/PaperTexture.png'),
+                fit: BoxFit.cover,
+                opacity: 0.4,
+              ),
               borderRadius: BorderRadius.circular(38),
               border: Border.all(
-                color: GardenColors.leafGreen.withOpacity(0.5),
-                width: 2,
+                color: GardenColors.ink,
+                width: 1.8,
               ),
               boxShadow: [
                 BoxShadow(
-                  color: GardenColors.leafDark.withOpacity(0.1),
-                  blurRadius: 20,
-                  offset: const Offset(0, 8),
+                  color: GardenColors.ink,
+                  blurRadius: 0,
+                  offset: const Offset(0, 6),
                 ),
               ],
             ),
@@ -74,8 +79,8 @@ class AnimatedBottomNav extends StatelessWidget {
                             shape: BoxShape.circle,
                             border: isActive
                                 ? Border.all(
-                                    color: GardenColors.leafGreen,
-                                    width: 2,
+                                    color: GardenColors.ink,
+                                    width: 1.5,
                                   )
                                 : null,
                           ),

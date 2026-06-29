@@ -43,14 +43,20 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
   Future<void> _fetchHistory() async {
     try {
       final history = await _chatService.getHistory(plantId);
-      final messages = history.messages.map((dtoMsg) => ChatMessage(
-        id: DateTime.now().microsecondsSinceEpoch.toString(), // Temporary
-        content: dtoMsg.content,
-        sender: dtoMsg.role == 'assistant' ? 'plant' : 'user',
-        source: 'backend',
-        confidence: 'high',
-        timestamp: dtoMsg.timestamp,
-      )).toList();
+      final messages = history.messages.asMap().entries.map((entry) {
+        final i = entry.key;
+        final dtoMsg = entry.value;
+        return ChatMessage(
+          id: '${DateTime.now().microsecondsSinceEpoch}_$i',
+          content: dtoMsg.content,
+          sender: dtoMsg.role == 'assistant' ? 'plant' : 'user',
+          source: 'backend',
+          confidence: 'high',
+          timestamp: dtoMsg.timestamp,
+          imageUrl: dtoMsg.userImageUrl,
+          audioUrl: dtoMsg.audioUrl,
+        );
+      }).toList();
       state = AsyncValue.data(messages);
     } catch (e, st) {
       state = AsyncValue.error(e, st);
@@ -67,21 +73,46 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
     final currentMessages = state.value ?? [];
     
     // Optimistic UI update
+    final initialContent = userAudioBase64 != null ? "Transcribiendo audio... ⏳" : content;
     final newMessage = ChatMessage(
       id: DateTime.now().microsecondsSinceEpoch.toString(),
-      content: content,
+      content: initialContent,
       sender: 'user',
       source: 'no-data',
       confidence: 'high',
       timestamp: DateTime.now(),
       audioUrl: audioUrl,
+      imageBase64: imageBase64,
     );
     state = AsyncValue.data([...currentMessages, newMessage]);
 
     try {
+      String finalContent = content;
+      if (userAudioBase64 != null) {
+        finalContent = await _chatService.transcribeAudio(userAudioBase64);
+        
+        // Actualizar UI con la transcripción antes de llamar al LLM
+        final updatedMessages = (state.value ?? []).map((m) {
+          if (m.id == newMessage.id) {
+            return ChatMessage(
+              id: m.id,
+              content: finalContent,
+              sender: m.sender,
+              source: m.source,
+              confidence: m.confidence,
+              timestamp: m.timestamp,
+              audioUrl: m.audioUrl,
+              imageBase64: m.imageBase64,
+            );
+          }
+          return m;
+        }).toList();
+        state = AsyncValue.data(updatedMessages);
+      }
+
       final response = await _chatService.chat(
         plantId: plantId, 
-        message: content, 
+        message: finalContent, 
         responseFormat: responseFormat,
         imageBase64: imageBase64,
         userAudioBase64: userAudioBase64,
@@ -97,7 +128,21 @@ class ChatMessagesNotifier extends StateNotifier<AsyncValue<List<ChatMessage>>> 
         audioUrl: response.audioUrl,
       );
 
-      final updatedMessages = state.value ?? [];
+      final updatedMessages = (state.value ?? []).map((m) {
+        if (m.id == newMessage.id) {
+          return ChatMessage(
+            id: m.id,
+            content: m.content,
+            sender: m.sender,
+            source: m.source,
+            confidence: m.confidence,
+            timestamp: m.timestamp,
+            audioUrl: m.audioUrl,
+            imageUrl: response.userImageUrl,
+          );
+        }
+        return m;
+      }).toList();
       state = AsyncValue.data([...updatedMessages, replyMessage]);
     } catch (e) {
       // Revert or show error

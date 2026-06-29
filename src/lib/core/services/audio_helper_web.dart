@@ -98,29 +98,80 @@ class AudioHelperWeb implements AudioHelper {
     final completer = Completer<AudioRecordingResult>();
 
     if (_mediaRecorder != null) {
-      _mediaRecorder!.addEventListener('stop', (event) async {
+      bool handled = false;
+      
+      void handleCompletion() async {
+        if (handled) return;
+        handled = true;
+        
         // Detener los tracks del stream para liberar el micrófono
-        _mediaRecorder!.stream?.getTracks().forEach((track) {
-          track.stop();
-        });
+        try {
+          _mediaRecorder!.stream?.getTracks().forEach((track) {
+            track.stop();
+          });
+        } catch (e) {
+          print("Error deteniendo tracks: $e");
+        }
 
-        final blob = html.Blob(_chunks, 'audio/webm');
-        final audioUrl = html.Url.createObjectUrl(blob);
-        
-        final reader = html.FileReader();
-        reader.readAsDataUrl(blob);
-        await reader.onLoadEnd.first;
-        final dataUrl = reader.result as String;
-        final base64Audio = dataUrl.split(',').last;
-        
-        completer.complete(AudioRecordingResult(
-          audioUrl: audioUrl,
-          transcription: _transcription.isNotEmpty ? _transcription : 'Nota de voz',
-          audioBase64: base64Audio,
-        ));
+        if (_chunks.isEmpty) {
+          completer.complete(AudioRecordingResult(
+            audioUrl: '',
+            transcription: _transcription.isNotEmpty ? _transcription : 'Nota de voz',
+          ));
+          return;
+        }
+
+        try {
+          final blob = html.Blob(_chunks, 'audio/webm');
+          final audioUrl = html.Url.createObjectUrl(blob);
+          
+          final reader = html.FileReader();
+          reader.readAsDataUrl(blob);
+          
+          await reader.onLoadEnd.first.timeout(const Duration(seconds: 5));
+          
+          if (reader.result != null) {
+            final dataUrl = reader.result as String;
+            final base64Audio = dataUrl.split(',').last;
+            
+            completer.complete(AudioRecordingResult(
+              audioUrl: audioUrl,
+              transcription: _transcription.isNotEmpty ? _transcription : 'Nota de voz',
+              audioBase64: base64Audio,
+            ));
+          } else {
+            completer.complete(AudioRecordingResult(
+              audioUrl: audioUrl,
+              transcription: _transcription.isNotEmpty ? _transcription : 'Nota de voz',
+            ));
+          }
+        } catch (e) {
+          print('Error procesando el blob de audio: $e');
+          completer.complete(AudioRecordingResult(
+            audioUrl: '',
+            transcription: _transcription.isNotEmpty ? _transcription : 'Nota de voz',
+          ));
+        }
+      }
+
+      _mediaRecorder!.addEventListener('stop', (event) {
+        handleCompletion();
       });
 
-      _mediaRecorder!.stop();
+      try {
+        _mediaRecorder!.stop();
+      } catch (e) {
+        print("Error llamando a _mediaRecorder.stop(): $e");
+        handleCompletion();
+      }
+      
+      // Fallback timeout in case the stop event never fires
+      Future.delayed(const Duration(seconds: 2), () {
+        if (!handled) {
+          print("Timeout esperando evento stop de MediaRecorder");
+          handleCompletion();
+        }
+      });
     } else {
       completer.complete(AudioRecordingResult(
         audioUrl: '',

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
 import '../../../../../core/theme/garden_colors.dart';
 import '../../../../../core/theme/garden_text_styles.dart';
@@ -15,6 +16,8 @@ class ChatMessage {
   final DateTime timestamp;
   final List<MessageAction>? actions;
   final String? audioUrl;
+  final String? imageBase64;
+  final String? imageUrl;
 
   ChatMessage({
     required this.id,
@@ -25,6 +28,8 @@ class ChatMessage {
     required this.timestamp,
     this.actions,
     this.audioUrl,
+    this.imageBase64,
+    this.imageUrl,
   });
 
   factory ChatMessage.fromMap(Map<String, dynamic> json) {
@@ -128,7 +133,7 @@ class _Bubble extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: isUser ? GardenColors.leafGreen.withValues(alpha: 0.2) : Colors.white,
+        color: isUser ? GardenColors.leafGreen.withValues(alpha: 0.2) : Colors.white.withValues(alpha: 0.85),
         border: Border.all(color: GardenColors.ink, width: 1.5),
         borderRadius: BorderRadius.only(
           topLeft: const Radius.circular(20),
@@ -144,9 +149,48 @@ class _Bubble extends StatelessWidget {
           ),
         ],
       ),
-      child: MarkdownBody(
-        data: message.content,
-        styleSheet: MarkdownStyleSheet(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          if (message.imageBase64 != null) ...[
+            Builder(
+              builder: (context) {
+                try {
+                  final bytes = base64Decode(message.imageBase64!);
+                  return ClipRRect(
+                    borderRadius: BorderRadius.circular(12),
+                    child: Image.memory(
+                      bytes,
+                      width: double.infinity,
+                      fit: BoxFit.contain,
+                    ),
+                  );
+                } catch (e) {
+                  return const SizedBox(
+                    width: double.infinity,
+                    height: 100,
+                    child: Center(
+                      child: Icon(Icons.broken_image, color: Colors.grey),
+                    ),
+                  );
+                }
+              },
+            ),
+            const SizedBox(height: 8),
+          ] else if (message.imageUrl != null) ...[
+            ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.network(
+                message.imageUrl!,
+                width: double.infinity,
+                fit: BoxFit.contain,
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+          MarkdownBody(
+            data: message.content,
+            styleSheet: MarkdownStyleSheet(
           p: GardenTextStyles.bodySmall.copyWith(
             color: const Color(0xFF2E382E), // Gris oscuro botánico
             fontSize: 15,
@@ -160,6 +204,8 @@ class _Bubble extends StatelessWidget {
             fontWeight: FontWeight.w800,
           ),
         ),
+      ),
+        ],
       ),
     );
   }
@@ -179,7 +225,7 @@ class _PlantAvatar extends StatelessWidget {
         border: Border.all(color: GardenColors.ink, width: 1.5),
       ),
       child: const Center(
-        child: Text('✿', style: TextStyle(fontSize: 14)),
+        child: Text('🌿', style: TextStyle(fontSize: 15)),
       ),
     );
   }

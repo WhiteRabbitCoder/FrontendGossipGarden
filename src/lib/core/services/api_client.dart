@@ -14,8 +14,8 @@ class ApiClient {
       : tokenStorage = storage ?? TokenStorage(),
         dio = Dio(BaseOptions(
           baseUrl: AppConfig.backendBaseUrl,
-          connectTimeout: const Duration(seconds: 10),
-          receiveTimeout: const Duration(seconds: 10),
+          connectTimeout: const Duration(seconds: 20),
+          receiveTimeout: const Duration(seconds: 20),
           contentType: Headers.jsonContentType,
         )) {
     _setupInterceptors();

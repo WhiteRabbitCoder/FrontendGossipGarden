@@ -10,7 +10,7 @@ class Plant {
   final String image;
 
   final PlantPersonality personality;
-  final double health;
+  final double? health;
   final PlantMood mood;
 
   final String lastWatered;
@@ -31,7 +31,7 @@ class Plant {
     required this.species,
     required this.image,
     required this.personality,
-    required this.health,
+    this.health,
     required this.mood,
     required this.lastWatered,
     required this.sensors,
@@ -50,7 +50,7 @@ class Plant {
       species: json['species']?.toString() ?? '',
       image: json['image']?.toString() ?? '',
 
-      health: (json['health'] as num?)?.toDouble() ?? 0.0,
+      health: (json['health'] as num?)?.toDouble(),
       lastWatered: json['lastWatered']?.toString() ?? '',
 
       // Mapeo de Enums usando la utilidad inferior
@@ -96,6 +96,7 @@ class Plant {
     String? image,
     PlantPersonality? personality,
     double? health,
+    bool overrideHealth = false,
     PlantMood? mood,
     String? lastWatered,
     Sensors? sensors,
@@ -112,7 +113,7 @@ class Plant {
       species: species ?? this.species,
       image: image ?? this.image,
       personality: personality ?? this.personality,
-      health: health ?? this.health,
+      health: overrideHealth ? health : (health ?? this.health),
       mood: mood ?? this.mood,
       lastWatered: lastWatered ?? this.lastWatered,
       sensors: sensors ?? this.sensors,

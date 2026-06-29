@@ -102,33 +102,32 @@ class PlantCard extends StatelessWidget {
   }
 
   Widget _buildHealthBadge(Plant plant) {
+    final hasData = plant.health != null;
+    final healthValue = plant.health ?? 0.0;
+    
+    final Color baseColor = !hasData 
+        ? Colors.grey 
+        : healthValue > 70 
+            ? Colors.green 
+            : healthValue > 40 
+                ? Colors.orange 
+                : Colors.red;
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        color: plant.health > 70
-            ? Colors.green.withOpacity(0.1)
-            : plant.health > 40
-                ? Colors.orange.withOpacity(0.1)
-                : Colors.red.withOpacity(0.1),
+        color: baseColor.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(20),
         border: Border.all(
-          color: plant.health > 70
-              ? Colors.green.withOpacity(0.25)
-              : plant.health > 40
-                  ? Colors.orange.withOpacity(0.25)
-                  : Colors.red.withOpacity(0.25),
+          color: baseColor.withValues(alpha: 0.25),
         ),
       ),
       child: Text(
-        '${plant.health.toInt()}%',
+        hasData ? '${healthValue.toInt()}%' : 'N/A',
         style: TextStyle(
           fontSize: 14,
           fontWeight: FontWeight.w700,
-          color: plant.health > 70
-              ? Colors.green
-              : plant.health > 40
-                  ? Colors.orange
-                  : Colors.red,
+          color: baseColor,
         ),
       ),
     );

@@ -38,7 +38,7 @@ class AchievementProgressStorage {
     required List<String> favoritePlantIds,
   }) {
     final healthyCount =
-        plants.where((plant) => plant.health >= 80).length;
+        plants.where((plant) => plant.health != null && plant.health! >= 80).length;
 
     return kAchievementDefinitions.map((definition) {
       final current = _currentForMetric(

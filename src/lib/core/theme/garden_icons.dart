@@ -15,7 +15,7 @@ class GardenIcons {
   static const add = '$_base/Icons_mas.png';
   static const addPlant = '$_base/Icons_add_plant.png';
   static const friendAdd = '$_base/Inos_friend_add.png';
-  static const back = '$_base/Icons_arrow_back.png';
+  static const back = 'assets/icons/sensor_icons/arrow_back.png';
   static const forward = '$_base/Icons_arrow_front.png';
   static const settings = '$_base/Icons_configurate.png';
   static const pencil = '$_base/Icons_lapiz.png';
