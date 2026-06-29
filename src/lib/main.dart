@@ -8,9 +8,59 @@ import 'features/auth/presentation/screens/login_screen.dart';
 import 'features/plants/presentation/screens/onboarding_screen.dart';
 import 'core/services/firebase_bootstrap.dart';
 import 'core/theme/garden_colors.dart';
+import 'core/theme/garden_text_styles.dart';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    return Material(
+      color: GardenColors.creamPaper,
+      child: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(32.0),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: GardenColors.heartRed.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: GardenColors.heartRed, width: 2),
+                ),
+                child: const Icon(
+                  Icons.wifi_off_rounded,
+                  color: GardenColors.heartRed,
+                  size: 48,
+                ),
+              ),
+              const SizedBox(height: 24),
+              Text(
+                '¡Se nos cayó la maceta!',
+                style: GardenTextStyles.display.copyWith(
+                  color: GardenColors.ink,
+                  fontSize: 28,
+                  fontWeight: FontWeight.w900,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Parece que perdimos la conexión con el jardín.',
+                style: GardenTextStyles.body.copyWith(
+                  color: GardenColors.inkSoft,
+                  fontWeight: FontWeight.w600,
+                ),
+                textAlign: TextAlign.center,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  };
+
   await FirebaseBootstrap.ensureInitialized();
   runApp(const ProviderScope(child: MyApp()));
 }
