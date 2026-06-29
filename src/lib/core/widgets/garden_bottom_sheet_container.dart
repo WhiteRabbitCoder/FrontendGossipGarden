@@ -18,7 +18,7 @@ class GardenBottomSheetContainer extends StatelessWidget {
     return Container(
       margin: margin,
       padding: padding,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: GardenColors.creamPaper,
         image: DecorationImage(
           image: AssetImage('assets/images/paper_texture.png'),

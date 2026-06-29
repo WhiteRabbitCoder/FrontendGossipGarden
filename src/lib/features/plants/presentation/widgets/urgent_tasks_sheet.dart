@@ -7,6 +7,7 @@ import '../providers/urgent_tasks_provider.dart';
 import '../../../../core/theme/garden_colors.dart';
 import '../../../../core/theme/garden_icons.dart';
 import '../../../../core/theme/garden_text_styles.dart';
+import '../../../../core/widgets/garden_bottom_sheet_container.dart';
 import '../../../../core/widgets/garden_icon.dart';
 
 // HARDCODE(demo): tareas derivadas de plantas locales; marcar check actualiza estado en memoria.
