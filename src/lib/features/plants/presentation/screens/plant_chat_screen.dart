@@ -244,6 +244,7 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen>
   void _showChatSettings(Plant plant) {
     showModalBottomSheet(
       context: context,
+      isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => _ChatSettingsSheet(plant: plant),
     );
@@ -866,12 +867,19 @@ class _ChatSettingsSheet extends ConsumerWidget {
 
           // Avatar grande
           Container(
-            width: 72,
-            height: 72,
+            width: 80,
+            height: 80,
             decoration: BoxDecoration(
               color: GardenColors.creamLight,
               shape: BoxShape.circle,
-              border: Border.all(color: GardenColors.dustLight, width: 2),
+              border: Border.all(color: GardenColors.ink, width: 1.5),
+              boxShadow: const [
+                BoxShadow(
+                  color: GardenColors.ink,
+                  blurRadius: 0,
+                  offset: Offset(0, 3),
+                ),
+              ],
             ),
             child: ClipOval(
               child: plant.image.isNotEmpty
@@ -896,8 +904,8 @@ class _ChatSettingsSheet extends ConsumerWidget {
             plant.name,
             style: GardenTextStyles.display.copyWith(
               color: GardenColors.ink,
-              fontSize: 22,
-              fontWeight: FontWeight.w800,
+              fontSize: 28,
+              fontWeight: FontWeight.w900,
             ),
           ),
           const SizedBox(height: 4),
@@ -915,7 +923,14 @@ class _ChatSettingsSheet extends ConsumerWidget {
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: GardenColors.dustLight),
+              border: Border.all(color: GardenColors.ink, width: 1.5),
+              boxShadow: const [
+                BoxShadow(
+                  color: GardenColors.ink,
+                  blurRadius: 0,
+                  offset: Offset(0, 3),
+                ),
+              ],
             ),
             child: Column(
               children: [
@@ -1004,13 +1019,20 @@ class _ChatSettingsSheet extends ConsumerWidget {
                 decoration: BoxDecoration(
                   color: GardenColors.creamLight,
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: GardenColors.dustLight),
+                  border: Border.all(color: GardenColors.ink, width: 1.5),
+                  boxShadow: const [
+                    BoxShadow(
+                      color: GardenColors.ink,
+                      blurRadius: 0,
+                      offset: Offset(0, 3),
+                    ),
+                  ],
                 ),
                 child: Text(
                   'Cerrar',
                   style: GardenTextStyles.label.copyWith(
-                    color: GardenColors.inkSoft,
-                    fontWeight: FontWeight.w600,
+                    color: GardenColors.ink,
+                    fontWeight: FontWeight.w800,
                   ),
                 ),
               ),
@@ -1044,16 +1066,17 @@ class _SettingsRow extends StatelessWidget {
           const SizedBox(width: 12),
           Text(
             label,
-            style: GardenTextStyles.bodySmall.copyWith(
-              color: GardenColors.inkSoft,
+            style: GardenTextStyles.body.copyWith(
+              color: GardenColors.ink,
+              fontWeight: FontWeight.w700,
             ),
           ),
           const Spacer(),
           Text(
             value,
-            style: GardenTextStyles.bodySmall.copyWith(
+            style: GardenTextStyles.body.copyWith(
               color: GardenColors.ink,
-              fontWeight: FontWeight.w600,
+              fontWeight: FontWeight.w900,
             ),
           ),
         ],
