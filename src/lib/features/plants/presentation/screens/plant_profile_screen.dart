@@ -2,8 +2,8 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../providers/plant_providers.dart';
-
 import '../../data/models/plant.dart';
+import '../providers/navigation_provider.dart';
 import '../../data/models/plant_enums.dart';
 import '../../data/models/comfort_zones.dart';
 import '../../../../core/theme/garden_colors.dart';
@@ -190,17 +190,17 @@ class PlantProfileScreen extends ConsumerWidget {
       loading: () => const Scaffold(
         body: Center(child: CircularProgressIndicator(color: GardenColors.leafGreen)),
       ),
-      error: (e, _) => _buildErrorState(context, 'No pudimos cargar la información adicional de esta planta. Revisa tu conexión.'),
+      error: (e, _) => _buildErrorState(context, ref, plantId, 'No pudimos cargar la información adicional de esta planta. Revisa tu conexión.'),
     );
       },
       loading: () => const Scaffold(
         body: Center(child: CircularProgressIndicator(color: GardenColors.leafGreen)),
       ),
-      error: (e, _) => _buildErrorState(context, 'No pudimos conectar con el jardín. Verifica tu conexión a internet o intenta de nuevo.'),
+      error: (e, _) => _buildErrorState(context, ref, plantId, 'No pudimos conectar con el jardín. Verifica tu conexión a internet o intenta de nuevo.'),
     );
   }
 
-  Widget _buildErrorState(BuildContext context, String message) {
+  Widget _buildErrorState(BuildContext context, WidgetRef ref, String plantId, String message) {
     return Scaffold(
       backgroundColor: GardenColors.creamLight,
       appBar: AppBar(
@@ -224,7 +224,7 @@ class PlantProfileScreen extends ConsumerWidget {
               Container(
                 padding: const EdgeInsets.all(24),
                 decoration: BoxDecoration(
-                  color: GardenColors.soilBrown.withOpacity(0.1),
+                  color: GardenColors.inkSoft.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: const GardenIcon(asset: GardenIcons.wrongConexion, size: 64),
@@ -232,20 +232,20 @@ class PlantProfileScreen extends ConsumerWidget {
               const SizedBox(height: 24),
               Text(
                 '¡Ups! Algo salió mal',
-                style: GardenTextStyles.headingSmall.copyWith(color: GardenColors.ink),
+                style: GardenTextStyles.title.copyWith(color: GardenColors.ink),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 12),
               Text(
                 message,
-                style: GardenTextStyles.bodyMedium.copyWith(color: GardenColors.grey),
+                style: GardenTextStyles.body.copyWith(color: GardenColors.inkSoft),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: 32),
               ElevatedButton(
                 onPressed: () {
-                  ref.invalidate(plantSingleProvider(widget.plantId));
-                  ref.invalidate(plantProfileProvider(widget.plantId));
+                  ref.invalidate(plantsProvider);
+                  ref.invalidate(plantProfileProvider(plantId));
                 },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: GardenColors.leafGreen,
@@ -253,7 +253,7 @@ class PlantProfileScreen extends ConsumerWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
                   elevation: 0,
                 ),
-                child: Text('Reintentar', style: GardenTextStyles.bodyMedium.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
+                child: Text('Reintentar', style: GardenTextStyles.body.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
               ),
               const SizedBox(height: 60),
             ],

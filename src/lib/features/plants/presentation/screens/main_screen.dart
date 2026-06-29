@@ -16,6 +16,7 @@ import 'friend_garden_screen.dart';
 import 'profile_settings_screen.dart';
 
 import '../widgets/animated_bottom_nav.dart';
+import '../../../../core/theme/garden_colors.dart';
 
 class MainScreen extends ConsumerWidget {
   const MainScreen({super.key});
