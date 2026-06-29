@@ -1,5 +1,6 @@
+import 'dart:convert';
 import 'package:gossip_garden/core/services/api_client.dart';
-
+import 'package:gossip_garden/core/services/cache_service.dart';
 import '../models/comfort_zones.dart';
 import '../models/plant.dart';
 import '../models/plant_action.dart';
@@ -17,8 +18,13 @@ class PlantApiDatasource implements PlantDatasource {
 
   @override
   Future<List<Plant>> getPlants() async {
+    final cacheService = CacheService();
     try {
       final response = await _apiClient.dio.get('/plants/');
+      
+      try {
+        await cacheService.savePlantsData(jsonEncode(response.data));
+      } catch (_) {}
       
       final List<dynamic> plantsRaw = response.data;
       final List<PlantResponse> plantResponses = plantsRaw
@@ -28,6 +34,18 @@ class PlantApiDatasource implements PlantDatasource {
       final futures = plantResponses.map((pr) => _toPlant(pr));
       return Future.wait(futures);
     } catch (e) {
+      try {
+        final cachedData = await cacheService.getPlantsData();
+        if (cachedData != null) {
+          final List<dynamic> plantsRaw = jsonDecode(cachedData);
+          final List<PlantResponse> plantResponses = plantsRaw
+              .map((e) => PlantResponse.fromJson(e as Map<String, dynamic>))
+              .toList();
+
+          final futures = plantResponses.map((pr) => _toPlant(pr));
+          return Future.wait(futures);
+        }
+      } catch (_) {}
       return [];
     }
   }

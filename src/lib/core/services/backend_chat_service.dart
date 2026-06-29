@@ -1,12 +1,16 @@
+import 'dart:convert';
 import 'package:dio/dio.dart';
 import 'package:gossip_garden/core/services/api_client.dart';
+import 'package:gossip_garden/core/services/cache_service.dart';
 import 'package:gossip_garden/features/plants/data/models/chat_dto.dart';
 
 class BackendChatService {
   final ApiClient _apiClient;
+  final CacheService _cacheService;
 
-  BackendChatService({ApiClient? apiClient})
-      : _apiClient = apiClient ?? ApiClient();
+  BackendChatService({ApiClient? apiClient, CacheService? cacheService})
+      : _apiClient = apiClient ?? ApiClient(),
+        _cacheService = cacheService ?? CacheService();
 
   Future<ChatMessageResponse> chat({
     required String plantId,
@@ -26,6 +30,7 @@ class BackendChatService {
         '/chat/$plantId',
         data: request.toJson(),
       );
+      // Actualizar historial local después de enviar un mensaje (Opcional, pero para mantener coherencia en caché si se puede, aunque por ahora solo confiamos en getHistory).
       return ChatMessageResponse.fromJson(response.data);
     } on DioException catch (e) {
       final detail = e.response?.data?['detail'] ?? 'Error desconocido';
@@ -36,8 +41,22 @@ class BackendChatService {
   Future<ChatHistoryResponse> getHistory(String plantId) async {
     try {
       final response = await _apiClient.dio.get('/chat/$plantId/history');
+      
+      try {
+        await _cacheService.saveChatData(plantId, jsonEncode(response.data));
+      } catch (_) {}
+
       return ChatHistoryResponse.fromJson(response.data);
     } on DioException catch (e) {
+      // Fallback a caché
+      try {
+        final cachedData = await _cacheService.getChatData(plantId);
+        if (cachedData != null) {
+          final data = jsonDecode(cachedData);
+          return ChatHistoryResponse.fromJson(data);
+        }
+      } catch (_) {}
+
       final detail = e.response?.data?['detail'] ?? 'Error desconocido';
       throw Exception('Error obteniendo historial: $detail');
     }
