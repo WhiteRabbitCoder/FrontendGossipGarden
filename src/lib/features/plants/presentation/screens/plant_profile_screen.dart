@@ -202,7 +202,7 @@ class PlantProfileScreen extends ConsumerWidget {
 
   Widget _buildErrorState(BuildContext context, WidgetRef ref, String plantId, String message) {
     return Scaffold(
-      backgroundColor: GardenColors.creamLight,
+      backgroundColor: Colors.transparent,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,

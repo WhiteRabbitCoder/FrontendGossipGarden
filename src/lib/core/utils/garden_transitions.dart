@@ -10,6 +10,7 @@ class GardenTransitions {
           animation: animation,
           secondaryAnimation: secondaryAnimation,
           transitionType: type,
+          fillColor: Colors.transparent,
           child: child,
         );
       },
@@ -23,6 +24,7 @@ class GardenTransitions {
         return FadeThroughTransition(
           animation: animation,
           secondaryAnimation: secondaryAnimation,
+          fillColor: Colors.transparent,
           child: child,
         );
       },

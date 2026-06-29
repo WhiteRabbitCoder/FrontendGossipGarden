@@ -61,7 +61,7 @@ class MainScreen extends ConsumerWidget {
                     return FadeThroughTransition(
                       animation: primaryAnimation,
                       secondaryAnimation: secondaryAnimation,
-                      fillColor: GardenColors.creamLight,
+                      fillColor: Colors.transparent,
                       child: child,
                     );
                   },
