@@ -67,6 +67,7 @@ class MainScreen extends ConsumerWidget {
                 ],
               ),
             ),
+            ),
   
             /// OVERLAY
             if (hasOverlay) _buildOverlay(nav, notifier),
