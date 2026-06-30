@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'dart:isolate';
 import 'package:gossip_garden/core/services/api_client.dart';
 import 'package:gossip_garden/core/services/cache_service.dart';
 import '../models/comfort_zones.dart';
@@ -23,13 +24,14 @@ class PlantApiDatasource implements PlantDatasource {
       final response = await _apiClient.dio.get('/plants/');
       
       try {
-        await cacheService.savePlantsData(jsonEncode(response.data));
+        final encoded = await Isolate.run(() => jsonEncode(response.data));
+        await cacheService.savePlantsData(encoded);
       } catch (_) {}
       
       final List<dynamic> plantsRaw = response.data;
-      final List<PlantResponse> plantResponses = plantsRaw
+      final List<PlantResponse> plantResponses = await Isolate.run(() => plantsRaw
           .map((e) => PlantResponse.fromJson(e as Map<String, dynamic>))
-          .toList();
+          .toList());
 
       final futures = plantResponses.map((pr) => _toPlant(pr));
       return Future.wait(futures);
@@ -37,10 +39,12 @@ class PlantApiDatasource implements PlantDatasource {
       try {
         final cachedData = await cacheService.getPlantsData();
         if (cachedData != null) {
-          final List<dynamic> plantsRaw = jsonDecode(cachedData);
-          final List<PlantResponse> plantResponses = plantsRaw
-              .map((e) => PlantResponse.fromJson(e as Map<String, dynamic>))
-              .toList();
+          final List<PlantResponse> plantResponses = await Isolate.run(() {
+            final List<dynamic> plantsRaw = jsonDecode(cachedData);
+            return plantsRaw
+                .map((e) => PlantResponse.fromJson(e as Map<String, dynamic>))
+                .toList();
+          });
 
           final futures = plantResponses.map((pr) => _toPlant(pr, isOffline: true));
           return Future.wait(futures);
@@ -69,7 +73,7 @@ class PlantApiDatasource implements PlantDatasource {
   }
 
   Future<Plant> _toPlant(PlantResponse response, {bool isOffline = false}) async {
-    final sensorResponse = isOffline ? null : await _getSensorSnapshot(response.plantId);
+    final sensorResponse = isOffline ? null : response.latestSensorData;
     
     // As the new backend doesn't provide min/max ranges directly on the /plants/ endpoint,
     // we use fallback comfort zones or could fetch the profile. (Using fallback to prevent N+1 requests, UI will load real ranges in profile screen)

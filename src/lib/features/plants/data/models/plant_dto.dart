@@ -1,5 +1,7 @@
 import 'dart:convert';
 
+import 'sensor_dto.dart';
+
 class PlantResponse {
   final String plantId;
   final String userId;
@@ -18,6 +20,7 @@ class PlantResponse {
   final String? location;
   final Map<String, dynamic>? specificCareTips;
   final String? macAddress;
+  final SensorDataResponse? latestSensorData;
 
   PlantResponse({
     required this.plantId,
@@ -37,6 +40,7 @@ class PlantResponse {
     this.location,
     this.specificCareTips,
     this.macAddress,
+    this.latestSensorData,
   });
 
   factory PlantResponse.fromJson(Map<String, dynamic> json) {
@@ -64,6 +68,7 @@ class PlantResponse {
           ? _tryDecodeJson(json['specific_care_tips'])
           : json['specific_care_tips'],
       macAddress: json['mac_address'],
+      latestSensorData: json['latest_sensor_data'] != null ? SensorDataResponse.fromJson(json['latest_sensor_data']) : null,
     );
   }
 

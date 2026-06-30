@@ -14,8 +14,8 @@ class ApiClient {
       : tokenStorage = storage ?? TokenStorage(),
         dio = Dio(BaseOptions(
           baseUrl: AppConfig.backendBaseUrl,
-          connectTimeout: const Duration(seconds: 20),
-          receiveTimeout: const Duration(seconds: 20),
+          connectTimeout: const Duration(seconds: 30),
+          receiveTimeout: const Duration(seconds: 60),
           contentType: Headers.jsonContentType,
         )) {
     _setupInterceptors();
@@ -91,9 +91,9 @@ class ApiClient {
     dio.interceptors.add(LogInterceptor(
       request: true,
       requestHeader: true,
-      requestBody: true,
+      requestBody: false, // Evita congelar el hilo principal al imprimir imágenes o JSON gigantes
       responseHeader: false,
-      responseBody: true,
+      responseBody: false, // Evita congelar el hilo principal al imprimir listas grandes
       error: true,
     ));
   }
