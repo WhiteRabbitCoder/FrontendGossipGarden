@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:isolate';
+import 'package:flutter/foundation.dart';
 import 'package:gossip_garden/core/services/api_client.dart';
 import 'package:gossip_garden/core/services/cache_service.dart';
 import '../models/comfort_zones.dart';
@@ -24,14 +25,14 @@ class PlantApiDatasource implements PlantDatasource {
       final response = await _apiClient.dio.get('/plants/');
       
       try {
-        final encoded = await Isolate.run(() => jsonEncode(response.data));
+        final encoded = kIsWeb ? jsonEncode(response.data) : await Isolate.run(() => jsonEncode(response.data));
         await cacheService.savePlantsData(encoded);
       } catch (_) {}
       
       final List<dynamic> plantsRaw = response.data;
-      final List<PlantResponse> plantResponses = await Isolate.run(() => plantsRaw
-          .map((e) => PlantResponse.fromJson(e as Map<String, dynamic>))
-          .toList());
+      final List<PlantResponse> plantResponses = kIsWeb 
+          ? plantsRaw.map((e) => PlantResponse.fromJson(e as Map<String, dynamic>)).toList()
+          : await Isolate.run(() => plantsRaw.map((e) => PlantResponse.fromJson(e as Map<String, dynamic>)).toList());
 
       final futures = plantResponses.map((pr) => _toPlant(pr));
       return Future.wait(futures);
@@ -39,11 +40,12 @@ class PlantApiDatasource implements PlantDatasource {
       try {
         final cachedData = await cacheService.getPlantsData();
         if (cachedData != null) {
-          final List<PlantResponse> plantResponses = await Isolate.run(() {
+          final List<PlantResponse> plantResponses = kIsWeb ? (() {
             final List<dynamic> plantsRaw = jsonDecode(cachedData);
-            return plantsRaw
-                .map((e) => PlantResponse.fromJson(e as Map<String, dynamic>))
-                .toList();
+            return plantsRaw.map((e) => PlantResponse.fromJson(e as Map<String, dynamic>)).toList();
+          })() : await Isolate.run(() {
+            final List<dynamic> plantsRaw = jsonDecode(cachedData);
+            return plantsRaw.map((e) => PlantResponse.fromJson(e as Map<String, dynamic>)).toList();
           });
 
           final futures = plantResponses.map((pr) => _toPlant(pr, isOffline: true));

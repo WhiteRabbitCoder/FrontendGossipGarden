@@ -67,6 +67,9 @@ build-apk:
 build-apk-qa-debug:
 	cd src && flutter build apk --debug $(_DEFINES) --dart-define=BACKEND_TARGET=prod --dart-define=BACKEND_DEPLOY_URL=$(QA_BACKEND_URL)
 
+build-apk-qa:
+	cd src && flutter build apk --release $(_DEFINES) --dart-define=BACKEND_TARGET=prod --dart-define=BACKEND_DEPLOY_URL=$(QA_BACKEND_URL)
+
 analyze:
 	cd src && flutter analyze
 

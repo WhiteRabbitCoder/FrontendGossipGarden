@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'dart:isolate';
 import 'package:camera/camera.dart';
 import 'package:flutter/material.dart';
@@ -42,7 +43,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
   late Animation<double> _scanAnimation;
   CameraController? _cameraController;
   bool _cameraReady = false;
-  File? _imageFile;
+  XFile? _imageFile;
   IdentifyResponse? _completed;
   List<PlantCandidate> _candidates = [];
   String? _errorMessage;
@@ -141,7 +142,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
     final controller = _cameraController;
     if (controller == null || !controller.value.isInitialized) return;
     final xFile = await controller.takePicture();
-    final file = await _processImage(xFile.path);
+    final file = await _processImage(xFile);
     if (!mounted) return;
     setState(() {
       _imageFile = file;
@@ -154,7 +155,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
   Future<void> _pickFromGallery() async {
     final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
     if (picked == null || !mounted) return;
-    final file = await _processImage(picked.path);
+    final file = await _processImage(XFile(picked.path));
     if (!mounted) return;
     setState(() {
       _imageFile = file;
@@ -164,8 +165,18 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
     await _runIdentify(file);
   }
 
-  Future<File> _processImage(String path) async {
-    final bytes = await File(path).readAsBytes();
+  Future<XFile> _processImage(XFile originalFile) async {
+    final bytes = await originalFile.readAsBytes();
+    if (kIsWeb) {
+      final originalImage = img.decodeImage(bytes)!;
+      final oriented = img.bakeOrientation(originalImage);
+      final w = oriented.width;
+      final h = oriented.height;
+      final side = w < h ? w : h;
+      final cropped = img.copyCrop(oriented, x: (w - side) ~/ 2, y: (h - side) ~/ 2, width: side, height: side);
+      final resized = img.copyResize(cropped, width: 1024, height: 1024);
+      return XFile.fromData(Uint8List.fromList(img.encodeJpg(resized, quality: 92)), mimeType: 'image/jpeg');
+    }
     final outPath = '${Directory.systemTemp.path}/plant_${DateTime.now().millisecondsSinceEpoch}.jpg';
     await Isolate.run(() {
       final original = img.decodeImage(bytes)!;
@@ -177,15 +188,16 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
       final resized = img.copyResize(cropped, width: 1024, height: 1024);
       File(outPath).writeAsBytesSync(img.encodeJpg(resized, quality: 92));
     });
-    return File(outPath);
+    return XFile(outPath);
   }
 
-  Future<void> _runIdentify(File file) async {
+  Future<void> _runIdentify(XFile file) async {
     _scanController.repeat(reverse: true);
     try {
+      final fileBytes = await file.readAsBytes();
       final formData = FormData.fromMap({
-        'image': await MultipartFile.fromFile(
-          file.path,
+        'image': MultipartFile.fromBytes(
+          fileBytes,
           filename: 'scan.jpg',
         ),
       });
@@ -746,7 +758,7 @@ class _CameraView extends StatelessWidget {
 }
 
 class _UploadingView extends StatelessWidget {
-  final File? imageFile;
+  final XFile? imageFile;
   final Animation<double> scanAnimation;
   const _UploadingView({required this.imageFile, required this.scanAnimation});
 
@@ -769,10 +781,9 @@ class _UploadingView extends StatelessWidget {
                   if (imageFile != null)
                     ClipRRect(
                       borderRadius: BorderRadius.circular(18),
-                      child: Image.file(imageFile!,
-                          fit: BoxFit.cover,
-                          width: double.infinity,
-                          height: double.infinity),
+                      child: kIsWeb 
+                        ? Image.network(imageFile!.path, fit: BoxFit.cover, width: double.infinity, height: double.infinity)
+                        : Image.file(File(imageFile!.path), fit: BoxFit.cover, width: double.infinity, height: double.infinity),
                     )
                   else
                     Center(
@@ -1015,7 +1026,7 @@ class _SearchViewState extends State<_SearchView> {
 
 class _ResultView extends StatelessWidget {
   final IdentifyResponse? completed;
-  final File? imageFile;
+  final XFile? imageFile;
   final TextEditingController nicknameController;
   final String? errorMessage;
   final VoidCallback onAdd;
@@ -1140,7 +1151,9 @@ class _ResultView extends StatelessWidget {
                   child: imageFile != null
                       ? ClipRRect(
                           borderRadius: BorderRadius.circular(16),
-                          child: Image.file(imageFile!, fit: BoxFit.cover),
+                          child: kIsWeb 
+                            ? Image.network(imageFile!.path, fit: BoxFit.cover)
+                            : Image.file(File(imageFile!.path), fit: BoxFit.cover),
                         )
                       : const Center(
                           child: GardenIcon(asset: GardenIcons.plantEco, size: 36),
