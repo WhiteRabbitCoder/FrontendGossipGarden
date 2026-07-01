@@ -95,7 +95,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
     );
     final controller = CameraController(
       back,
-      ResolutionPreset.medium,
+      ResolutionPreset.high,
       enableAudio: false,
       imageFormatGroup: ImageFormatGroup.jpeg,
     );
@@ -171,9 +171,22 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
   }
 
   Future<XFile> _processImage(XFile originalFile) async {
-    // Return the original file directly to prevent Dart from freezing the UI.
-    // Resolution is controlled natively via CameraController or ImagePicker.
-    return originalFile;
+    if (kIsWeb) {
+      return originalFile;
+    }
+    final bytes = await originalFile.readAsBytes();
+    final outPath = '${Directory.systemTemp.path}/plant_${DateTime.now().millisecondsSinceEpoch}.jpg';
+    await Isolate.run(() {
+      final original = img.decodeImage(bytes)!;
+      final oriented = img.bakeOrientation(original);
+      final w = oriented.width;
+      final h = oriented.height;
+      final side = w < h ? w : h;
+      final cropped = img.copyCrop(oriented, x: (w - side) ~/ 2, y: (h - side) ~/ 2, width: side, height: side);
+      final resized = img.copyResize(cropped, width: 1024, height: 1024);
+      File(outPath).writeAsBytesSync(img.encodeJpg(resized, quality: 92));
+    });
+    return XFile(outPath);
   }
 
   Future<void> _runIdentify(XFile file) async {
@@ -768,7 +781,7 @@ class _UploadingView extends StatelessWidget {
                       borderRadius: BorderRadius.circular(18),
                       child: kIsWeb 
                         ? Image.network(imageFile!.path, fit: BoxFit.cover, width: double.infinity, height: double.infinity)
-                        : Image.file(File(imageFile!.path), fit: BoxFit.cover, width: double.infinity, height: double.infinity),
+                        : Image.file(File(imageFile!.path), fit: BoxFit.cover, width: double.infinity, height: double.infinity, cacheWidth: 1024),
                     )
                   else
                     Center(
@@ -1138,7 +1151,7 @@ class _ResultView extends StatelessWidget {
                           borderRadius: BorderRadius.circular(16),
                           child: kIsWeb 
                             ? Image.network(imageFile!.path, fit: BoxFit.cover)
-                            : Image.file(File(imageFile!.path), fit: BoxFit.cover),
+                            : Image.file(File(imageFile!.path), fit: BoxFit.cover, cacheWidth: 1024),
                         )
                       : const Center(
                           child: GardenIcon(asset: GardenIcons.plantEco, size: 36),
