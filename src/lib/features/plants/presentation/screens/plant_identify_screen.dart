@@ -95,7 +95,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
     );
     final controller = CameraController(
       back,
-      ResolutionPreset.high,
+      ResolutionPreset.medium,
       enableAudio: false,
       imageFormatGroup: ImageFormatGroup.jpeg,
     );
@@ -153,7 +153,12 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
   }
 
   Future<void> _pickFromGallery() async {
-    final picked = await ImagePicker().pickImage(source: ImageSource.gallery);
+    final picked = await ImagePicker().pickImage(
+      source: ImageSource.gallery,
+      maxWidth: 1024,
+      maxHeight: 1024,
+      imageQuality: 85,
+    );
     if (picked == null || !mounted) return;
     final file = await _processImage(XFile(picked.path));
     if (!mounted) return;
@@ -166,29 +171,9 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
   }
 
   Future<XFile> _processImage(XFile originalFile) async {
-    final bytes = await originalFile.readAsBytes();
-    if (kIsWeb) {
-      final originalImage = img.decodeImage(bytes)!;
-      final oriented = img.bakeOrientation(originalImage);
-      final w = oriented.width;
-      final h = oriented.height;
-      final side = w < h ? w : h;
-      final cropped = img.copyCrop(oriented, x: (w - side) ~/ 2, y: (h - side) ~/ 2, width: side, height: side);
-      final resized = img.copyResize(cropped, width: 1024, height: 1024);
-      return XFile.fromData(Uint8List.fromList(img.encodeJpg(resized, quality: 92)), mimeType: 'image/jpeg');
-    }
-    final outPath = '${Directory.systemTemp.path}/plant_${DateTime.now().millisecondsSinceEpoch}.jpg';
-    await Isolate.run(() {
-      final original = img.decodeImage(bytes)!;
-      final oriented = img.bakeOrientation(original);
-      final w = oriented.width;
-      final h = oriented.height;
-      final side = w < h ? w : h;
-      final cropped = img.copyCrop(oriented, x: (w - side) ~/ 2, y: (h - side) ~/ 2, width: side, height: side);
-      final resized = img.copyResize(cropped, width: 1024, height: 1024);
-      File(outPath).writeAsBytesSync(img.encodeJpg(resized, quality: 92));
-    });
-    return XFile(outPath);
+    // Return the original file directly to prevent Dart from freezing the UI.
+    // Resolution is controlled natively via CameraController or ImagePicker.
+    return originalFile;
   }
 
   Future<void> _runIdentify(XFile file) async {
