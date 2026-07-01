@@ -199,3 +199,13 @@ final achievementWateringWatcherProvider = Provider.family<void, String>(
     });
   },
 );
+
+/// Proveedor centralizado para observar los sensores de todas las plantas simultáneamente.
+final allWateringWatchersProvider = Provider<void>((ref) {
+  final plants = ref.watch(plantsProvider).valueOrNull;
+  if (plants != null) {
+    for (final plant in plants) {
+      ref.watch(achievementWateringWatcherProvider(plant.id));
+    }
+  }
+});

@@ -223,12 +223,20 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
           // ── Lista o cuadrícula de plantas ────────────────────────────────────
           plantsAsync.when(
             data: (plants) => _buildPlantsSliver(plants),
-            loading: () => const SliverToBoxAdapter(
-              child: Padding(
-                padding: EdgeInsets.all(32),
-                child: Center(
-                    child: CircularProgressIndicator(
-                        color: GardenColors.leafGreen)),
+            loading: () => SliverList(
+              delegate: SliverChildBuilderDelegate(
+                (context, index) => Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+                  child: Container(
+                    height: 120,
+                    decoration: BoxDecoration(
+                      color: GardenColors.creamLight.withValues(alpha: 0.5),
+                      borderRadius: BorderRadius.circular(16),
+                      border: Border.all(color: GardenColors.dustLight, width: 1.1),
+                    ),
+                  ),
+                ),
+                childCount: 4,
               ),
             ),
             error: (e, _) => SliverToBoxAdapter(

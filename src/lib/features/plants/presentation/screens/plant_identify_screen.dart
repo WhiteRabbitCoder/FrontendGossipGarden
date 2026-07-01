@@ -296,7 +296,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
           'photo_storage_path': _photoStoragePath ?? completed.photoStoragePath,
         },
       );
-      ref.invalidate(plantsProvider);
+      ref.read(plantsProvider.notifier).refresh();
       if (!mounted) return;
       if (widget.onCompleted != null) {
         widget.onCompleted!();
@@ -789,27 +789,32 @@ class _UploadingView extends StatelessWidget {
                           size: 64,
                           color: GardenColors.forest.withValues(alpha: 0.4)),
                     ),
-                  AnimatedBuilder(
-                    animation: scanAnimation,
-                    builder: (_, __) {
-                      return LayoutBuilder(
-                        builder: (ctx, constraints) => Positioned(
-                          top: scanAnimation.value * (constraints.maxHeight - 4),
-                          left: 0,
-                          right: 0,
-                          child: Container(
-                            height: 2,
-                            decoration: BoxDecoration(
-                              gradient: LinearGradient(colors: [
-                                Colors.transparent,
-                                GardenColors.sage.withValues(alpha: 0.9),
-                                Colors.transparent,
-                              ]),
-                            ),
-                          ),
-                        ),
-                      );
-                    },
+                  Positioned.fill(
+                    child: LayoutBuilder(
+                      builder: (ctx, constraints) {
+                        return AnimatedBuilder(
+                          animation: scanAnimation,
+                          builder: (_, __) {
+                            return Transform.translate(
+                              offset: Offset(0, scanAnimation.value * (constraints.maxHeight - 4)),
+                              child: Align(
+                                alignment: Alignment.topCenter,
+                                child: Container(
+                                  height: 2,
+                                  decoration: BoxDecoration(
+                                    gradient: LinearGradient(colors: [
+                                      Colors.transparent,
+                                      GardenColors.sage.withValues(alpha: 0.9),
+                                      Colors.transparent,
+                                    ]),
+                                  ),
+                                ),
+                              ),
+                            );
+                          },
+                        );
+                      },
+                    ),
                   ),
                   ..._viewfinderCorners(),
                 ],

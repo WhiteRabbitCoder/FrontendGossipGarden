@@ -27,12 +27,7 @@ class MainScreen extends ConsumerWidget {
     final notifier = ref.read(navigationProvider.notifier);
 
     ref.watch(achievementStatsProvider);
-    final plants = ref.watch(plantsProvider).valueOrNull;
-    if (plants != null) {
-      for (final plant in plants) {
-        ref.watch(achievementWateringWatcherProvider(plant.id));
-      }
-    }
+    ref.watch(allWateringWatchersProvider);
 
     final hasOverlay =
         nav.showChat || nav.showPlantProfile || nav.selectedFriendId != null;

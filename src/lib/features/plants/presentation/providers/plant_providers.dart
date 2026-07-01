@@ -2,6 +2,7 @@ import 'dart:typed_data';
 
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:gossip_garden/core/services/api_client.dart';
+import '../../../auth/presentation/providers/auth_provider.dart';
 
 import '../../data/datasources/wifi_setup_datasource.dart';
 import '../../data/models/plant.dart';
@@ -38,14 +39,16 @@ class PlantsNotifier extends StateNotifier<AsyncValue<List<Plant>>> {
   }
 
   Future<void> refresh() async {
-    state = const AsyncValue.loading();
     await _fetchPlants();
   }
 }
 
 final plantsProvider =
     StateNotifierProvider<PlantsNotifier, AsyncValue<List<Plant>>>(
-  (ref) => PlantsNotifier(PlantApiDatasource()),
+  (ref) {
+    ref.watch(backendTokenProvider);
+    return PlantsNotifier(PlantApiDatasource());
+  },
 );
 
 // TODO(backend): persistir en perfil de usuario.
