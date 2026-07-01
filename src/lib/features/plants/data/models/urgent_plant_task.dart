@@ -91,6 +91,7 @@ List<UrgentPlantTask> deriveUrgentTasks(Plant plant) {
       );
     case PlantMood.happy:
     case PlantMood.perfect:
+    case PlantMood.offline:
       break;
   }
 

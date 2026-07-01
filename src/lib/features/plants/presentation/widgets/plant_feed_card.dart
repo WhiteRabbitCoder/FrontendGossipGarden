@@ -109,7 +109,7 @@ class PlantFeedCard extends ConsumerWidget {
                             Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                const Text('💚', style: TextStyle(fontSize: 12)),
+                                const GardenIcon(asset: GardenIcons.healthHeart, size: 14),
                                 const SizedBox(width: 4),
                                 Text(
                                   '${plant.health!.toInt()}%',

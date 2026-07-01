@@ -68,6 +68,16 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> with Ticker
       mainAxisAlignment: MainAxisAlignment.center,
       crossAxisAlignment: CrossAxisAlignment.center,
       children: [
+        Align(
+          alignment: Alignment.centerLeft,
+          child: IconButton(
+            padding: EdgeInsets.zero,
+            alignment: Alignment.centerLeft,
+            icon: const Icon(Icons.arrow_back_rounded, color: GardenColors.ink, size: 28),
+            onPressed: () => setState(() => _step = OnboardingStep.wow),
+          ),
+        ),
+        const SizedBox(height: 16),
         const Text(
           'Prepara tu jardín',
           style: TextStyle(
@@ -99,30 +109,98 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> with Ticker
           title: 'Conectar Sensor Gossip Garden',
           isDone: _isSensorConnected,
           isSkipped: _isSensorSkipped,
-          onTap: () => setState(() => _step = OnboardingStep.sensor),
-          onSkip: () => setState(() => _isSensorSkipped = true),
+          onTap: _showSensorModal,
           iconAsset: GardenIcons.logroSensores,
           color: GardenColors.potOrange,
         ),
         const SizedBox(height: 40),
 
-        ElevatedButton(
-          onPressed: canContinue ? () => setState(() => _step = OnboardingStep.config) : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: GardenColors.heartRed,
-            disabledBackgroundColor: GardenColors.heartRed.withValues(alpha: 0.3),
-            padding: const EdgeInsets.symmetric(vertical: 20),
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-            minimumSize: const Size(double.infinity, 60),
-            elevation: canContinue ? 4 : 0,
-            shadowColor: GardenColors.heartRed.withValues(alpha: 0.4),
-          ),
-          child: const Text(
-            'Continuar',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-          ),
+        _ComicButton(
+          text: 'Continuar',
+          onTap: canContinue ? () => setState(() => _step = OnboardingStep.config) : null,
+          color: GardenColors.heartRed,
         ),
       ],
+    );
+  }
+
+  void _showSensorModal() {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (context) {
+        return Container(
+          decoration: BoxDecoration(
+            color: GardenColors.creamSolid,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(32)),
+            border: Border(
+              top: BorderSide(color: GardenColors.ink, width: 2.5),
+              left: BorderSide(color: GardenColors.ink, width: 2.5),
+              right: BorderSide(color: GardenColors.ink, width: 2.5),
+            ),
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 48,
+                height: 6,
+                decoration: BoxDecoration(
+                  color: GardenColors.ink.withValues(alpha: 0.2),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+              const SizedBox(height: 32),
+              const GardenIcon(asset: GardenIcons.logroSensores, size: 80),
+              const SizedBox(height: 24),
+              const Text(
+                '¿Tienes el Sensor?',
+                style: TextStyle(
+                  fontFamily: 'Quicksand',
+                  fontSize: 24,
+                  fontWeight: FontWeight.w800,
+                  color: GardenColors.ink,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                'El sensor es esencial para monitorear la salud de tus plantas en tiempo real.',
+                style: TextStyle(fontSize: 16, color: GardenColors.inkSoft),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 32),
+              _ComicButton(
+                text: 'Sí, conectarlo ahora',
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() => _step = OnboardingStep.sensor);
+                },
+                color: GardenColors.leafDark,
+              ),
+              const SizedBox(height: 16),
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                  setState(() => _isSensorSkipped = true);
+                },
+                style: TextButton.styleFrom(
+                  padding: const EdgeInsets.symmetric(vertical: 18),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+                  minimumSize: const Size(double.infinity, 56),
+                ),
+                child: const Text(
+                  'Aún no lo tengo',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: GardenColors.inkSoft),
+                ),
+              ),
+              const SizedBox(height: 16),
+            ],
+          ),
+        );
+      },
     );
   }
 
@@ -141,13 +219,21 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> with Ticker
       duration: const Duration(milliseconds: 300),
       decoration: BoxDecoration(
         color: isDone ? color.withValues(alpha: 0.1) : Colors.white,
+        image: DecorationImage(
+          image: const AssetImage('images/PaperTexture.png'),
+          fit: BoxFit.cover,
+          colorFilter: ColorFilter.mode(
+            Colors.white.withValues(alpha: 0.3),
+            BlendMode.dstATop,
+          ),
+        ),
         borderRadius: BorderRadius.circular(24),
-        border: Border.all(color: isDone ? color : GardenColors.ink.withValues(alpha: 0.2), width: isDone ? 2.5 : 2),
+        border: Border.all(color: isDone ? color : GardenColors.ink, width: 3.5),
         boxShadow: [
           BoxShadow(
-            color: (isDone ? color : GardenColors.ink).withValues(alpha: 0.15),
-            blurRadius: 12,
-            offset: const Offset(0, 6),
+            color: isDone ? color : GardenColors.ink,
+            blurRadius: 0,
+            offset: const Offset(4, 6),
           ),
         ],
       ),
@@ -223,12 +309,6 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> with Ticker
   }
 
 Widget _buildWowStep() {
-    final icons = [
-      GardenIcons.water,
-      GardenIcons.sun,
-      GardenIcons.thermostat,
-    ];
-
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
@@ -239,20 +319,20 @@ Widget _buildWowStep() {
             child: child,
           ),
           child: Container(
-            width: 160,
-            height: 160,
+            width: 180,
+            height: 180,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(32),
+              borderRadius: BorderRadius.circular(40),
               boxShadow: [
                 BoxShadow(
-                  color: GardenColors.leafDark.withValues(alpha: 0.15),
-                  blurRadius: 20,
-                  offset: const Offset(0, 10),
+                  color: GardenColors.ink.withValues(alpha: 0.12),
+                  blurRadius: 30,
+                  offset: const Offset(0, 15),
                 )
               ],
             ),
             child: ClipRRect(
-              borderRadius: BorderRadius.circular(32),
+              borderRadius: BorderRadius.circular(40),
               child: Image.asset(
                 'images/logo_no_text.png',
                 fit: BoxFit.cover,
@@ -262,35 +342,46 @@ Widget _buildWowStep() {
         ),
         const SizedBox(height: 40),
 
-        // Íconos con animación staggered
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(icons.length, (i) {
-            return Padding(
-              padding: EdgeInsets.only(left: i == 0 ? 0 : 24),
-              child: FadeTransition(
-                opacity: _iconFadeAnims[i],
-                child: SlideTransition(
-                  position: _iconSlideAnims[i],
-                  child: GardenIcon(asset: icons[i], size: 32),
-                ),
-              ),
-            );
-          }),
-        ),
-        const SizedBox(height: 32),
+        // Hero Typography
         const Text(
-          'Tus plantas tienen algo que decirte....',
+          'Tus plantas tienen algo\nque decirte...',
           textAlign: TextAlign.center,
           style: TextStyle(
-              fontSize: 24,
-              fontWeight: FontWeight.w600,
+              fontFamily: 'Quicksand',
+              fontSize: 32,
+              fontWeight: FontWeight.w900,
+              height: 1.2,
               color: GardenColors.ink),
         ),
         const SizedBox(height: 32),
+        
+        // Scroll Indicator
+        AnimatedBuilder(
+          animation: _floatAnimation,
+          builder: (_, child) => Transform.translate(
+            offset: Offset(0, -_floatAnimation.value * 0.5),
+            child: child,
+          ),
+          child: const Column(
+            children: [
+              Text(
+                'Desliza para descubrir',
+                style: TextStyle(
+                  fontFamily: 'Caveat',
+                  fontSize: 20,
+                  fontWeight: FontWeight.w700,
+                  color: GardenColors.potOrange,
+                ),
+              ),
+              SizedBox(height: 8),
+              Icon(Icons.keyboard_arrow_down_rounded, color: GardenColors.potOrange, size: 32),
+            ],
+          ),
+        ),
+        const SizedBox(height: 48),
         _buildAppBasics(),
         const SizedBox(height: 48),
-        _primaryButton('Comenzar', () {
+        _primaryButton('¡Empecemos la aventura!', () {
           // Reiniciar stagger para verlo de nuevo si el usuario regresa
           _staggerController
             ..reset()
@@ -408,65 +499,60 @@ Widget _buildWowStep() {
     );
   }
 
-Widget _buildAppBasics() {
+  Widget _buildAppBasics() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const Padding(
-          padding: EdgeInsets.only(top: 16, bottom: 12),
-          child: Row(
-            children: [
-              Icon(Icons.menu_book_rounded, color: GardenColors.leafDark, size: 20),
-              SizedBox(width: 8),
-              Text(
-                'Básicos de la App',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: GardenColors.ink,
-                ),
-              ),
-            ],
+        const Center(
+          child: Text(
+            'Básicos de la App',
+            style: TextStyle(
+              fontFamily: 'Quicksand',
+              fontSize: 24,
+              fontWeight: FontWeight.w800,
+              color: GardenColors.ink,
+            ),
           ),
         ),
-        _InteractiveBasicItem(
-          icon: GardenIcons.plantChat,
+        const SizedBox(height: 32),
+        const _InteractiveBasicItem(
+          icon: GardenIcons.basicPlantTranslator,
           iconBg: GardenColors.sageLight,
-          iconColor: GardenColors.leafDark,
           title: 'El Traductor de Plantas',
           description: 'No más números aburridos. Tus plantas te dirán cómo se sienten a través de chismes ingeniosos en su propio canal de chat.',
+          isLeftAligned: true,
         ),
-        const SizedBox(height: 12),
-        _InteractiveBasicItem(
-          icon: GardenIcons.chat,
+        const SizedBox(height: 24),
+        const _InteractiveBasicItem(
+          icon: GardenIcons.basicBotanicalChat,
           iconBg: GardenColors.creamLight,
-          iconColor: GardenColors.golden,
           title: 'Chat Botánico con IA',
           description: 'Pregúntale a nuestra IA botánica cualquier duda sobre plagas, abonos, poda o consejos personalizados para mantener tu jardín radiante.',
+          isLeftAligned: false,
         ),
-        const SizedBox(height: 12),
-        _InteractiveBasicItem(
-          icon: GardenIcons.friendPlants,
+        const SizedBox(height: 24),
+        const _InteractiveBasicItem(
+          icon: GardenIcons.basicFriendsGarden,
           iconBg: GardenColors.sageLight,
-          iconColor: GardenColors.leafDark,
           title: 'Jardín de Amigos',
           description: 'Conéctate con otros entusiastas de las plantas. Visita sus jardines virtuales, presume tus especies y comparte logros botánicos.',
+          isLeftAligned: true,
         ),
-        const SizedBox(height: 12),
-        _InteractiveBasicItem(
-          icon: GardenIcons.calendarAlt,
+        const SizedBox(height: 24),
+        const _InteractiveBasicItem(
+          icon: GardenIcons.basicHealthGraphics,
           iconBg: GardenColors.creamPaper,
-          iconColor: GardenColors.potOrange,
-          title: 'Gráficos de Salud e Historial',
+          title: 'Gráficos e Historial',
           description: 'Revisa de forma interactiva la evolución histórica de humedad, luz y temperatura para entender mejor los ciclos de tu planta.',
+          isLeftAligned: false,
         ),
-        const SizedBox(height: 12),
-        _InteractiveBasicItem(
-          icon: GardenIcons.notification,
+        const SizedBox(height: 24),
+        const _InteractiveBasicItem(
+          icon: GardenIcons.basicAlerts,
           iconBg: GardenColors.creamLight,
-          iconColor: GardenColors.heartRed,
-          title: 'Alertas justo cuando importan',
+          title: 'Alertas Inteligentes',
           description: 'Recibe notificaciones automáticas y personalizadas únicamente cuando los sensores detecten que tu planta corre algún peligro.',
+          isLeftAligned: true,
         ),
       ],
     );
@@ -474,26 +560,10 @@ Widget _buildAppBasics() {
 
 
 Widget _primaryButton(String text, VoidCallback? onTap) {
-    final enabled = onTap != null;
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton(
-        onPressed: onTap,
-        style: ElevatedButton.styleFrom(
-          backgroundColor:
-              enabled ? GardenColors.leafDark : GardenColors.dustLight,
-          padding: const EdgeInsets.symmetric(vertical: 16),
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
-          elevation: enabled ? 2 : 0,
-          shadowColor: GardenColors.ink.withValues(alpha: 0.18),
-        ),
-        child: Text(text,
-            style: TextStyle(
-                fontWeight: FontWeight.w600,
-                fontSize: 16,
-                color: enabled ? Colors.white : GardenColors.inkSoft)),
-      ),
+    return _ComicButton(
+      text: text,
+      onTap: onTap,
+      color: GardenColors.leafDark,
     );
   }
 
@@ -523,8 +593,19 @@ Widget _primaryButton(String text, VoidCallback? onTap) {
 
     return Scaffold(
       backgroundColor: GardenColors.creamPaper,
-      body: SafeArea(
-        child: SingleChildScrollView(
+      body: Container(
+        decoration: BoxDecoration(
+          image: DecorationImage(
+            image: const AssetImage('images/PaperTexture.png'),
+            fit: BoxFit.cover,
+            colorFilter: ColorFilter.mode(
+              Colors.white.withValues(alpha: 0.4),
+              BlendMode.dstATop,
+            ),
+          ),
+        ),
+        child: SafeArea(
+          child: SingleChildScrollView(
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 400),
             child: Padding(
@@ -540,6 +621,7 @@ Widget _primaryButton(String text, VoidCallback? onTap) {
           ),
         ),
       ),
+      ),
     );
   }
 }
@@ -548,47 +630,179 @@ Widget _primaryButton(String text, VoidCallback? onTap) {
 class _InteractiveBasicItem extends StatelessWidget {
   final String icon;
   final Color iconBg;
-  final Color iconColor;
   final String title;
   final String description;
+  final bool isLeftAligned;
 
   const _InteractiveBasicItem({
     required this.icon,
     required this.iconBg,
-    required this.iconColor,
     required this.title,
     required this.description,
+    required this.isLeftAligned,
   });
 
   @override
   Widget build(BuildContext context) {
+    final iconWidget = Container(
+      width: 80,
+      height: 80,
+      decoration: BoxDecoration(
+        color: iconBg,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: GardenColors.ink, width: 2),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(18),
+        child: Transform.scale(
+          scale: 1.35, // Ampliamos ligeramente para recortar los márgenes de la imagen generada
+          child: GardenIcon(
+            asset: icon,
+            size: 80,
+            fit: BoxFit.cover,
+          ),
+        ),
+      ),
+    );
+
+    final textWidget = Expanded(
+      child: Column(
+        crossAxisAlignment: isLeftAligned ? CrossAxisAlignment.start : CrossAxisAlignment.end,
+        children: [
+          Text(
+            title, 
+            textAlign: isLeftAligned ? TextAlign.left : TextAlign.right,
+            style: const TextStyle(
+              fontFamily: 'Quicksand',
+              fontSize: 17, 
+              fontWeight: FontWeight.w800, 
+              color: GardenColors.ink
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            description, 
+            textAlign: isLeftAligned ? TextAlign.left : TextAlign.right,
+            style: const TextStyle(
+              fontFamily: 'Nunito',
+              fontSize: 14, 
+              color: GardenColors.inkSoft, 
+              height: 1.4
+            ),
+          ),
+        ],
+      ),
+    );
+
+    final rowChildren = isLeftAligned 
+        ? [iconWidget, const SizedBox(width: 16), textWidget]
+        : [textWidget, const SizedBox(width: 16), iconWidget];
+
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: GardenColors.dustLight, width: 1),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: iconBg, borderRadius: BorderRadius.circular(16)),
-            child: GardenIcon(asset: icon, size: 24, color: iconColor),
+        color: GardenColors.creamLight.withValues(alpha: 1.0),
+        image: DecorationImage(
+          image: const AssetImage('images/PaperTexture.png'),
+          fit: BoxFit.cover,
+          colorFilter: ColorFilter.mode(
+            Colors.white.withValues(alpha: 0.3),
+            BlendMode.dstATop,
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700, color: GardenColors.ink)),
-                const SizedBox(height: 6),
-                Text(description, style: const TextStyle(fontSize: 13, color: GardenColors.inkSoft, height: 1.4)),
-              ],
-            ),
+        ),
+        borderRadius: BorderRadius.circular(24),
+        border: Border.all(color: GardenColors.ink, width: 3.5),
+        boxShadow: [
+          BoxShadow(
+            color: GardenColors.ink,
+            blurRadius: 0,
+            offset: const Offset(4, 6),
           )
         ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: rowChildren,
+      ),
+    );
+  }
+}
+
+class _ComicButton extends StatelessWidget {
+  final String text;
+  final VoidCallback? onTap;
+  final Color color;
+
+  const _ComicButton({
+    required this.text,
+    required this.onTap,
+    required this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onTap != null;
+    final actualColor = enabled ? color : GardenColors.dustLight;
+    
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: double.infinity,
+        height: 60,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Layer 1 (Crayon offset 1)
+            Positioned(
+              left: 4, right: -2, top: 4, bottom: -2,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: actualColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: actualColor.withValues(alpha: 0.4), width: 2.5),
+                ),
+              ),
+            ),
+            // Layer 2 (Crayon offset 2)
+            Positioned(
+              left: -3, right: 3, top: -1, bottom: 2,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: actualColor.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(26),
+                  border: Border.all(color: actualColor.withValues(alpha: 0.6), width: 2.5),
+                ),
+              ),
+            ),
+            // Main Button
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: actualColor,
+                  image: DecorationImage(
+                    image: const AssetImage('images/PaperTexture.png'),
+                    fit: BoxFit.cover,
+                    colorFilter: ColorFilter.mode(
+                      Colors.white.withValues(alpha: 0.3),
+                      BlendMode.dstATop,
+                    ),
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: actualColor, width: 3.5),
+                ),
+                alignment: Alignment.center,
+                child: Text(
+                  text,
+                  style: TextStyle(
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    color: enabled ? Colors.white : GardenColors.inkSoft,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

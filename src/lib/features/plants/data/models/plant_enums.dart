@@ -1,5 +1,5 @@
 enum PlantPersonality { wise, playful, dramatic }
-enum PlantMood { happy, thirsty, cold, hot, stressed, perfect }
+enum PlantMood { happy, thirsty, cold, hot, stressed, perfect, offline }
 enum SensorStatus { online, offline, degraded, unlinked }
 enum ConfidenceLevel { high, medium, low }
 enum PlantActionType { water, light, move, fertilize, prune }

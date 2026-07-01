@@ -85,6 +85,7 @@ flutter:
 
   assets:
     - images/
+    - assets/icons/
     - assets/icons/sensor_icons/
     - assets/icons/settings/
 

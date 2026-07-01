@@ -25,33 +25,33 @@ class PlantApiDatasource implements PlantDatasource {
       final response = await _apiClient.dio.get('/plants/');
       
       try {
-        final encoded = kIsWeb ? jsonEncode(response.data) : await Isolate.run(() => jsonEncode(response.data));
+        final encoded = jsonEncode(response.data);
         await cacheService.savePlantsData(encoded);
       } catch (_) {}
       
       final List<dynamic> plantsRaw = response.data;
-      final List<PlantResponse> plantResponses = kIsWeb 
-          ? plantsRaw.map((e) => PlantResponse.fromJson(e as Map<String, dynamic>)).toList()
-          : await Isolate.run(() => plantsRaw.map((e) => PlantResponse.fromJson(e as Map<String, dynamic>)).toList());
+      final List<PlantResponse> plantResponses = plantsRaw
+          .map((e) => PlantResponse.fromJson(e as Map<String, dynamic>))
+          .toList();
 
       final futures = plantResponses.map((pr) => _toPlant(pr));
       return Future.wait(futures);
-    } catch (e) {
+    } catch (e, st) {
       try {
         final cachedData = await cacheService.getPlantsData();
         if (cachedData != null) {
-          final List<PlantResponse> plantResponses = kIsWeb ? (() {
-            final List<dynamic> plantsRaw = jsonDecode(cachedData);
-            return plantsRaw.map((e) => PlantResponse.fromJson(e as Map<String, dynamic>)).toList();
-          })() : await Isolate.run(() {
-            final List<dynamic> plantsRaw = jsonDecode(cachedData);
-            return plantsRaw.map((e) => PlantResponse.fromJson(e as Map<String, dynamic>)).toList();
-          });
+          final List<dynamic> plantsRaw = jsonDecode(cachedData);
+          final List<PlantResponse> plantResponses = plantsRaw
+              .map((e) => PlantResponse.fromJson(e as Map<String, dynamic>))
+              .toList();
 
           final futures = plantResponses.map((pr) => _toPlant(pr, isOffline: true));
           return Future.wait(futures);
         }
-      } catch (_) {}
+      } catch (cacheError) {
+        print('Error in cache retrieval: $cacheError');
+      }
+      print('DEBUG: Exception in getPlants: $e\nStacktrace: $st');
       return [];
     }
   }
@@ -120,7 +120,7 @@ class PlantApiDatasource implements PlantDatasource {
       image: resolvedImage,
       personality: PlantPersonality.playful, // Now needs to be derived from profile if needed
       health: response.healthScore,
-      mood: _deriveMood(status),
+      mood: _deriveMood(status, response, sensors, comfortZones),
       lastWatered: response.lastWatered != null 
           ? _formatLastWatered(response.lastWatered!) 
           : _estimateLastWatered(sensors, comfortZones, status),
@@ -140,7 +140,8 @@ class PlantApiDatasource implements PlantDatasource {
     try {
       final response = await _apiClient.dio.get('/plants/$plantId/sensor-data/latest');
       return SensorDataResponse.fromJson(response.data);
-    } catch (_) {
+    } catch (e, st) {
+      print('Error en _getSensorSnapshot para $plantId: $e\n$st');
       return null;
     }
   }
@@ -179,9 +180,22 @@ class PlantApiDatasource implements PlantDatasource {
     }
   }
 
-  PlantMood _deriveMood(SensorStatus status) {
-    if (status == SensorStatus.offline || status == SensorStatus.degraded || status == SensorStatus.unlinked) return PlantMood.stressed;
-    return PlantMood.happy; // simplified for now
+  PlantMood _deriveMood(SensorStatus status, PlantResponse response, Sensors sensors, ComfortZones zones) {
+    if (status == SensorStatus.offline || status == SensorStatus.degraded || status == SensorStatus.unlinked) return PlantMood.offline;
+    
+    if (response.healthStatus == 'critical' || response.healthStatus == 'warning') {
+      if (sensors.soilMoisture < zones.soilMoisture.min) {
+        return PlantMood.thirsty;
+      } else if (sensors.temperature < zones.temperature.min) {
+        return PlantMood.cold;
+      } else if (sensors.temperature > zones.temperature.max) {
+        return PlantMood.hot;
+      }
+      return PlantMood.stressed;
+    }
+    
+    if (response.healthScore >= 95) return PlantMood.perfect;
+    return PlantMood.happy;
   }
 
   String _formatLastWatered(DateTime date) {

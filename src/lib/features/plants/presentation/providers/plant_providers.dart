@@ -80,7 +80,8 @@ final plantRealtimeSensorProvider =
           light: (data['light_lux'] as num?)?.toDouble() ?? 0.0,
         );
       }
-    } catch (_) {
+    } catch (e, st) {
+      print('Error polling realtime sensor for $plantId: $e\n$st');
       // Si falla, emitimos null para no dejar el stream bloqueado en 'loading'
       yield null;
     }

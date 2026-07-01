@@ -51,6 +51,8 @@ class PlantMoodBadge extends StatelessWidget {
       case PlantMood.perfect:
       case PlantMood.happy:
         return ('Óptimo', const Color(0xFFE6F4EA), const Color(0xFF2E7D32));
+      case PlantMood.offline:
+        return ('Sin conexión', const Color(0xFFE5E2DC), const Color(0xFF8E8278)); // GardenColors.dustLight and GardenColors.dust
     }
   }
 }

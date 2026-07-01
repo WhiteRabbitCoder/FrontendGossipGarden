@@ -255,6 +255,15 @@ class _PlantChatScreenState extends ConsumerState<PlantChatScreen>
     final plantsAsync = ref.watch(plantsProvider);
     final messagesAsync = ref.watch(chatMessagesProvider(widget.plantId));
     final messages = messagesAsync.value ?? [];
+    
+    ref.listen(chatMessagesProvider(widget.plantId), (previous, next) {
+      final prevLength = previous?.value?.length ?? 0;
+      final nextLength = next.value?.length ?? 0;
+      if (nextLength > prevLength) {
+        WidgetsBinding.instance.addPostFrameCallback((_) => _scrollToBottom());
+      }
+    });
+
     final hasError = messagesAsync.hasError;
     final errorText = messagesAsync.error?.toString();
     final realtimeAsync =

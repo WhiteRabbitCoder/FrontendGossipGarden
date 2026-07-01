@@ -44,7 +44,7 @@ qa-web:
 	cd src && flutter run -d chrome $(_DEFINES) --dart-define=BACKEND_TARGET=prod --dart-define=BACKEND_DEPLOY_URL=$(QA_BACKEND_URL)
 
 dev-android:
-	cd src && flutter run -d android $(_DEFINES) --dart-define=BACKEND_TARGET=local
+	cd src && flutter run -d emulator-5554 $(_DEFINES) --dart-define=BACKEND_TARGET=local
 
 prod-android:
 	cd src && flutter run -d android $(_DEFINES) --dart-define=BACKEND_TARGET=prod --dart-define=BACKEND_DEPLOY_URL=$(PROD_BACKEND_URL)

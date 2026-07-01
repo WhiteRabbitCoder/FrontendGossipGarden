@@ -21,14 +21,15 @@ class GardenIcons {
   static const pencil = '$_base/Icons_lapiz.png';
   static const camera = '$_base/Icons_camera.png';
   static const letters = '$_base/Icons_leters.png';
-  static const share = '$_base/Icons_shine.png';
+  static const share = '$_base/Icons_shine.png'; // Currently used as share in some screens
+  static const shine = '$_base/Icons_shine.png';
 
   // Vistas
   static const viewList = '$_base/Icons_view_list.png';
   static const viewGrid = '$_base/Icons_view_square.png';
 
   // Notificaciones
-  static const notification = '$_base/Icons_plant_alert.png';
+  static const notification = 'assets/icons/settings/icon_notification.png';
   static const notificationAlt = '$_base/Icons_bolbillo.png';
 
   // Sensores / conectividad
@@ -41,6 +42,7 @@ class GardenIcons {
   static const soilHumidity = '$_base/Icons_humedad_suelo.png';
 
   // Cuidados de planta
+  static const healthHeart = 'assets/icons/sensor_icons/heart.png';
   static const water = '$_base/Icons_water_drop.png';
   static const sun = '$_base/Icons_wb_sunny.png';
   static const thermostat = '$_base/Icons_thermostat.png';
@@ -83,6 +85,17 @@ class GardenIcons {
   static const starOutline = '$_base/icons_start_outline.png';
   static const starFilled = '$_base/Icons_start_fully.png';
   static const helpBooks = '$_base/Icons_add_books.png';
+
+  // Onboarding Basics
+  static const basicPlantTranslator = 'assets/icons/icon_plant_translator.png';
+  static const basicBotanicalChat = 'assets/icons/icon_botanical_chat.png';
+  static const basicFriendsGarden = 'assets/icons/icon_friends_garden.png';
+  static const basicHealthGraphics = 'assets/icons/icon_health_graphics.png';
+  static const basicAlerts = 'assets/icons/icon_alerts.png';
+
+  // Identify Screen
+  static const identifyCamera = 'assets/icons/icon_identify_camera.png';
+  static const identifyLetters = 'assets/icons/icon_identify_letters.png';
 
   // Perfil de planta
   static const map = '$_base/Icons_mapa.png';

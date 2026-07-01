@@ -471,6 +471,8 @@ class _PlantHeroCard extends StatelessWidget {
       case PlantMood.perfect:
       case PlantMood.happy:
         return const Color(0xFFE6F4EA);
+      case PlantMood.offline:
+        return const Color(0xFFE5E2DC);
     }
   }
 
@@ -513,7 +515,7 @@ class _PersonalitySection extends StatelessWidget {
       children: [
         Row(
           children: [
-            const Text('✨', style: TextStyle(fontSize: 18)),
+            const GardenIcon(asset: GardenIcons.shine, size: 18),
             const SizedBox(width: 8),
             Text(
               'Personalidad',

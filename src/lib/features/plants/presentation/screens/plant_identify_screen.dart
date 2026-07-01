@@ -355,12 +355,23 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
     );
   }
 
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: GardenColors.creamPaper,
-      appBar: AppBar(
+    return Container(
+      decoration: BoxDecoration(
+        color: GardenColors.creamPaper,
+        image: DecorationImage(
+          image: const AssetImage('images/PaperTexture.png'),
+          fit: BoxFit.cover,
+          colorFilter: ColorFilter.mode(
+            Colors.white.withValues(alpha: 0.4),
+            BlendMode.dstATop,
+          ),
+        ),
+      ),
+      child: Scaffold(
         backgroundColor: Colors.transparent,
+        appBar: AppBar(
+          backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
           icon: const GardenIcon(asset: GardenIcons.back, size: 20),
@@ -378,6 +389,7 @@ class _PlantIdentifyScreenState extends ConsumerState<PlantIdentifyScreen>
         ),
       ),
       body: _buildContent(),
+    ),
     );
   }
 
@@ -502,7 +514,7 @@ class _SelectMethodView extends StatelessWidget {
           ),
           const SizedBox(height: 28),
           _MethodCard(
-            iconAsset: GardenIcons.camera,
+            iconAsset: GardenIcons.identifyCamera,
             title: 'Reconocer con cámara',
             subtitle: 'Toma o sube una foto y la identificamos por ti.',
             badge: 'Recomendado',
@@ -510,7 +522,7 @@ class _SelectMethodView extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           _MethodCard(
-            iconAsset: GardenIcons.letters,
+            iconAsset: GardenIcons.identifyLetters,
             title: 'Buscar por nombre',
             subtitle: 'Si ya sabes qué planta es, búscala en el catálogo.',
             onTap: onSearch,
@@ -539,20 +551,28 @@ class _MethodCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Material(
-      color: Colors.white,
-      borderRadius: BorderRadius.circular(16),
+      color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(24),
         onTap: onTap,
         child: Container(
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: GardenColors.dustLight, width: 1.2),
-            boxShadow: [
+            color: Colors.white,
+            image: const DecorationImage(
+              image: AssetImage('images/PaperTexture.png'),
+              fit: BoxFit.cover,
+              colorFilter: ColorFilter.mode(
+                Colors.white30,
+                BlendMode.dstATop,
+              ),
+            ),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: GardenColors.ink, width: 3.5),
+            boxShadow: const [
               BoxShadow(
-                color: GardenColors.ink.withOpacity(0.06),
-                blurRadius: 18,
-                offset: const Offset(0, 8),
+                color: GardenColors.ink,
+                blurRadius: 0,
+                offset: Offset(4, 6),
               ),
             ],
           ),
@@ -564,7 +584,16 @@ class _MethodCard extends StatelessWidget {
                 height: 52,
                 decoration: const BoxDecoration(
                     color: GardenColors.creamLight, shape: BoxShape.circle),
-                child: GardenIcon(asset: iconAsset, size: 24),
+                child: ClipOval(
+                  child: Transform.scale(
+                    scale: 1.35,
+                    child: GardenIcon(
+                      asset: iconAsset, 
+                      size: 52,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                ),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -588,7 +617,7 @@ class _MethodCard extends StatelessWidget {
                       const SizedBox(height: 6),
                       Row(
                         children: [
-                          const Text('✨', style: TextStyle(fontSize: 12)),
+                          const GardenIcon(asset: GardenIcons.shine, size: 12),
                           const SizedBox(width: 4),
                           Text(
                             badge!,
@@ -712,41 +741,19 @@ class _CameraView extends StatelessWidget {
                         .copyWith(color: Colors.redAccent, fontSize: 13)),
               ),
 
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton.icon(
-                onPressed: cameraReady ? onIdentify : null,
-                icon: const GardenIcon(asset: GardenIcons.camera, size: 18),
-                label: const Text('Identificar',
-                    style:
-                        TextStyle(fontSize: 15, fontWeight: FontWeight.w700)),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: GardenColors.leafDark,
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: GardenColors.leafGreen,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
-                  elevation: 0,
-                ),
-              ),
+            _ComicButton(
+              text: 'Identificar',
+              icon: const GardenIcon(asset: GardenIcons.camera, size: 18),
+              onTap: cameraReady ? onIdentify : null,
+              color: GardenColors.leafDark,
             ),
-            const SizedBox(height: 10),
-            SizedBox(
-              width: double.infinity,
-              child: OutlinedButton.icon(
-                onPressed: onGallery,
-                icon: const Icon(Icons.photo_library_outlined, size: 18),
-                label: const Text('Elegir de galería',
-                    style: TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: GardenColors.forest,
-                  side: const BorderSide(color: GardenColors.forest, width: 1.5),
-                  padding: const EdgeInsets.symmetric(vertical: 14),
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14)),
-                ),
-              ),
+            const SizedBox(height: 16),
+            _ComicButton(
+              text: 'Elegir de galería',
+              icon: const Icon(Icons.photo_library_outlined, size: 20, color: GardenColors.forest),
+              onTap: onGallery,
+              color: Colors.white,
+              textColor: GardenColors.forest,
             ),
           ],
         ),
@@ -927,9 +934,22 @@ class _SearchViewState extends State<_SearchView> {
             onChanged: _onSearchChanged,
             style: GardenTextStyles.bodySmall.copyWith(color: GardenColors.ink),
             decoration: InputDecoration(
-              prefixIcon: const Padding(
-                padding: EdgeInsets.all(12),
-                child: GardenIcon(asset: GardenIcons.letters, size: 20),
+              prefixIcon: Padding(
+                padding: const EdgeInsets.all(8),
+                child: SizedBox(
+                  width: 32,
+                  height: 32,
+                  child: ClipOval(
+                    child: Transform.scale(
+                      scale: 1.35,
+                      child: const GardenIcon(
+                        asset: GardenIcons.identifyLetters,
+                        size: 32,
+                        fit: BoxFit.cover,
+                      ),
+                    ),
+                  ),
+                ),
               ),
               hintText: 'Busca: monstera, potos, ficus...',
               hintStyle: GardenTextStyles.bodySmall
@@ -939,17 +959,17 @@ class _SearchViewState extends State<_SearchView> {
               contentPadding:
                   const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: GardenColors.creamPaper),
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: GardenColors.ink, width: 2.5),
               ),
               enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
-                borderSide: const BorderSide(color: GardenColors.creamPaper),
+                borderRadius: BorderRadius.circular(16),
+                borderSide: const BorderSide(color: GardenColors.ink, width: 2.5),
               ),
               focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(16),
                 borderSide:
-                    const BorderSide(color: GardenColors.leafDark, width: 1.5),
+                    const BorderSide(color: GardenColors.leafDark, width: 3.0),
               ),
             ),
           ),
@@ -1130,14 +1150,22 @@ class _ResultView extends StatelessWidget {
           // Tarjeta de identificación
           Container(
             decoration: BoxDecoration(
-              color: GardenColors.creamLight,
+              color: GardenColors.creamLight.withValues(alpha: 1.0),
+              image: const DecorationImage(
+                image: AssetImage('images/PaperTexture.png'),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(
+                  Colors.white30,
+                  BlendMode.dstATop,
+                ),
+              ),
               borderRadius: BorderRadius.circular(24),
-              border: Border.all(color: GardenColors.ink.withOpacity(0.1), width: 1.5),
-              boxShadow: [
+              border: Border.all(color: GardenColors.ink, width: 3.5),
+              boxShadow: const [
                 BoxShadow(
-                  color: GardenColors.ink.withOpacity(0.04),
-                  blurRadius: 16,
-                  offset: const Offset(0, 8),
+                  color: GardenColors.ink,
+                  blurRadius: 0,
+                  offset: Offset(4, 6),
                 ),
               ],
             ),
@@ -1229,8 +1257,23 @@ class _ResultView extends StatelessWidget {
           Container(
             decoration: BoxDecoration(
               color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              border: Border.all(color: GardenColors.ink.withOpacity(0.08), width: 1.5),
+              image: const DecorationImage(
+                image: AssetImage('images/PaperTexture.png'),
+                fit: BoxFit.cover,
+                colorFilter: ColorFilter.mode(
+                  Colors.white30,
+                  BlendMode.dstATop,
+                ),
+              ),
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: GardenColors.ink, width: 3.5),
+              boxShadow: const [
+                BoxShadow(
+                  color: GardenColors.ink,
+                  blurRadius: 0,
+                  offset: Offset(4, 6),
+                ),
+              ],
             ),
             child: Column(
               children: (completed?.profile?.careTips ?? []).take(3).toList().asMap().entries.map((entry) {
@@ -1301,7 +1344,7 @@ class _ResultView extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('✨', style: TextStyle(fontSize: 16)),
+                const GardenIcon(asset: GardenIcons.shine, size: 16),
                 const SizedBox(width: 10),
                 Expanded(
                   child: Column(
@@ -1328,22 +1371,11 @@ class _ResultView extends StatelessWidget {
           const SizedBox(height: 32),
 
           // Botón agregar
-          SizedBox(
-            width: double.infinity,
-            child: ElevatedButton.icon(
-              onPressed: onAdd,
-              icon: const GardenIcon(asset: GardenIcons.addPlant, size: 20),
-              label: const Text('Guardar en mi jardín',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: GardenColors.leafDark,
-                foregroundColor: Colors.white,
-                padding: const EdgeInsets.symmetric(vertical: 20),
-                shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(20)),
-                elevation: 0,
-              ),
-            ),
+          _ComicButton(
+            text: 'Guardar en mi jardín',
+            icon: const GardenIcon(asset: GardenIcons.addPlant, size: 20),
+            onTap: onAdd,
+            color: GardenColors.leafDark,
           ),
         ],
       ),
@@ -1786,4 +1818,98 @@ class _CornerPainter extends CustomPainter {
 
   @override
   bool shouldRepaint(_CornerPainter old) => false;
+}
+
+class _ComicButton extends StatelessWidget {
+  final String text;
+  final Widget? icon;
+  final VoidCallback? onTap;
+  final Color color;
+  final Color textColor;
+
+  const _ComicButton({
+    required this.text,
+    this.icon,
+    required this.onTap,
+    required this.color,
+    this.textColor = Colors.white,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final enabled = onTap != null;
+    final actualColor = enabled ? color : GardenColors.dustLight;
+    final actualTextColor = enabled ? textColor : GardenColors.inkSoft;
+    
+    return GestureDetector(
+      onTap: onTap,
+      child: SizedBox(
+        width: double.infinity,
+        height: 60,
+        child: Stack(
+          alignment: Alignment.center,
+          children: [
+            // Layer 1
+            Positioned(
+              left: 4, right: -2, top: 4, bottom: -2,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: actualColor.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: actualColor.withValues(alpha: 0.4), width: 2.5),
+                ),
+              ),
+            ),
+            // Layer 2
+            Positioned(
+              left: -3, right: 3, top: -1, bottom: 2,
+              child: Container(
+                decoration: BoxDecoration(
+                  color: actualColor.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(26),
+                  border: Border.all(color: actualColor.withValues(alpha: 0.6), width: 2.5),
+                ),
+              ),
+            ),
+            // Main Button
+            Positioned.fill(
+              child: Container(
+                decoration: BoxDecoration(
+                  color: actualColor,
+                  image: const DecorationImage(
+                    image: AssetImage('images/PaperTexture.png'),
+                    fit: BoxFit.cover,
+                    colorFilter: ColorFilter.mode(
+                      Colors.white30,
+                      BlendMode.dstATop,
+                    ),
+                  ),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(color: actualColor == Colors.white ? GardenColors.ink : actualColor, width: 3.5),
+                ),
+                alignment: Alignment.center,
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    if (icon != null) ...[
+                      icon!,
+                      const SizedBox(width: 8),
+                    ],
+                    Text(
+                      text,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: actualTextColor,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

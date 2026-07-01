@@ -16,6 +16,8 @@ extension PlantMoodX on PlantMood {
         return FontAwesomeIcons.triangleExclamation;
       case PlantMood.perfect: 
         return FontAwesomeIcons.solidStar;
+      case PlantMood.offline:
+        return FontAwesomeIcons.linkSlash;
     }
   }
 
@@ -33,6 +35,8 @@ extension PlantMoodX on PlantMood {
         return 'Estresada';
       case PlantMood.perfect:
         return 'Radiante';
+      case PlantMood.offline:
+        return 'Sin conexión';
     }
   }
 }
